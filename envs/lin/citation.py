@@ -1,7 +1,7 @@
 import gym
-import numpy as np
-import matplotlib.pyplot as plt
 import matlab.engine
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Citation(gym.Env):
@@ -95,9 +95,11 @@ class Citation(gym.Env):
     def get_eom():
 
         eng = matlab.engine.start_matlab()
+        eng.cd('envs/lin')
         eng.save_mat(nargout=0)
         A = np.asarray(eng.eval('Alin'))
         B = np.asarray(eng.eval('Blin'))[:, :3]
+        eng.quit()
 
         return A, B
 
@@ -178,13 +180,13 @@ class Citation(gym.Env):
         return
 
 
-from stable_baselines.common.env_checker import check_env
-
-time = np.arange(0, 20, 0.01)
-env = Citation(time)
-
-# Box(4,) means that it is a Vector with 4 components
-print("Observation space:", env.observation_space)
-print("Action space:", env.action_space)
-
-check_env(env, warn=True)
+# from stable_baselines.common.env_checker import check_env
+#
+# time = np.arange(0, 20, 0.01)
+# envs = Citation(time)
+#
+# # Box(4,) means that it is a Vector with 4 components
+# print("Observation space:", envs.observation_space)
+# print("Action space:", envs.action_space)
+#
+# check_env(envs, warn=True)
