@@ -18,16 +18,12 @@ from tools.schedule import schedule
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-sys.path.append('envs/lin/save_mat.m')
-
-log_dir = "agents/tmp"
-os.makedirs(log_dir, exist_ok=True)
 env = Citation()
 
 learn = False
 
 if learn:
-    env = Monitor(env, log_dir)
+    env = Monitor(env, "agents/tmp")
     callback = SaveOnBestTrainingRewardCallback(check_freq=1000, log_dir=log_dir)
     model = SAC(LnMlpPolicy, env, verbose=1,
                 ent_coef='auto', batch_size=256, learning_rate=schedule(0.00094))
@@ -45,9 +41,9 @@ if learn:
 
 # Test the trained agent
 obs = env.reset()
-controller_1 = PID(Kp=10, Ki=0.5, Kd=1)
-controller_2 = PID(Kp=10, Ki=0.5, Kd=1)
-controller_3 = PID(Kp=10, Ki=0.5, Kd=1)
+controller_1 = PID(Kp=-10, Ki=0.5, Kd=1)
+controller_2 = PID(Kp=-10, Ki=0.5, Kd=1)
+controller_3 = PID(Kp=-10, Ki=0.5, Kd=1)
 
 return_a = 0
 
@@ -60,41 +56,74 @@ for i, current_time in enumerate(env.time):
     obs, reward, done, info = env.step(action)
     return_a += reward
     if current_time == env.time[-1]:
-        print("Goal reached!", "return=", return_a)
 
-        # fig = go.Figure()
-        fig = make_subplots(
-            rows=3, cols=1,
-            specs=[[{"rowspan": 2}],
-                   [None],
-                   [{}]])
+        fig = make_subplots(rows=6, cols=2,)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[1, :].T, name=r'$x_c\: (SAC)$',
+            x=env.time, y=env.state_history[0, :].T, name=r'$p [^\circ/s]$',
+            line=dict(color='#636EFA')), row=1, col=2)
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.ref_signal[0, :], name=r'$p_{ref} [^\circ/s]$',
+            line=dict(color='#EF553B', dash='dashdot')), row=1, col=2)
+        fig.update_yaxes(title_text=r'$p \:[^\circ/s]$', row=1, col=2)
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
             line=dict(color='#636EFA')), row=1, col=1)
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.ref_cart, name=r'$x_{ref}$',
-            line=dict(color='#EF553B')), row=1, col=1)
-        fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[4, :].T, name=r'$\theta\: (SAC)$',
-            line=dict(color='#636EFA', dash='dashdot')), row=1, col=1)
-
-        fig.append_trace(go.Scatter(
-            x=env.time, y=env.ref_ball, name=r'$\theta_{ref}$',
+            x=env.time, y=env.ref_signal[1, :], name=r'$q_{ref} [^\circ/s]$',
             line=dict(color='#EF553B', dash='dashdot')), row=1, col=1)
+        fig.update_yaxes(title_text=r'$q \:[^\circ/s]$', row=1, col=1)
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[2, :].T, name=r'$r [^\circ/s]$',
+            line=dict(color='#636EFA')), row=2, col=2)
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.ref_signal[2, :], name=r'$r_{ref} [^\circ/s]$',
+            line=dict(color='#EF553B', dash='dashdot')), row=2, col=2)
+        fig.update_yaxes(title_text=r'$r \:[^\circ/s]$', row=2, col=2)
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
+            line=dict(color='#636EFA')), row=4, col=1)
+        fig.update_yaxes(title_text=r'$V \:[m/s]$', row=4, col=1)
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[4, :].T, name=r'$\alpha [^\circ]$',
+            line=dict(color='#636EFA')), row=2, col=1)
+        fig.update_yaxes(title_text=r'$\alpha \:[^\circ]$', row=2, col=1)
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[5, :].T, name=r'$\beta [^\circ]$',
+            line=dict(color='#636EFA')), row=4, col=2)
+        fig.update_yaxes(title_text=r'$\beta \:[^\circ]$', row=4, col=2)
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[6, :].T, name=r'$\phi [^\circ]$',
+            line=dict(color='#636EFA')), row=3, col=2)
+        fig.update_yaxes(title_text=r'$\phi \:[^\circ]$', row=3, col=2)
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[7, :].T, name=r'$\theta [^\circ]$',
+            line=dict(color='#636EFA')), row=3, col=1)
+        fig.update_yaxes(title_text=r'$\theta \:[^\circ]$', row=3, col=1)
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[9, :].T, name=r'$H [m]$',
+            line=dict(color='#636EFA')), row=5, col=1)
+        fig.update_yaxes(title_text=r'$H \:[m]$', row=5, col=1)
 
         fig.append_trace(go.Scatter(
             x=env.time, y=env.action_history[0, :].T,
-            name=r'$F_1 \: (SAC)$', line=dict(color='#ab63f3')), row=3, col=1)
+            name=r'$\delta_e [^\circ]$', line=dict(color='#00CC96')), row=6, col=1)
+        fig.update_yaxes(title_text=r'$\delta_e \:[^\circ]$', row=6, col=1)
         fig.append_trace(go.Scatter(
             x=env.time, y=env.action_history[1, :].T,
-            name=r'$F_2 \: (SAC)$', line=dict(color='#19d3f3')), row=3, col=1)
+            name=r'$\delta_a [^\circ]$', line=dict(color='#00CC96')), row=5, col=2)
+        fig.update_yaxes(title_text=r'$\delta_a \:[^\circ]$', row=5, col=2)
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.action_history[2, :].T,
+            name=r'$\delta_r [^\circ]$', line=dict(color='#00CC96')), row=6, col=2)
+        fig.update_yaxes(title_text=r'$\delta_r \:[^\circ]$', row=6, col=2)
 
-        fig.update_yaxes(title_text="Position [m], [rad]", range=[-1, 7],
-                         tickfont=dict(size=15), row=1, col=1, title_standoff=50)
-
-        fig.update_layout(width=600, height=400, margin=dict(
+        fig.update_layout(showlegend=False, width=800, height=500, margin=dict(
             l=10,
             r=10,
             b=10,
@@ -102,16 +131,16 @@ for i, current_time in enumerate(env.time):
         ))
 
         end_time = env.time[-1] + env.dt * 2
-        fig.update_xaxes(range=[0, end_time], tickmode='array',
-                         tickvals=np.arange(0, end_time, 5), tickfont=dict(size=15), row=1, col=1)
         fig.update_xaxes(title_text="Time [s]", range=[0, end_time], tickmode='array',
-                         tickvals=np.arange(0, end_time, 5), tickfont=dict(size=15), row=3, col=1)
-        fig.update_yaxes(title_text="Force [N]", range=[-1100, 1100], tickmode='array',
-                         tickvals=np.linspace(-1000, 1000, 3), tickfont=dict(size=15), row=3, col=1)
+                         tickvals=np.arange(0, end_time, 5), row=6, col=1)
+        fig.update_xaxes(title_text="Time [s]", range=[0, end_time], tickmode='array',
+                         tickvals=np.arange(0, end_time, 5), row=6, col=2)
 
-        fig.update_layout(font=dict(size=13), template="plotly", legend=dict(font=dict(size=16)))
+        for i in range(6):
+            for j in range(3):
+                fig.update_xaxes(showticklabels=False, row=i, col=j)
+
         fig.update_traces(mode='lines')
-
         fig.write_image(f"figures/flying_{abs(int(return_a))}.eps")
 
         print(f"Goal reached! Return = {return_a}")
