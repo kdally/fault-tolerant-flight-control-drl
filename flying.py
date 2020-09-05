@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import warnings
 
@@ -10,7 +9,7 @@ from stable_baselines import SAC
 from stable_baselines.bench import Monitor
 from stable_baselines.sac.policies import LnMlpPolicy
 
-from envs.lin.citation import Citation
+from envs.citation_lin import Citation
 from tools.PID import PID
 from stable_baselines.common.callbacks import EvalCallback as SaveOnBestReturn
 from tools.schedule import schedule
@@ -79,9 +78,6 @@ for i, current_time in enumerate(env_eval.time):
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.state_history[2, :].T, name=r'$r [^\circ/s]$',
             line=dict(color='#636EFA')), row=2, col=2)
-        fig.append_trace(go.Scatter(
-            x=env_eval.time, y=env_eval.ref_signal[2, :], name=r'$r_{ref} [^\circ/s]$',
-            line=dict(color='#EF553B', dash='dashdot')), row=2, col=2)
         fig.update_yaxes(title_text=r'$r \:[^\circ/s]$', row=2, col=2)
 
         fig.append_trace(go.Scatter(
@@ -93,10 +89,15 @@ for i, current_time in enumerate(env_eval.time):
             x=env_eval.time, y=env_eval.state_history[4, :].T, name=r'$\alpha [^\circ]$',
             line=dict(color='#636EFA')), row=2, col=1)
         fig.update_yaxes(title_text=r'$\alpha \:[^\circ]$', row=2, col=1)
+
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.state_history[5, :].T, name=r'$\beta [^\circ]$',
             line=dict(color='#636EFA')), row=4, col=2)
+        fig.append_trace(go.Scatter(
+            x=env_eval.time, y=env_eval.ref_signal[2, :], name=r'$\beta_{ref} [^\circ]$',
+            line=dict(color='#EF553B', dash='dashdot')), row=2, col=2)
         fig.update_yaxes(title_text=r'$\beta \:[^\circ]$', row=4, col=2)
+
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.state_history[6, :].T, name=r'$\phi [^\circ]$',
             line=dict(color='#636EFA')), row=3, col=2)
@@ -137,9 +138,9 @@ for i, current_time in enumerate(env_eval.time):
         fig.update_xaxes(title_text="Time [s]", range=[0, end_time], tickmode='array',
                          tickvals=np.arange(0, end_time, 5), row=6, col=2)
 
-        for i in range(6):
-            for j in range(3):
-                fig.update_xaxes(showticklabels=False, row=i, col=j)
+        for row in range(6):
+            for col in range(3):
+                fig.update_xaxes(showticklabels=False, row=row, col=col)
 
         fig.update_traces(mode='lines')
         fig.write_image(f"figures/flying_{abs(int(return_a))}.eps")
