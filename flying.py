@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 env_train = Citation(evaluation=False)
-env_eval = Citation(evaluation=True)
+env_eval = Citation(evaluation=False)
 
 learn = True
 
@@ -30,7 +30,7 @@ if learn:
 
     # model = SAC.load("tmp/best_model.zip", env=env_train)
     tic = time.time()
-    model.learn(total_timesteps=int(5e5), log_interval=10, callback=callback)
+    model.learn(total_timesteps=int(2e5), log_interval=10, callback=callback)
     print('')
     print(f'Elapsed time = {time.time() - tic}s')
     print('')
@@ -95,7 +95,7 @@ for i, current_time in enumerate(env_eval.time):
             line=dict(color='#636EFA')), row=4, col=2)
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.ref_signal[2, :], name=r'$\beta_{ref} [^\circ]$',
-            line=dict(color='#EF553B', dash='dashdot')), row=2, col=2)
+            line=dict(color='#EF553B', dash='dashdot')), row=4, col=2)
         fig.update_yaxes(title_text=r'$\beta \:[^\circ]$', row=4, col=2)
 
         fig.append_trace(go.Scatter(

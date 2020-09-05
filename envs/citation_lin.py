@@ -34,7 +34,7 @@ class Citation(gym.Env):
         self.max_steps = len(self.time)
 
         self.ref_signal = self.get_task(evaluation)
-        self.observation_space = gym.spaces.Box(-3000, 3000, shape=(self.ref_signal.shape[0] + 3,), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-3000, 3000, shape=(self.ref_signal.shape[0] + 1,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
 
         self.state = None
@@ -48,8 +48,8 @@ class Citation(gym.Env):
 
         self.state = self.euler(self.state, self.scale_a(action))
 
-        self.error[:2] = self.ref_signal[:2, self.step_count] - self.state[:2]
-        self.error[2] = self.ref_signal[2, self.step_count] - self.state[5]
+        self.error[:2] = d2r(self.ref_signal[:2, self.step_count]) - self.state[:2]
+        self.error[2] = d2r(self.ref_signal[2, self.step_count]) - self.state[5]
         self.state_history[:, self.step_count] = np.multiply(self.state, self.scale_s)
         self.action_history[:, self.step_count] = self.scale_a(action, to='fig')
 
@@ -71,7 +71,7 @@ class Citation(gym.Env):
 
     def get_reward(self):
 
-        sum_error = self.error.sum() / 50
+        sum_error = self.error.sum() / 10 * 180 / np.pi
         return -abs(max(min(sum_error, 1), -1))
 
     def get_task(self, evaluation):
@@ -106,10 +106,10 @@ class Citation(gym.Env):
             ref_qbody = 5*np.sin(self.time*2*np.pi*0.2)
             ref_beta = np.zeros(int(self.max_steps))
 
-        return d2r(np.vstack([ref_pbody, ref_qbody, ref_beta]))
+        return np.vstack([ref_pbody, ref_qbody, ref_beta])
 
     def get_obs(self):
-        return np.hstack([self.error, self.state[[2, 6, 7]]])
+        return np.hstack([self.error, self.state[2]])
 
     @staticmethod
     def scale_a(action: np.ndarray, to: str = 'model'):
