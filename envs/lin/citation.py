@@ -70,12 +70,7 @@ class Citation(gym.Env):
                                    np.zeros(int(4 * self.max_steps / 20)),
                                    3 * np.ones(int(4 * self.max_steps / 20)),
                                    ])
-            ref_rbody = np.hstack([1 * np.ones(int(4 * self.max_steps / 20)),
-                                   np.zeros(int(4 * self.max_steps / 20)),
-                                   -1 * np.ones(int(4 * self.max_steps / 20)),
-                                   np.zeros(int(4 * self.max_steps / 20)),
-                                   1 * np.ones(int(4 * self.max_steps / 20)),
-                                   ])
+            ref_beta = np.zeros(int(self.max_steps))
 
         else:
             ref_pbody = np.hstack([np.zeros(int(5 * self.max_steps / 20)),
@@ -95,6 +90,7 @@ class Citation(gym.Env):
                                    np.zeros(int(4 * self.max_steps / 20)),
                                    1 * np.ones(int(4 * self.max_steps / 20)),
                                    ])
+            ref_beta = np.zeros(int(self.max_steps))
 
         return np.vstack([ref_pbody, ref_qbody, ref_rbody])
 
