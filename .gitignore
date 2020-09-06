@@ -3,9 +3,6 @@
 
 *.xml
 *.pyc
-*.zip
-*.csv
-*.eps
 *.pdf
 *.xlsx
 *.pyc
