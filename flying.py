@@ -3,6 +3,7 @@ import time
 import warnings
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from stable_baselines import SAC
@@ -13,31 +14,76 @@ from envs.citation_lin import Citation
 from tools.PID import PID
 from stable_baselines.common.callbacks import EvalCallback as SaveOnBestReturn
 from tools.schedule import schedule
+from tools.identifier import get_ID
+from tools.plot_training import plot_training
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-env_train = Citation(evaluation=False)
-env_eval = Citation(evaluation=False)
 
-learn = True
+def get_task(time_v: np.ndarray = np.arange(0, 30, 0.01)):
+
+    state_indices = {'p': 0, 'q': 1, 'r': 2, 'V': 3, 'alpha': 4, 'beta': 5,
+                     'phi': 6, 'theta': 7, 'psi': 8, 'h': 9, 'x': 10, 'y': 11}
+    # noinspection PyDictCreation
+    signals = {}
+
+    signals['p'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 2 * np.pi * 0.2),
+                           5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3.5 * np.pi * 0.2),
+                           # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                           # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                           np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
+                           ])
+    signals['q'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 2 * np.pi * 0.2),
+                           5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3.5 * np.pi * 0.2),
+                           # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                           # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                           np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
+                           ])
+    signals['beta'] = np.zeros(int(time_v.shape[0]))
+
+    track_signals = np.zeros(time_v.shape[0])
+    for state in signals:
+        track_signals = np.vstack([track_signals, signals[state]])
+    track_signals = track_signals[1:]
+
+    track_indices = []
+    for state in signals:
+        track_indices.append(int(state_indices[state]))
+    obs_indices = track_indices + [state_indices['r']]
+
+    return track_signals, track_indices, obs_indices, time_v
+
+
+env_train = Citation(task=get_task()[:3], time_vector=get_task()[3])
+env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
+
+learn = False
 
 if learn:
     env_train = Monitor(env_train, "agents/tmp")
-    callback = SaveOnBestReturn(eval_env=env_eval, callback_on_new_best=None, eval_freq=5000, best_model_save_path="agents/tmp/")
+    callback = SaveOnBestReturn(eval_env=env_eval, callback_on_new_best=None, eval_freq=5000,
+                                best_model_save_path="agents/tmp/", n_eval_episodes=1)
     model = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256, learning_rate=schedule(0.00094))
 
     # model = SAC.load("tmp/best_model.zip", env=env_train)
     tic = time.time()
     model.learn(total_timesteps=int(2e5), log_interval=10, callback=callback)
+    model = SAC.load("agents/tmp/best_model.zip")
+    ID = get_ID(6)
+    model.save(f'agents/{ID}.zip')
+    training_log = pd.read_csv('agents/tmp/monitor.csv')
+    training_log.to_csv(f'agents/{ID}.csv')
+    plot_training(ID)
     print('')
     print(f'Elapsed time = {time.time() - tic}s')
     print('')
-    del model
 
-# model = SAC.load("agents/500K_simple_batch256.zip")
-model = SAC.load("agents/tmp/best_model.zip")
+else:
+    ID = '2b4ht9'
+    # ID = 'tmp/best_model'
+    model = SAC.load(f"agents/{ID}.zip")
 
 # Test the trained agent
 obs = env_eval.reset()
@@ -57,7 +103,7 @@ for i, current_time in enumerate(env_eval.time):
     return_a += reward
     if current_time == env_eval.time[-1]:
 
-        fig = make_subplots(rows=6, cols=2,)
+        fig = make_subplots(rows=6, cols=2, )
 
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.state_history[0, :].T, name=r'$p [^\circ/s]$',
@@ -96,7 +142,7 @@ for i, current_time in enumerate(env_eval.time):
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.ref_signal[2, :], name=r'$\beta_{ref} [^\circ]$',
             line=dict(color='#EF553B', dash='dashdot')), row=4, col=2)
-        fig.update_yaxes(title_text=r'$\beta \:[^\circ]$', row=4, col=2)
+        fig.update_yaxes(title_text=r'$\beta \:[^\circ]$', row=4, col=2, range=[-0.5, 0.5])
 
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.state_history[6, :].T, name=r'$\phi [^\circ]$',
@@ -108,9 +154,9 @@ for i, current_time in enumerate(env_eval.time):
         fig.update_yaxes(title_text=r'$\theta \:[^\circ]$', row=3, col=1)
 
         fig.append_trace(go.Scatter(
-            x=env_eval.time, y=env_eval.state_history[9, :].T, name=r'$H [m]$',
+            x=env_eval.time, y=env_eval.state_history[9, :].T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=5, col=1)
-        fig.update_yaxes(title_text=r'$H \:[m]$', row=5, col=1)
+        fig.update_yaxes(title_text=r'$h \:[m]$', row=5, col=1)
 
         fig.append_trace(go.Scatter(
             x=env_eval.time, y=env_eval.action_history[0, :].T,
@@ -140,10 +186,10 @@ for i, current_time in enumerate(env_eval.time):
 
         for row in range(6):
             for col in range(3):
-                fig.update_xaxes(showticklabels=False, row=row, col=col)
+                fig.update_xaxes(showticklabels=False, nticks=7, row=row, col=col)
 
         fig.update_traces(mode='lines')
-        fig.write_image(f"figures/flying_{abs(int(return_a))}.eps")
+        fig.write_image(f"figures/{ID}_r{abs(int(return_a))}.eps")
 
         print(f"Goal reached! Return = {return_a}")
         print('')
