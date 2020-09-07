@@ -549,23 +549,15 @@ class SAC(OffPolicyRLModel):
             callback.on_rollout_start()
 
             for step in range(total_timesteps):
-                # Before training starts, randomly sample actions
-                # from a uniform distribution for better exploration.
-                # Afterwards, use the learned policy
-                # if random_exploration is set to 0 (normal setting)
-                if self.num_timesteps < self.learning_starts or np.random.rand() < self.random_exploration:
-                    # actions sampled from action space are from range specific to the environment
-                    # but algorithm operates on tanh-squashed actions therefore simple scaling is used
-                    unscaled_action = self.env.action_space.sample()
-                    action = scale_action(self.action_space, unscaled_action)
-                else:
-                    action = self.policy_tf.step(obs[None], deterministic=False).flatten()
-                    # Add noise to the action (improve exploration,
-                    # not needed in general)
-                    if self.action_noise is not None:
-                        action = np.clip(action + self.action_noise(), -1, 1)
-                    # inferred actions need to be transformed to environment action_space before stepping
-                    unscaled_action = unscale_action(self.action_space, action)
+
+                action = self.policy_tf.step(obs[None], deterministic=True).flatten()
+                # Add noise to the action (improve exploration,
+                # not needed in general)
+                if self.action_noise is not None:
+                    action = np.clip(action + self.action_noise(), -1, 1)
+
+                # inferred actions need to be transformed to environment action_space before stepping
+                unscaled_action = unscale_action(self.action_space, action)
 
                 assert action.shape == self.env.action_space.shape
 
@@ -652,7 +644,7 @@ class SAC(OffPolicyRLModel):
 
                 num_episodes = len(episode_rewards)
                 # Display training infos
-                if self.verbose >= 1 and done and log_interval is not None and len(episode_rewards) % log_interval == 0:
+                if self.verbose >= 1 and n_updates == total_timesteps:
                     fps = int(step / (time.time() - start_time))
                     logger.logkv("episodes", num_episodes)
                     logger.logkv("mean 100 episode reward", mean_reward)

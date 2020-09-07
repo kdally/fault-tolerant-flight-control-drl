@@ -3,9 +3,10 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-def plot_training(ID: str):
+def plot_training(ID: str, task_type: str):
 
-    df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc Thesis/DRL-cessna-citation-fc/agents/{ID}.csv', header=1)
+    df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
+                     f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=1)
 
     training_steps = np.arange(0, len(df['r']) * 3000, 3000)
     df['training_steps'] = training_steps
@@ -53,4 +54,4 @@ def plot_training(ID: str):
         margin=dict(l=50, r=5, b=50, t=10)
     )
     fig.update_traces(mode='lines')
-    fig.write_image(f"figures/{ID}_training.eps")
+    fig.write_image(f"figures/{task_type}_{ID}_training.eps")
