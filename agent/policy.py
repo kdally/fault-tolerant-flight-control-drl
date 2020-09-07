@@ -73,27 +73,27 @@ def mlp(input_tensor, layers, activ_fn=tf.nn.relu, layer_norm=False):
     return output
 
 
-class BasePolicy(ABC):
+class LnMlpPolicy(ABC):
     """
-    The base policy object
+    Policy object that implements a SAC-like actor critic
 
     :param sess: (TensorFlow session) The current TensorFlow session
     :param ob_space: (Gym Space) The observation space of the environment
     :param ac_space: (Gym Space) The action space of the environment
     :param n_env: (int) The number of environments to run
     :param n_steps: (int) The number of steps to run for each environment
-    :param n_batch: (int) The number of batches to run (n_envs * n_steps)
+    :param n_batch: (int) The number of batch to run (n_envs * n_steps)
     :param reuse: (bool) If the policy is reusable or not
     :param scale: (bool) whether or not to scale the input
-    :param obs_phs: (TensorFlow Tensor, TensorFlow Tensor) a tuple containing an override for observation placeholder
-        and the processed observation placeholder respectively
-    :param add_action_ph: (bool) whether or not to create an action placeholder
     """
 
     recurrent = False
 
-    def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, scale=False,
-                 obs_phs=None, add_action_ph=False):
+    def __init__(self, sess, ob_space, ac_space, n_env=1, n_steps=1, n_batch=None, reuse=False, scale=False,
+                 obs_phs=None, add_action_ph=False, layers=None, reg_weight=0.0, act_fun=tf.nn.relu, **kwargs):
+
+        assert isinstance(ac_space, Box), "Error: the action space must be of type gym.spaces.Box"
+
         self.n_env = n_env
         self.n_steps = n_steps
         self.n_batch = n_batch
@@ -111,6 +111,28 @@ class BasePolicy(ABC):
         self.reuse = reuse
         self.ob_space = ob_space
         self.ac_space = ac_space
+
+        self.qf1 = None
+        self.qf2 = None
+        self.value_fn = None
+        self.policy = None
+        self.deterministic_policy = None
+        self.act_mu = None
+        self.std = None
+        self._kwargs_check("mlp", kwargs)
+        self.layer_norm = True
+        self.feature_extraction = "mlp"
+        self.reuse = reuse
+        if layers is None:
+            layers = [64, 64]
+        self.layers = layers
+        self.reg_loss = None
+        self.reg_weight = reg_weight
+        self.entropy = None
+
+        assert len(layers) >= 1, "Error: must have at least one hidden layer for the policy."
+
+        self.activ_fn = act_fun
 
     @property
     def initial_state(self):
@@ -156,72 +178,6 @@ class BasePolicy(ABC):
         # (in that case the keywords arguments are passed explicitly)
         if feature_extraction == 'mlp' and len(kwargs) > 0:
             raise ValueError("Unknown keywords for policy: {}".format(kwargs))
-
-    @abstractmethod
-    def step(self, obs, state=None, mask=None):
-        """
-        Returns the policy for a single step
-
-        :param obs: ([float] or [int]) The current observation of the environment
-        :param state: ([float]) The last states (used in recurrent policies)
-        :param mask: ([float]) The last masks (used in recurrent policies)
-        :return: ([float], [float], [float], [float]) actions, values, states, neglogp
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def proba_step(self, obs, state=None, mask=None):
-        """
-        Returns the action probability for a single step
-
-        :param obs: ([float] or [int]) The current observation of the environment
-        :param state: ([float]) The last states (used in recurrent policies)
-        :param mask: ([float]) The last masks (used in recurrent policies)
-        :return: ([float]) the action probability
-        """
-        raise NotImplementedError
-
-
-class LnMlpPolicy(BasePolicy):
-    """
-    Policy object that implements a SAC-like actor critic
-
-    :param sess: (TensorFlow session) The current TensorFlow session
-    :param ob_space: (Gym Space) The observation space of the environment
-    :param ac_space: (Gym Space) The action space of the environment
-    :param n_env: (int) The number of environments to run
-    :param n_steps: (int) The number of steps to run for each environment
-    :param n_batch: (int) The number of batch to run (n_envs * n_steps)
-    :param reuse: (bool) If the policy is reusable or not
-    :param scale: (bool) whether or not to scale the input
-    """
-
-    def __init__(self, sess, ob_space, ac_space, n_env=1, n_steps=1, n_batch=None, reuse=False,
-                 layers=None, reg_weight=0.0, act_fun=tf.nn.relu, **kwargs):
-        super(LnMlpPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=False)
-        assert isinstance(ac_space, Box), "Error: the action space must be of type gym.spaces.Box"
-
-        self.qf1 = None
-        self.qf2 = None
-        self.value_fn = None
-        self.policy = None
-        self.deterministic_policy = None
-        self.act_mu = None
-        self.std = None
-        self._kwargs_check("mlp", kwargs)
-        self.layer_norm = True
-        self.feature_extraction = "mlp"
-        self.reuse = reuse
-        if layers is None:
-            layers = [64, 64]
-        self.layers = layers
-        self.reg_loss = None
-        self.reg_weight = reg_weight
-        self.entropy = None
-
-        assert len(layers) >= 1, "Error: must have at least one hidden layer for the policy."
-
-        self.activ_fn = act_fun
 
     def make_actor(self, obs=None, reuse=False, scope="pi"):
         if obs is None:

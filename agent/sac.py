@@ -1,16 +1,16 @@
 import time
 import warnings
+import os
 
 import numpy as np
 import tensorflow as tf
+import gym
 
-from stable_baselines.common import tf_util, OffPolicyRLModel, SetVerbosity, TensorboardWriter
-from stable_baselines.common.vec_env import VecEnv
-from stable_baselines.common.math_util import safe_mean, unscale_action, scale_action
-from stable_baselines.common.schedules import get_schedule_fn
-from stable_baselines.common.buffers import ReplayBuffer
-from stable_baselines.sac.policies import SACPolicy
-from stable_baselines import logger
+from stable_baselines.common import tf_util, OffPolicyRLModel
+from agent.buffer import ReplayBuffer
+from agent.policy import LnMlpPolicy
+from tools.math_util import safe_mean, unscale_action, scale_action
+import tools.logger as logger
 
 
 class SAC(OffPolicyRLModel):
@@ -23,7 +23,7 @@ class SAC(OffPolicyRLModel):
     Paper: https://arxiv.org/abs/1801.01290
     Introduction to SAC: https://spinningup.openai.com/en/latest/algorithms/sac.html
 
-    :param policy: (SACPolicy or str) The policy model to use (MlpPolicy, CnnPolicy, LnMlpPolicy, ...)
+    :param policy: The LnMlpPolicy policy model
     :param env: (Gym environment or str) The environment to learn from (if registered in Gym, can be str)
     :param gamma: (float) the discount factor
     :param learning_rate: (float or callable) learning rate for adam optimizer,
@@ -67,7 +67,7 @@ class SAC(OffPolicyRLModel):
                  seed=None, n_cpu_tf_sess=None):
 
         super(SAC, self).__init__(policy=policy, env=env, replay_buffer=None, verbose=verbose,
-                                  policy_base=SACPolicy, requires_vec_env=False, policy_kwargs=policy_kwargs,
+                                  policy_base=LnMlpPolicy, requires_vec_env=False, policy_kwargs=policy_kwargs,
                                   seed=seed, n_cpu_tf_sess=n_cpu_tf_sess)
 
         self.buffer_size = buffer_size
@@ -360,13 +360,11 @@ class SAC(OffPolicyRLModel):
         if replay_wrapper is not None:
             self.replay_buffer = replay_wrapper(self.replay_buffer)
 
-        with SetVerbosity(self.verbose), TensorboardWriter(self.graph, self.tensorboard_log, tb_log_name, new_tb_log) \
-                as writer:
+        with SetVerbosity(self.verbose) as writer:
 
             self._setup_learn()
 
-            # Transform to callable if needed
-            self.learning_rate = get_schedule_fn(self.learning_rate)
+            self.learning_rate = self.learning_rate
             # Initial learning rate
             current_lr = self.learning_rate(1)
 
@@ -475,8 +473,8 @@ class SAC(OffPolicyRLModel):
                 if done:
                     if self.action_noise is not None:
                         self.action_noise.reset()
-                    if not isinstance(self.env, VecEnv):
-                        obs = self.env.reset()
+
+                    obs = self.env.reset()
                     episode_rewards.append(0.0)
 
                     maybe_is_success = info.get('is_success')
@@ -522,13 +520,12 @@ class SAC(OffPolicyRLModel):
         if replay_wrapper is not None:
             self.replay_buffer = replay_wrapper(self.replay_buffer)
 
-        with SetVerbosity(self.verbose), TensorboardWriter(self.graph, self.tensorboard_log, tb_log_name, new_tb_log) \
-                as writer:
+        with SetVerbosity(self.verbose) as writer:
 
             self._setup_learn()
 
             # Transform to callable if needed
-            self.learning_rate = get_schedule_fn(self.learning_rate)
+            self.learning_rate = self.learning_rate
             # Initial learning rate
             current_lr = self.learning_rate(1)
 
@@ -629,8 +626,8 @@ class SAC(OffPolicyRLModel):
                 if done:
                     if self.action_noise is not None:
                         self.action_noise.reset()
-                    if not isinstance(self.env, VecEnv):
-                        obs = self.env.reset()
+
+                    obs = self.env.reset()
                     episode_rewards.append(0.0)
 
                     maybe_is_success = info.get('is_success')
@@ -725,3 +722,33 @@ class SAC(OffPolicyRLModel):
         params_to_save = self.get_parameters()
 
         self._save_to_file(save_path, data=data, params=params_to_save, cloudpickle=cloudpickle)
+
+
+class SetVerbosity:
+    def __init__(self, verbose=0):
+        """
+        define a region of code for certain level of verbosity
+
+        :param verbose: (int) the verbosity level: 0 none, 1 training information, 2 tensorflow debug
+        """
+        self.verbose = verbose
+
+    def __enter__(self):
+        self.tf_level = os.environ.get('TF_CPP_MIN_LOG_LEVEL', '0')
+        self.log_level = logger.get_level()
+        self.gym_level = gym.logger.MIN_LEVEL
+
+        if self.verbose <= 1:
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+        if self.verbose <= 0:
+            logger.set_level(logger.DISABLED)
+            gym.logger.set_level(gym.logger.DISABLED)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.verbose <= 1:
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = self.tf_level
+
+        if self.verbose <= 0:
+            logger.set_level(self.log_level)
+            gym.logger.set_level(self.gym_level)
