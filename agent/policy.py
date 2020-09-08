@@ -49,7 +49,7 @@ def apply_squashing_func(mu_, pi_, logp_pi):
     deterministic_policy = tf.tanh(mu_)
     policy = tf.tanh(pi_)
     # Squash correction (from original implementation)
-    logp_pi -= tf.reduce_sum(tf.math.log(1 - policy ** 2 + EPS), axis=1)
+    logp_pi -= tf.reduce_sum(tf.log(1 - policy ** 2 + EPS), axis=1)
     return deterministic_policy, policy, logp_pi
 
 
@@ -57,7 +57,7 @@ def mlp(input_tensor, layers, activ_fn=tf.nn.relu, layer_norm=False):
     """
     Create a multi-layer fully connected neural network.
 
-    :param input_tensor: (tf.compat.v1.placeholder)
+    :param input_tensor: (tf.placeholder)
     :param layers: ([int]) Network architecture
     :param activ_fn: (tf.function) Activation function
     :param layer_norm: (bool) Whether to apply layer normalization or not
@@ -86,7 +86,7 @@ def observation_input(ob_space, batch_size=None, name='Ob', scale=False):
     :return: (TensorFlow Tensor, TensorFlow Tensor) input_placeholder, processed_input_tensor
     """
     if isinstance(ob_space, Box):
-        observation_ph = tf.compat.v1.placeholder(shape=(batch_size,) + ob_space.shape, dtype=ob_space.dtype, name=name)
+        observation_ph = tf.placeholder(shape=(batch_size,) + ob_space.shape, dtype=ob_space.dtype, name=name)
         processed_observations = tf.cast(observation_ph, tf.float32)
         # rescale to [1, 0] if the bounds are defined
         if (scale and
@@ -126,7 +126,7 @@ class LnMlpPolicy(ABC):
         self.n_env = n_env
         self.n_steps = n_steps
         self.n_batch = n_batch
-        with tf.compat.v1.variable_scope("input", reuse=False):
+        with tf.variable_scope("input", reuse=False):
             if obs_phs is None:
                 self._obs_ph, self._processed_obs = observation_input(ob_space, n_batch, scale=scale)
             else:
@@ -134,7 +134,7 @@ class LnMlpPolicy(ABC):
 
             self._action_ph = None
             if add_action_ph:
-                self._action_ph = tf.compat.v1.placeholder(dtype=ac_space.dtype, shape=(n_batch,) + ac_space.shape,
+                self._action_ph = tf.placeholder(dtype=ac_space.dtype, shape=(n_batch,) + ac_space.shape,
                                                  name="action_ph")
         self.sess = sess
         self.reuse = reuse
@@ -212,7 +212,7 @@ class LnMlpPolicy(ABC):
         if obs is None:
             obs = self.processed_obs
 
-        with tf.compat.v1.variable_scope(scope, reuse=reuse):
+        with tf.variable_scope(scope, reuse=reuse):
             pi_h = tf.layers.flatten(obs)
             pi_h = mlp(pi_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
 
@@ -225,7 +225,7 @@ class LnMlpPolicy(ABC):
 
         self.std = std = tf.exp(log_std)
         # Reparameterization trick
-        pi_ = mu_ + tf.random.normal(tf.shape(mu_)) * std
+        pi_ = mu_ + tf.random_normal(tf.shape(mu_)) * std
         logp_pi = gaussian_likelihood(pi_, mu_, log_std)
         self.entropy = gaussian_entropy(log_std)
         # MISSING: reg params for log and mu
@@ -241,12 +241,12 @@ class LnMlpPolicy(ABC):
         if obs is None:
             obs = self.processed_obs
 
-        with tf.compat.v1.variable_scope(scope, reuse=reuse):
+        with tf.variable_scope(scope, reuse=reuse):
             critics_h = tf.layers.flatten(obs)
 
             if create_vf:
                 # Value function
-                with tf.compat.v1.variable_scope('vf', reuse=reuse):
+                with tf.variable_scope('vf', reuse=reuse):
                     vf_h = mlp(critics_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
                     value_fn = tf.layers.dense(vf_h, 1, name="vf")
                 self.value_fn = value_fn
@@ -256,11 +256,11 @@ class LnMlpPolicy(ABC):
                 qf_h = tf.concat([critics_h, action], axis=-1)
 
                 # Double Q values to reduce overestimation
-                with tf.compat.v1.variable_scope('qf1', reuse=reuse):
+                with tf.variable_scope('qf1', reuse=reuse):
                     qf1_h = mlp(qf_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
                     qf1 = tf.layers.dense(qf1_h, 1, name="qf1")
 
-                with tf.compat.v1.variable_scope('qf2', reuse=reuse):
+                with tf.variable_scope('qf2', reuse=reuse):
                     qf2_h = mlp(qf_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
                     qf2 = tf.layers.dense(qf2_h, 1, name="qf2")
 

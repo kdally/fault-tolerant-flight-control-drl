@@ -18,7 +18,6 @@ from agent.callback import BaseCallback
 def set_global_seeds(seed):
     """
     set the seed for python random, tensorflow, numpy and gym spaces
-
     :param seed: (int) the seed
     """
     tf.set_random_seed(seed)
@@ -32,7 +31,6 @@ def set_global_seeds(seed):
 class BaseRLModel(ABC):
     """
     The base RL model
-
     :param policy: (BasePolicy) Policy object
     :param env: (Gym environment) The environment to learn from
                 (if registered in Gym, can be str. Can be None for loading trained models)
@@ -82,7 +80,6 @@ class BaseRLModel(ABC):
     def get_env(self):
         """
         returns the current environment (can be None if not defined)
-
         :return: (Gym Environment) The current environment
         """
         return self.env
@@ -90,7 +87,6 @@ class BaseRLModel(ABC):
     def set_env(self, env):
         """
         Checks the validity of the environment, and if it is coherent, set it as the current environment.
-
         :param env: (Gym Environment) The environment for learning a policy
         """
         if env is None and self.env is None:
@@ -122,7 +118,6 @@ class BaseRLModel(ABC):
         """
         Initialize and resets num_timesteps (total timesteps since beginning of training)
         if needed. Mainly used logging and plotting (tensorboard).
-
         :param reset_num_timesteps: (bool) Set it to false when continuing training
             to not create new plotting curves in tensorboard.
         :return: (bool) Whether a new tensorboard log needs to be created
@@ -136,7 +131,6 @@ class BaseRLModel(ABC):
     def replay_buffer_add(self, obs_t, action, reward, obs_tp1, done, info):
         """
         Add a new transition to the replay buffer
-
         :param obs_t: (np.ndarray) the last observation
         :param action: ([float]) the action
         :param reward: (float) the reward of the transition
@@ -197,9 +191,7 @@ class BaseRLModel(ABC):
     def get_parameter_list(self):
         """
         Get tensorflow Variables of model's parameters
-
         This includes all variables necessary for continuing training (saving / loading).
-
         :return: (list) List of tensorflow Variables
         """
         pass
@@ -207,7 +199,6 @@ class BaseRLModel(ABC):
     def get_parameters(self):
         """
         Get current model parameters as dictionary of variable name -> ndarray.
-
         :return: (OrderedDict) Dictionary of variable name -> ndarray of model's parameters.
         """
         parameters = self.get_parameter_list()
@@ -245,7 +236,6 @@ class BaseRLModel(ABC):
             (from the expert dataset)
         - deterministic_actions_ph: e.g., in the case of a Gaussian policy,
             the mean.
-
         :return: ((tf.placeholder)) (obs_ph, actions_ph, deterministic_actions_ph)
         """
         pass
@@ -255,9 +245,7 @@ class BaseRLModel(ABC):
         """
         Pretrain a model using behavior cloning:
         supervised learning given an expert dataset.
-
         NOTE: only Box and Discrete spaces are supported for now.
-
         :param dataset: (ExpertDataset) Dataset manager
         :param n_epochs: (int) Number of iterations on the training set
         :param learning_rate: (float) Learning rate
@@ -343,7 +331,6 @@ class BaseRLModel(ABC):
               reset_num_timesteps=True, replay_wrapper=None):
         """
         Return a trained model.
-
         :param total_timesteps: (int) The total number of samples to train on
         :param callback: (Union[callable, [callable], BaseCallback])
             function called at every steps with state of the algorithm.
@@ -363,7 +350,6 @@ class BaseRLModel(ABC):
     def predict(self, observation, state=None, mask=None, deterministic=False):
         """
         Get the model's action from an observation
-
         :param observation: (np.ndarray) the input observation
         :param state: (np.ndarray) The last states (can be None, used in recurrent policies)
         :param mask: (np.ndarray) The last masks (can be None, used in recurrent policies)
@@ -376,17 +362,14 @@ class BaseRLModel(ABC):
     def action_probability(self, observation, state=None, mask=None, actions=None, logp=False):
         """
         If ``actions`` is ``None``, then get the model's action probability distribution from a given observation.
-
         Depending on the action space the output is:
             - Discrete: probability for each possible action
             - Box: mean and standard deviation of the action output
-
         However if ``actions`` is not ``None``, this function will return the probability that the given actions are
         taken with the given parameters (observation, state, ...) on this model. For discrete action spaces, it
         returns the probability mass; for continuous action spaces, the probability density. This is since the
         probability mass will always be zero in continuous spaces, see http://blog.christianperone.com/2019/01/
         for a good explanation
-
         :param observation: (np.ndarray) the input observation
         :param state: (np.ndarray) The last states (can be None, used in recurrent policies)
         :param mask: (np.ndarray) The last masks (can be None, used in recurrent policies)
@@ -402,18 +385,14 @@ class BaseRLModel(ABC):
     def load_parameters(self, load_path_or_dict, exact_match=True):
         """
         Load model parameters from a file or a dictionary
-
         Dictionary keys should be tensorflow variable names, which can be obtained
         with ``get_parameters`` function. If ``exact_match`` is True, dictionary
         should contain keys for all model's parameters, otherwise RunTimeError
         is raised. If False, only variables included in the dictionary will be updated.
-
         This does not load agent's hyper-parameters.
-
         .. warning::
             This function does not update trainer/optimizer variables (e.g. momentum).
             As such training after using this function may lead to less-than-optimal results.
-
         :param load_path_or_dict: (str or file-like or dict) Save parameter location
             or dict of parameters as variable.name -> ndarrays to be loaded.
         :param exact_match: (bool) If True, expects load dictionary to contain keys for
@@ -473,7 +452,6 @@ class BaseRLModel(ABC):
     def load(cls, load_path, env=None, custom_objects=None, **kwargs):
         """
         Load the model from file
-
         :param load_path: (str or file-like) the saved parameter location
         :param env: (Gym Environment) the new environment to run the loaded model on
             (can be None if you only need prediction from a trained model)
@@ -505,7 +483,6 @@ class BaseRLModel(ABC):
     @staticmethod
     def _save_to_file_zip(save_path, data=None, params=None):
         """Save model to a .zip archive
-
         :param save_path: (str or file-like) Where to store the model
         :param data: (OrderedDict) Class parameters being stored
         :param params: (OrderedDict) Model parameters being stored
@@ -545,7 +522,6 @@ class BaseRLModel(ABC):
     @staticmethod
     def _load_from_file(load_path, load_data=True, custom_objects=None):
         """Load model data from a .zip archive
-
         :param load_path: (str or file-like) Where to load model from
         :param load_data: (bool) Whether we should load and return data
             (class parameters). Mainly used by `load_parameters` to
@@ -597,10 +573,5 @@ class BaseRLModel(ABC):
                           "Older cloudpickle format has been replaced with zip-archived " +
                           "models. Consider saving the model with new format.",
                           DeprecationWarning)
-            # Attempt loading with the cloudpickle format.
-            # If load_path is file-like, seek back to beginning of file
-            if not isinstance(load_path, str):
-                load_path.seek(0)
-            data, params = BaseRLModel._load_from_file_cloudpickle(load_path)
 
         return data, params

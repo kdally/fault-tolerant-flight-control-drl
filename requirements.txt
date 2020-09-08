@@ -4,6 +4,3 @@ pandas~=1.0.5
 
 gym~=0.15.7
 plotly~=4.9.0
-
-cloudpickle~=1.2.1
-matlab

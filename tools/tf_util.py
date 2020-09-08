@@ -188,7 +188,7 @@ def make_session(num_cpu=None, make_default=False, graph=None):
     """
     if num_cpu is None:
         num_cpu = int(os.getenv('RCALL_NUM_CPU', multiprocessing.cpu_count()))
-    tf_config = tf.compat.v1.ConfigProto(
+    tf_config = tf.ConfigProto(
         allow_soft_placement=True,
         inter_op_parallelism_threads=num_cpu,
         intra_op_parallelism_threads=num_cpu)
@@ -197,7 +197,7 @@ def make_session(num_cpu=None, make_default=False, graph=None):
     if make_default:
         return tf.InteractiveSession(config=tf_config, graph=graph)
     else:
-        return tf.compat.v1.Session(config=tf_config, graph=graph)
+        return tf.Session(config=tf_config, graph=graph)
 
 
 def single_threaded_session(make_default=False, graph=None):
@@ -446,7 +446,7 @@ def get_trainable_vars(name):
     :param name: (str) the scope
     :return: ([TensorFlow Variable])
     """
-    return tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, scope=name)
+    return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=name)
 
 
 def get_globals_vars(name):
@@ -491,7 +491,7 @@ def total_episode_reward_logger(rew_acc, rewards, masks, writer, steps):
     :return: (np.array float) the updated total running reward
     :return: (np.array float) the updated total running reward
     """
-    with tf.compat.v1.variable_scope("environment_info", reuse=True):
+    with tf.variable_scope("environment_info", reuse=True):
         for env_idx in range(rewards.shape[0]):
             dones_idx = np.sort(np.argwhere(masks[env_idx]))
 
