@@ -21,8 +21,7 @@ class ReplayBuffer(object):
 
     @property
     def storage(self):
-        """[(Union[np.ndarray, int], Union[np.ndarray, int], float, Union[np.ndarray, int], bool)]: content of the
-        replay buffer """
+        """[(Union[np.ndarray, int], Union[np.ndarray, int], float, Union[np.ndarray, int], bool)]: content of the replay buffer"""
         return self._storage
 
     @property
@@ -86,27 +85,7 @@ class ReplayBuffer(object):
                 self._storage[self._next_idx] = data
             self._next_idx = (self._next_idx + 1) % self._maxsize
 
-    @staticmethod
-    def _normalize_obs(obs: np.ndarray,
-                       env = None) -> np.ndarray:
-        """
-        Helper for normalizing the observation.
-        """
-        if env is not None:
-            return env.normalize_obs(obs)
-        return obs
-
-    @staticmethod
-    def _normalize_reward(reward: np.ndarray,
-                          env = None) -> np.ndarray:
-        """
-        Helper for normalizing the reward.
-        """
-        if env is not None:
-            return env.normalize_reward(reward)
-        return reward
-
-    def _encode_sample(self, idxes: Union[List[int], np.ndarray], env = None):
+    def _encode_sample(self, idxes: Union[List[int], np.ndarray]):
         obses_t, actions, rewards, obses_tp1, dones = [], [], [], [], []
         for i in idxes:
             data = self._storage[i]
@@ -116,19 +95,17 @@ class ReplayBuffer(object):
             rewards.append(reward)
             obses_tp1.append(np.array(obs_tp1, copy=False))
             dones.append(done)
-        return (self._normalize_obs(np.array(obses_t), env),
+        return (np.array(obses_t),
                 np.array(actions),
-                self._normalize_reward(np.array(rewards), env),
-                self._normalize_obs(np.array(obses_tp1), env),
+                np.array(rewards),
+                np.array(obses_tp1),
                 np.array(dones))
 
-    def sample(self, batch_size: int, env = None, **_kwargs):
+    def sample(self, batch_size: int, **_kwargs):
         """
         Sample a batch of experiences.
 
         :param batch_size: (int) How many transitions to sample.
-        :param env: associated gym VecEnv
-            to normalize the observations/rewards when sampling
         :return:
             - obs_batch: (np.ndarray) batch of observations
             - act_batch: (numpy float) batch of actions executed given obs_batch
@@ -138,4 +115,6 @@ class ReplayBuffer(object):
                 and 0 otherwise.
         """
         idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
-        return self._encode_sample(idxes, env=env)
+        return self._encode_sample(idxes)
+
+

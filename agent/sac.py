@@ -6,11 +6,11 @@ import numpy as np
 import tensorflow as tf
 import gym
 
-from stable_baselines.common import tf_util, OffPolicyRLModel
+from tools import tf_util, logger
+from agent.base_class import OffPolicyRLModel
 from agent.buffer import ReplayBuffer
 from agent.policy import LnMlpPolicy
 from tools.math_util import safe_mean, unscale_action, scale_action
-import tools.logger as logger
 
 
 class SAC(OffPolicyRLModel):
@@ -252,7 +252,8 @@ class SAC(OffPolicyRLModel):
                     # Policy train op
                     # (has to be separate from value train op, because min_qf_pi appears in policy_loss)
                     policy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
-                    policy_train_op = policy_optimizer.minimize(policy_loss, var_list=tf_util.get_trainable_vars('model/pi'))
+                    policy_train_op = policy_optimizer.minimize(policy_loss,
+                                                                var_list=tf_util.get_trainable_vars('model/pi'))
 
                     # Value train op
                     value_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
@@ -451,7 +452,7 @@ class SAC(OffPolicyRLModel):
                         # Break if the warmup phase is not over
                         # or if there are not enough samples in the replay buffer
                         if not self.replay_buffer.can_sample(self.batch_size) \
-                           or self.num_timesteps < self.learning_starts:
+                                or self.num_timesteps < self.learning_starts:
                             break
                         n_updates += 1
                         # Compute current learning_rate
@@ -512,7 +513,7 @@ class SAC(OffPolicyRLModel):
             return self
 
     def learn_online(self, total_timesteps, initial_state, callback=None,
-              log_interval=4, tb_log_name="SAC", reset_num_timesteps=True, replay_wrapper=None):
+                     log_interval=4, tb_log_name="SAC", reset_num_timesteps=True, replay_wrapper=None):
 
         new_tb_log = self._init_num_timesteps(reset_num_timesteps)
         callback = self._init_callback(callback)
@@ -604,7 +605,7 @@ class SAC(OffPolicyRLModel):
                         # Break if the warmup phase is not over
                         # or if there are not enough samples in the replay buffer
                         if not self.replay_buffer.can_sample(self.batch_size) \
-                           or self.num_timesteps < self.learning_starts:
+                                or self.num_timesteps < self.learning_starts:
                             break
                         n_updates += 1
                         # Compute current learning_rate
