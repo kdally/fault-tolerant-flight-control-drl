@@ -1,20 +1,33 @@
 import os
-import glob
 import json
+import random
 import zipfile
 import warnings
 from abc import ABC, abstractmethod
 from collections import OrderedDict, deque
-from typing import Union, List, Callable, Optional
+from typing import Union, Optional
 
 import gym
 import cloudpickle
 import numpy as np
 import tensorflow as tf
 
-from stable_baselines.common.misc_util import set_global_seeds
-from stable_baselines.common.save_util import data_to_json, json_to_data, params_to_bytes, bytes_to_params
-from stable_baselines.common.callbacks import BaseCallback, CallbackList, ConvertCallback
+from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params
+from agent.callback import BaseCallback
+
+
+def set_global_seeds(seed):
+    """
+    set the seed for python random, tensorflow, numpy and gym spaces
+
+    :param seed: (int) the seed
+    """
+    tf.set_random_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    # prng was removed in latest gym version
+    if hasattr(gym.spaces, 'prng'):
+        gym.spaces.prng.seed(seed)
 
 
 class BaseRLModel(ABC):
@@ -35,7 +48,7 @@ class BaseRLModel(ABC):
         If None, the number of cpu of the current machine will be used.
     """
 
-    def __init__(self, policy, env, verbose=0, *, requires_vec_env, policy_base,
+    def __init__(self, policy, env, verbose=0, *, requires_vec_env, policy_base=None,
                  policy_kwargs=None, seed=None, n_cpu_tf_sess=None):
 
         self.policy = policy
@@ -130,19 +143,11 @@ class BaseRLModel(ABC):
         pass
 
     def _init_callback(self,
-                      callback: Union[None, Callable, List[BaseCallback], BaseCallback]
-                      ) -> BaseCallback:
+                      callback: Union[None, BaseCallback]) -> BaseCallback:
         """
         :param callback: (Union[None, Callable, List[BaseCallback], BaseCallback])
         :return: (BaseCallback)
         """
-        # Convert a list of callbacks into a callback
-        if isinstance(callback, list):
-            callback = CallbackList(callback)
-        # Convert functional callback to object
-        if not isinstance(callback, BaseCallback):
-            callback = ConvertCallback(callback)
-
         callback.init_callback(self)
         return callback
 
@@ -694,6 +699,7 @@ class BaseRLModel(ABC):
         else:
             raise ValueError("Error: Cannot determine if the observation is vectorized with the space type {}."
                              .format(observation_space))
+
 
 class OffPolicyRLModel(BaseRLModel):
     """

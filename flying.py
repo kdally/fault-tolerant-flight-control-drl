@@ -10,8 +10,7 @@ from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 
 from envs.citation_lin import Citation
-from stable_baselines.common.callbacks import EvalCallback as SaveOnBestReturn
-# from tools.callbacks import EvalCallback as SaveOnBestReturn
+from agent.callback import EvalCallback as SaveOnBestReturn
 from tools.schedule import schedule
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
