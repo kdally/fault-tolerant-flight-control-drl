@@ -106,8 +106,7 @@ class Citation(gym.Env):
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
 
         if np.greater(np.abs(action), 1).any():
-            os.system('say "Invalid, Invalid input."')
-            print(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds.')
+            print(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds. Corrected to {max(min(np.abs(action).max(), 1), -1)}.')
             action[0] = max(min(action[0], 1), -1)
             action[1] = max(min(action[1], 1), -1)
             # raise Exception(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds.')

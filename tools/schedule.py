@@ -7,9 +7,6 @@ def schedule(initial_value):
     :param initial_value: (float or str)
     :return: (function)
     """
-    if isinstance(initial_value, str):
-        initial_value = float(initial_value)
-
     # def func(progress):
     #     """
     #     Progress will decrease from 1 (beginning) to 0

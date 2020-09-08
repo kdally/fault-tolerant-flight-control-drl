@@ -10,10 +10,11 @@ from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 
 from envs.citation_lin import Citation
-from agent.callback import EvalCallback as SaveOnBestReturn
+from agent.callback import SaveOnBestRewardSimple, EvalCallback as SaveOnBestReturn
 from tools.schedule import schedule
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
+from stable_baselines.bench import Monitor
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
@@ -25,8 +26,8 @@ def get_task(time_v: np.ndarray = np.arange(0, 30, 0.01)):
     # noinspection PyDictCreation
     signals = {}
 
-    task_type = 'body_rates'
-    # task_type = '3attitude'
+    # task_type = 'body_rates'
+    task_type = '3attitude'
     # task_type = 'altitude_2attitude'
 
     if task_type == 'body_rates':
@@ -182,14 +183,19 @@ env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
 learn = True
 
 if learn:
-    callback = SaveOnBestReturn(eval_env=env_eval, callback_on_new_best=None, eval_freq=5000,
-                                best_model_save_path="agent/trained/tmp/", n_eval_episodes=5)
+    # todo: choose and study callback functions!
+    # callback = SaveOnBestReturn(eval_env=env_eval, callback_on_new_best=None, eval_freq=5000,
+    #                             best_model_save_path="agent/trained/tmp/", n_eval_episodes=5)
+
+    env_train = Monitor(env_train, "agent/trained/tmp")
+    callback = SaveOnBestRewardSimple(check_freq=5000, log_dir="agent/trained/tmp/")
+
     model = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256, learning_rate=schedule(0.00094))
+                ent_coef='auto', batch_size=256, learning_rate=schedule(0.001))
 
     # model = SAC.load("tmp/best_model.zip", env=env_train)
     tic = time.time()
-    model.learn(total_timesteps=int(1e5), log_interval=10, callback=callback)
+    model.learn(total_timesteps=int(1e6), log_interval=10, callback=callback)
     model = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
     model.save(f'agent/trained/{get_task()[4]}_{ID}.zip')
