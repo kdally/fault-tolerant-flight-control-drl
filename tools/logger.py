@@ -12,7 +12,6 @@ from typing import Optional
 import tensorflow as tf
 
 
-
 DEBUG = 10
 INFO = 20
 WARN = 30

@@ -8,7 +8,6 @@ from collections import OrderedDict, deque
 from typing import Union, Optional
 
 import gym
-import cloudpickle
 import numpy as np
 import tensorflow as tf
 
@@ -37,8 +36,8 @@ class BaseRLModel(ABC):
     :param policy: (BasePolicy) Policy object
     :param env: (Gym environment) The environment to learn from
                 (if registered in Gym, can be str. Can be None for loading trained models)
+    :param replay_buffer: (ReplayBuffer) the type of replay buffer
     :param verbose: (int) the verbosity level: 0 none, 1 training information, 2 tensorflow debug
-    :param requires_vec_env: (bool) Does this model require a vectorized environment
     :param policy_base: (BasePolicy) the base policy used by this method
     :param policy_kwargs: (dict) additional arguments to be passed to the policy on creation
     :param seed: (int) Seed for the pseudo-random generators (python, numpy, tensorflow).
@@ -48,13 +47,12 @@ class BaseRLModel(ABC):
         If None, the number of cpu of the current machine will be used.
     """
 
-    def __init__(self, policy, env, verbose=0, *, requires_vec_env, policy_base=None,
+    def __init__(self, policy, env, replay_buffer=None, _init_setup_model=False, verbose=0, *, policy_base=None,
                  policy_kwargs=None, seed=None, n_cpu_tf_sess=None):
 
         self.policy = policy
         self.env = env
         self.verbose = verbose
-        self._requires_vec_env = requires_vec_env
         self.policy_kwargs = {} if policy_kwargs is None else policy_kwargs
         self.observation_space = None
         self.action_space = None
@@ -69,6 +67,7 @@ class BaseRLModel(ABC):
         self.n_cpu_tf_sess = n_cpu_tf_sess
         self.episode_reward = None
         self.ep_info_buf = None
+        self.replay_buffer = replay_buffer
 
         if env is not None:
 
@@ -87,7 +86,6 @@ class BaseRLModel(ABC):
         :return: (Gym Environment) The current environment
         """
         return self.env
-
 
     def set_env(self, env):
         """
@@ -134,6 +132,21 @@ class BaseRLModel(ABC):
 
         new_tb_log = self.num_timesteps == 0
         return new_tb_log
+
+    def replay_buffer_add(self, obs_t, action, reward, obs_tp1, done, info):
+        """
+        Add a new transition to the replay buffer
+
+        :param obs_t: (np.ndarray) the last observation
+        :param action: ([float]) the action
+        :param reward: (float) the reward of the transition
+        :param obs_tp1: (np.ndarray) the new observation
+        :param done: (bool) is the episode done
+        :param info: (dict) extra values used to compute the reward when using HER
+        """
+        # Pass info dict when using HER, as it can be used to compute the reward
+        kwargs = {}
+        self.replay_buffer.add(obs_t, action, reward, obs_tp1, float(done), **kwargs)
 
     @abstractmethod
     def setup_model(self):
@@ -327,7 +340,7 @@ class BaseRLModel(ABC):
 
     @abstractmethod
     def learn(self, total_timesteps, callback=None, log_interval=100, tb_log_name="run",
-              reset_num_timesteps=True):
+              reset_num_timesteps=True, replay_wrapper=None):
         """
         Return a trained model.
 
@@ -341,6 +354,7 @@ class BaseRLModel(ABC):
         :param log_interval: (int) The number of timesteps before logging.
         :param tb_log_name: (str) the name of the run for tensorboard log
         :param reset_num_timesteps: (bool) whether or not to reset the current timestep number (used in logging)
+        :param replay_wrapper:
         :return: (BaseRLModel) the trained model
         """
         pass
@@ -452,17 +466,10 @@ class BaseRLModel(ABC):
         self.sess.run(param_update_ops, feed_dict=feed_dict)
 
     @abstractmethod
-    def save(self, save_path, cloudpickle=False):
-        """
-        Save the current parameters to file
-
-        :param save_path: (str or file-like) The save location
-        :param cloudpickle: (bool) Use older cloudpickle format instead of zip-archives.
-        """
-        raise NotImplementedError()
+    def save(self, save_path):
+        pass
 
     @classmethod
-    @abstractmethod
     def load(cls, load_path, env=None, custom_objects=None, **kwargs):
         """
         Load the model from file
@@ -478,26 +485,22 @@ class BaseRLModel(ABC):
             file that can not be deserialized.
         :param kwargs: extra arguments to change the model when loading
         """
-        raise NotImplementedError()
+        data, params = cls._load_from_file(load_path, custom_objects=custom_objects)
 
-    @staticmethod
-    def _save_to_file_cloudpickle(save_path, data=None, params=None):
-        """Legacy code for saving models with cloudpickle
+        if 'policy_kwargs' in kwargs and kwargs['policy_kwargs'] != data['policy_kwargs']:
+            raise ValueError("The specified policy kwargs do not equal the stored policy kwargs. "
+                             "Stored kwargs: {}, specified kwargs: {}".format(data['policy_kwargs'],
+                                                                              kwargs['policy_kwargs']))
 
-        :param save_path: (str or file-like) Where to store the model
-        :param data: (OrderedDict) Class parameters being stored
-        :param params: (OrderedDict) Model parameters being stored
-        """
-        if isinstance(save_path, str):
-            _, ext = os.path.splitext(save_path)
-            if ext == "":
-                save_path += ".pkl"
+        model = cls(policy=data["policy"], env=None, _init_setup_model=False)
+        model.__dict__.update(data)
+        model.__dict__.update(kwargs)
+        model.set_env(env)
+        model.setup_model()
 
-            with open(save_path, "wb") as file_:
-                cloudpickle.dump((data, params), file_)
-        else:
-            # Here save_path is a file-like object, not a path
-            cloudpickle.dump((data, params), save_path)
+        model.load_parameters(params)
+
+        return model
 
     @staticmethod
     def _save_to_file_zip(save_path, data=None, params=None):
@@ -538,43 +541,6 @@ class BaseRLModel(ABC):
             if params is not None:
                 file_.writestr("parameters", serialized_params)
                 file_.writestr("parameter_list", serialized_param_list)
-
-    @staticmethod
-    def _save_to_file(save_path, data=None, params=None, cloudpickle=False):
-        """Save model to a zip archive or cloudpickle file.
-
-        :param save_path: (str or file-like) Where to store the model
-        :param data: (OrderedDict) Class parameters being stored
-        :param params: (OrderedDict) Model parameters being stored
-        :param cloudpickle: (bool) Use old cloudpickle format
-            (stable-baselines<=2.7.0) instead of a zip archive.
-        """
-        if cloudpickle:
-            BaseRLModel._save_to_file_cloudpickle(save_path, data, params)
-        else:
-            BaseRLModel._save_to_file_zip(save_path, data, params)
-
-    @staticmethod
-    def _load_from_file_cloudpickle(load_path):
-        """Legacy code for loading older models stored with cloudpickle
-
-        :param load_path: (str or file-like) where from to load the file
-        :return: (dict, OrderedDict) Class parameters and model parameters
-        """
-        if isinstance(load_path, str):
-            if not os.path.exists(load_path):
-                if os.path.exists(load_path + ".pkl"):
-                    load_path += ".pkl"
-                else:
-                    raise ValueError("Error: the file {} could not be found".format(load_path))
-
-            with open(load_path, "rb") as file_:
-                data, params = cloudpickle.load(file_)
-        else:
-            # Here load_path is a file-like object, not a path
-            data, params = cloudpickle.load(load_path)
-
-        return data, params
 
     @staticmethod
     def _load_from_file(load_path, load_data=True, custom_objects=None):
@@ -638,175 +604,3 @@ class BaseRLModel(ABC):
             data, params = BaseRLModel._load_from_file_cloudpickle(load_path)
 
         return data, params
-
-    @staticmethod
-    def _softmax(x_input):
-        """
-        An implementation of softmax.
-
-        :param x_input: (numpy float) input vector
-        :return: (numpy float) output vector
-        """
-        x_exp = np.exp(x_input.T - np.max(x_input.T, axis=0))
-        return (x_exp / x_exp.sum(axis=0)).T
-
-    @staticmethod
-    def _is_vectorized_observation(observation, observation_space):
-        """
-        For every observation type, detects and validates the shape,
-        then returns whether or not the observation is vectorized.
-
-        :param observation: (np.ndarray) the input observation to validate
-        :param observation_space: (gym.spaces) the observation space
-        :return: (bool) whether the given observation is vectorized or not
-        """
-        if isinstance(observation_space, gym.spaces.Box):
-            if observation.shape == observation_space.shape:
-                return False
-            elif observation.shape[1:] == observation_space.shape:
-                return True
-            else:
-                raise ValueError("Error: Unexpected observation shape {} for ".format(observation.shape) +
-                                 "Box environment, please use {} ".format(observation_space.shape) +
-                                 "or (n_env, {}) for the observation shape."
-                                 .format(", ".join(map(str, observation_space.shape))))
-        elif isinstance(observation_space, gym.spaces.Discrete):
-            if observation.shape == ():  # A numpy array of a number, has shape empty tuple '()'
-                return False
-            elif len(observation.shape) == 1:
-                return True
-            else:
-                raise ValueError("Error: Unexpected observation shape {} for ".format(observation.shape) +
-                                 "Discrete environment, please use (1,) or (n_env, 1) for the observation shape.")
-        elif isinstance(observation_space, gym.spaces.MultiDiscrete):
-            if observation.shape == (len(observation_space.nvec),):
-                return False
-            elif len(observation.shape) == 2 and observation.shape[1] == len(observation_space.nvec):
-                return True
-            else:
-                raise ValueError("Error: Unexpected observation shape {} for MultiDiscrete ".format(observation.shape) +
-                                 "environment, please use ({},) or ".format(len(observation_space.nvec)) +
-                                 "(n_env, {}) for the observation shape.".format(len(observation_space.nvec)))
-        elif isinstance(observation_space, gym.spaces.MultiBinary):
-            if observation.shape == (observation_space.n,):
-                return False
-            elif len(observation.shape) == 2 and observation.shape[1] == observation_space.n:
-                return True
-            else:
-                raise ValueError("Error: Unexpected observation shape {} for MultiBinary ".format(observation.shape) +
-                                 "environment, please use ({},) or ".format(observation_space.n) +
-                                 "(n_env, {}) for the observation shape.".format(observation_space.n))
-        else:
-            raise ValueError("Error: Cannot determine if the observation is vectorized with the space type {}."
-                             .format(observation_space))
-
-
-class OffPolicyRLModel(BaseRLModel):
-    """
-    The base class for off policy RL model
-
-    :param policy: (BasePolicy) Policy object
-    :param env: (Gym environment) The environment to learn from
-                (if registered in Gym, can be str. Can be None for loading trained models)
-    :param replay_buffer: (ReplayBuffer) the type of replay buffer
-    :param verbose: (int) the verbosity level: 0 none, 1 training information, 2 tensorflow debug
-    :param requires_vec_env: (bool) Does this model require a vectorized environment
-    :param policy_base: (BasePolicy) the base policy used by this method
-    :param policy_kwargs: (dict) additional arguments to be passed to the policy on creation
-    :param seed: (int) Seed for the pseudo-random generators (python, numpy, tensorflow).
-        If None (default), use random seed. Note that if you want completely deterministic
-        results, you must set `n_cpu_tf_sess` to 1.
-    :param n_cpu_tf_sess: (int) The number of threads for TensorFlow operations
-        If None, the number of cpu of the current machine will be used.
-    """
-
-    def __init__(self, policy, env, replay_buffer=None, _init_setup_model=False, verbose=0, *,
-                 requires_vec_env=False, policy_base=None,
-                 policy_kwargs=None, seed=None, n_cpu_tf_sess=None):
-        super(OffPolicyRLModel, self).__init__(policy, env, verbose=verbose, requires_vec_env=requires_vec_env,
-                                               policy_base=policy_base, policy_kwargs=policy_kwargs,
-                                               seed=seed, n_cpu_tf_sess=n_cpu_tf_sess)
-
-        self.replay_buffer = replay_buffer
-
-    def is_using_her(self) -> bool:
-        """
-        Check if is using HER
-
-        :return: (bool) Whether is using HER or not
-        """
-        # Avoid circular import
-        from stable_baselines.her.replay_buffer import HindsightExperienceReplayWrapper
-        return isinstance(self.replay_buffer, HindsightExperienceReplayWrapper)
-
-    def replay_buffer_add(self, obs_t, action, reward, obs_tp1, done, info):
-        """
-        Add a new transition to the replay buffer
-
-        :param obs_t: (np.ndarray) the last observation
-        :param action: ([float]) the action
-        :param reward: (float) the reward of the transition
-        :param obs_tp1: (np.ndarray) the new observation
-        :param done: (bool) is the episode done
-        :param info: (dict) extra values used to compute the reward when using HER
-        """
-        # Pass info dict when using HER, as it can be used to compute the reward
-        kwargs = dict(info=info) if self.is_using_her() else {}
-        self.replay_buffer.add(obs_t, action, reward, obs_tp1, float(done), **kwargs)
-
-    @abstractmethod
-    def setup_model(self):
-        pass
-
-    @abstractmethod
-    def learn(self, total_timesteps, callback=None,
-              log_interval=100, tb_log_name="run", reset_num_timesteps=True, replay_wrapper=None):
-        pass
-
-    @abstractmethod
-    def predict(self, observation, state=None, mask=None, deterministic=False):
-        pass
-
-    @abstractmethod
-    def action_probability(self, observation, state=None, mask=None, actions=None, logp=False):
-        pass
-
-    @abstractmethod
-    def save(self, save_path, cloudpickle=False):
-        pass
-
-    @classmethod
-    def load(cls, load_path, env=None, custom_objects=None, **kwargs):
-        """
-        Load the model from file
-
-        :param load_path: (str or file-like) the saved parameter location
-        :param env: (Gym Environment) the new environment to run the loaded model on
-            (can be None if you only need prediction from a trained model)
-        :param custom_objects: (dict) Dictionary of objects to replace
-            upon loading. If a variable is present in this dictionary as a
-            key, it will not be deserialized and the corresponding item
-            will be used instead. Similar to custom_objects in
-            `keras.models.load_model`. Useful when you have an object in
-            file that can not be deserialized.
-        :param kwargs: extra arguments to change the model when loading
-        """
-        data, params = cls._load_from_file(load_path, custom_objects=custom_objects)
-
-        if 'policy_kwargs' in kwargs and kwargs['policy_kwargs'] != data['policy_kwargs']:
-            raise ValueError("The specified policy kwargs do not equal the stored policy kwargs. "
-                             "Stored kwargs: {}, specified kwargs: {}".format(data['policy_kwargs'],
-                                                                              kwargs['policy_kwargs']))
-
-        model = cls(policy=data["policy"], env=None, _init_setup_model=False)
-        model.__dict__.update(data)
-        model.__dict__.update(kwargs)
-        model.set_env(env)
-        model.setup_model()
-
-        model.load_parameters(params)
-
-        return model
-
-
-
