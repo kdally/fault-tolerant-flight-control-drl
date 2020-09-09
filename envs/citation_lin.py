@@ -4,6 +4,10 @@ import gym
 import matlab.engine
 import numpy as np
 
+# CITATION_TRIM_CMD                   = np.array([-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0, 0, 0, 0, 0, 0.38576210972746433, 0.38576210972746433, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+# cmd     = phlab.CITATION_TRIM_CMD[:10].copy()
+# env     = phlab.CITATION_TRIM_CMD[10:19].copy()
+# failure = phlab.CITATION_TRIM_CMD[-1].copy()
 
 def d2r(num):
     return num * np.pi / 180.0
