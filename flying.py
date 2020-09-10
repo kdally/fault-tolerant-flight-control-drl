@@ -9,7 +9,7 @@ from plotly.subplots import make_subplots
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 
-from envs.citation_lin import Citation
+from envs.citation import Citation
 from agent.callback import SaveOnBestRewardSimple, EvalCallback as SaveOnBestReturn
 from tools.schedule import schedule
 from tools.identifier import get_ID
@@ -26,8 +26,8 @@ def get_task(time_v: np.ndarray = np.arange(0, 30, 0.01)):
     # noinspection PyDictCreation
     signals = {}
 
-    # task_type = 'body_rates'
-    task_type = '3attitude'
+    task_type = 'body_rates'
+    # task_type = '3attitude'
     # task_type = 'altitude_2attitude'
 
     if task_type == 'body_rates':
@@ -195,7 +195,7 @@ if learn:
 
     # model = SAC.load("tmp/best_model.zip", env=env_train)
     tic = time.time()
-    model.learn(total_timesteps=int(1e6), log_interval=10, callback=callback)
+    model.learn(total_timesteps=int(5e5), log_interval=10, callback=callback)
     model = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
     model.save(f'agent/trained/{get_task()[4]}_{ID}.zip')
@@ -207,7 +207,7 @@ if learn:
     print('')
 
 else:
-    ID = 'M2F9Rx'
+    ID = '2b4ht9'
     # ID = 'tmp/best_model'
     model = SAC.load(f"agent/trained/{get_task()[4]}_{ID}.zip")
 

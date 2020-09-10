@@ -1,5 +1,6 @@
 /example/
 /figures/
+/envs/phlab/
 .idea
 
 *.xml
