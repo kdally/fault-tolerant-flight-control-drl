@@ -1,6 +1,7 @@
 import gym
-import matlab.engine
 import numpy as np
+
+np.seterr(all='raise')
 
 # # Import the low-level C/C++ module
 if __package__ or "." in __name__:
@@ -17,9 +18,9 @@ def r2d(num):
     return num * 180 / np.pi
 
 
-def map_to(num, a, b):
+def map_to(num: float, a, b):
     """ Map linearly num on the [-1, 1] range to the [a, b] range"""
-    return ((num + 1) / 2) * (b - a) + a
+    return ((num + 1.0) / 2.0) * (b - a) + a
 
 
 class Citation(gym.Env):
@@ -51,9 +52,12 @@ class Citation(gym.Env):
     def step(self, action: np.ndarray):
 
         self.state = C_MODEL.step(self.scale_a(action))
+        if np.isnan(self.state).sum() > 0:
+            print(self.scale_a(action), action, self.state)
+            raise Exception(f'Nan')
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
-        if 5 in self.track_indices:   # for sideslip angle
+        if 5 in self.track_indices:  # for sideslip angle
             self.error[self.track_indices.index(5)] *= 100
 
         self.state_history[:, self.step_count] = np.multiply(self.state, self.scale_s)
@@ -68,7 +72,7 @@ class Citation(gym.Env):
 
         C_MODEL.initialize()
         action_trim = np.array(
-            [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0, 0, 0, 0, 0,
+            [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0., 0., 0., 0., 0.,
              0.38576210972746433, 0.38576210972746433, ])
         self.state = C_MODEL.step(action_trim)
         self.scale_s = np.ones(self.state.shape)
@@ -106,23 +110,26 @@ class Citation(gym.Env):
         return np.hstack([self.error, self.state[2]])
 
     @staticmethod
-    def scale_a(action: np.ndarray, to: str = 'model'):
+    def scale_a(action_unscaled: np.ndarray, to: str = 'model') -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
 
-        if np.greater(np.abs(action), 1).any():
-            print(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds. Corrected to {max(min(np.abs(action).max(), 1), -1)}.')
-            action[0] = max(min(action[0], 1), -1)
-            action[1] = max(min(action[1], 1), -1)
+        if np.greater(np.abs(action_unscaled), 1).any():
+            print(
+                f'Control input {np.abs(action_unscaled).max()} is outside [-1, 1] bounds. '
+                f'Corrected to {max(min(np.abs(action_unscaled).max(), 1), -1)}.')
+            action_unscaled[0] = max(min(action_unscaled[0], 1), -1)
+            action_unscaled[1] = max(min(action_unscaled[1], 1), -1)
             # raise Exception(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds.')
 
-        action[0] = map_to(action[0], d2r(-20.05), d2r(14.90))
-        action[1] = map_to(action[1], d2r(-37.24), d2r(37.24))
-        action[2] = map_to(action[2], d2r(-21.77), d2r(21.77))
+        action_scaled = np.ndarray(3)
+        action_scaled[0] = map_to(action_unscaled[0], d2r(-20.05), d2r(14.90))
+        action_scaled[1] = map_to(action_unscaled[1], d2r(-37.24), d2r(37.24))
+        action_scaled[2] = map_to(action_unscaled[2], d2r(-21.77), d2r(21.77))
 
         if to == 'model':
-            return np.hstack([action, 0, 0, 0, 0, 0, 0, 0])
+            return np.hstack([action_scaled, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         else:
-            return r2d(action)
+            return r2d(action_scaled)
 
     def render(self, mode='any'):
         raise NotImplementedError()
@@ -141,3 +148,32 @@ class Citation(gym.Env):
 # print("Action space:", envs.action_space)
 #
 # check_env(envs, warn=True)
+
+
+# C_MODEL.initialize()
+# print(C_MODEL.step(np.array([-0.07829045, -0.19252336, 0.03627374, 0., 0., 0.,
+#                              0., 0., 0., 0.])))
+#
+# import random
+# for j in range(1000):
+#     C_MODEL.initialize()
+#     state_old = np.ones(12)
+#     for i in range(1000):
+#         action = np.array([random.randint(-20, 14),
+#                            random.randint(-37, 37),
+#                            random.randint(-21, 21),
+#                            0,
+#                            0,
+#                            0,
+#                            0,
+#                            0,
+#                            0,
+#                            0
+#                            ])
+#
+#         state = C_MODEL.step(action)
+#         if np.isnan(state).sum() > 0:
+#             print(action, state, state_old)
+#             raise Exception(f'Nan')
+#         state_old = state
+

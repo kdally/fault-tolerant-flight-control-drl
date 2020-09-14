@@ -45,35 +45,6 @@ class BaseCallback(ABC):
         self.model = model
         self.training_env = model.get_env()
         self.logger = logger.Logger.CURRENT
-        self._init_callback()
-
-    def update_locals(self, locals_: Dict[str, Any]) -> None:
-        """
-        Updates the local variables of the training process
-
-        For reference to which variables are accessible,
-        check each individual algorithm's documentation
-        :param `locals_`: (Dict[str, Any]) current local variables
-        """
-        self.locals.update(locals_)
-
-    def _init_callback(self) -> None:
-        pass
-
-    def on_training_start(self, locals_: Dict[str, Any], globals_: Dict[str, Any]) -> None:
-        # Those are reference and will be updated automatically
-        self.locals = locals_
-        self.globals = globals_
-        self._on_training_start()
-
-    def _on_training_start(self) -> None:
-        pass
-
-    def on_rollout_start(self) -> None:
-        self._on_rollout_start()
-
-    def _on_rollout_start(self) -> None:
-        pass
 
     def _on_step(self) -> bool:
         """
@@ -85,9 +56,6 @@ class BaseCallback(ABC):
         """
         This method will be called by the model after each call to `env.step()`.
 
-        For child callback (of an `EventCallback`), this will be called
-        when the event is triggered.
-
         :return: (bool) If the callback returns False, training is aborted early.
         """
         self.n_calls += 1
@@ -95,53 +63,8 @@ class BaseCallback(ABC):
 
         return self._on_step()
 
-    def on_training_end(self) -> None:
-        self._on_training_end()
 
-    def _on_training_end(self) -> None:
-        pass
-
-    def on_rollout_end(self) -> None:
-        self._on_rollout_end()
-
-    def _on_rollout_end(self) -> None:
-        pass
-
-
-class EventCallback(BaseCallback):
-    """
-    Base class for triggering callback on event.
-
-    :param callback: (Optional[BaseCallback]) Callback that will be called
-        when an event is triggered.
-    :param verbose: (int)
-    """
-    def __init__(self, callback: Optional[BaseCallback] = None, verbose: int = 0):
-        super(EventCallback, self).__init__(verbose=verbose)
-        self.callback = callback
-        # Give access to the parent
-        if callback is not None:
-            self.callback.parent = self
-
-    def init_callback(self, model: 'BaseRLModel') -> None:
-        super(EventCallback, self).init_callback(model)
-        if self.callback is not None:
-            self.callback.init_callback(self.model)
-
-    def _on_training_start(self) -> None:
-        if self.callback is not None:
-            self.callback.on_training_start(self.locals, self.globals)
-
-    def _on_event(self) -> bool:
-        if self.callback is not None:
-            return self.callback.on_step()
-        return True
-
-    def _on_step(self) -> bool:
-        return True
-
-
-class EvalCallback(EventCallback):
+class EvalCallback(BaseCallback):
     """
     Callback for evaluating an agent.
 
@@ -160,7 +83,6 @@ class EvalCallback(EventCallback):
     :param verbose: (int)
     """
     def __init__(self, eval_env: gym.Env,
-                 callback_on_new_best: Optional[BaseCallback] = None,
                  n_eval_episodes: int = 5,
                  eval_freq: int = 10000,
                  log_path: str = None,
@@ -168,7 +90,7 @@ class EvalCallback(EventCallback):
                  deterministic: bool = True,
                  render: bool = False,
                  verbose: int = 1):
-        super(EvalCallback, self).__init__(callback_on_new_best, verbose=verbose)
+        super(EvalCallback, self).__init__(verbose=verbose)
         self.n_eval_episodes = n_eval_episodes
         self.eval_freq = eval_freq
         self.best_mean_reward = -np.inf
@@ -186,18 +108,6 @@ class EvalCallback(EventCallback):
         self.evaluations_timesteps = []
         self.evaluations_length = []
 
-    def _init_callback(self):
-        # Does not work in some corner cases, where the wrapper is not the same
-        # if not type(self.training_env) is type(self.eval_env):
-        #     warnings.warn("Training and eval env are not of the same type"
-        #                   "{} != {}".format(self.training_env, self.eval_env))
-
-        # Create folders if needed
-        if self.best_model_save_path is not None:
-            os.makedirs(self.best_model_save_path, exist_ok=True)
-        if self.log_path is not None:
-            os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
-
     def _on_step(self) -> bool:
 
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
@@ -207,7 +117,7 @@ class EvalCallback(EventCallback):
                                                                render=self.render,
                                                                deterministic=self.deterministic,
                                                                return_episode_rewards=True)
-
+            # todo: check if episode_rewards is a cte list
             if self.log_path is not None:
                 self.evaluations_timesteps.append(self.num_timesteps)
                 self.evaluations_results.append(episode_rewards)
@@ -216,8 +126,6 @@ class EvalCallback(EventCallback):
                          results=self.evaluations_results, ep_lengths=self.evaluations_length)
 
             mean_reward, std_reward = np.mean(episode_rewards), np.std(episode_rewards)
-            mean_ep_length, std_ep_length = np.mean(episode_lengths), np.std(episode_lengths)
-            # Keep track of the last evaluation, useful for classes that derive from this callback
             self.last_mean_reward = mean_reward
 
             if self.verbose > 0:
@@ -231,8 +139,6 @@ class EvalCallback(EventCallback):
                     self.model.save(os.path.join(self.best_model_save_path, 'best_model'))
                 self.best_mean_reward = mean_reward
                 # Trigger callback if needed
-                if self.callback is not None:
-                    return self._on_event()
 
         return True
 
@@ -255,9 +161,6 @@ class SaveOnBestRewardSimple(BaseCallback):
         self.save_path = os.path.join(log_dir, 'best_model')
         self.best_mean_reward = -np.inf
 
-    def _init_callback(self) -> None:
-        pass
-
     def _on_step(self) -> bool:
         if self.n_calls % self.check_freq == 0:
 
@@ -266,7 +169,6 @@ class SaveOnBestRewardSimple(BaseCallback):
             if len(x) > 0:
                 # Mean training reward over the last 100 episodes
                 mean_reward = np.mean(y[-100:])
-                print(mean_reward)
                 if self.verbose > 0:
                     print(f"Num timesteps: {self.num_timesteps}")
                     print(

@@ -8,9 +8,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
+from agent.callback import SaveOnBestRewardSimple, EvalCallback as SaveOnBestReturn
 
 from envs.citation import Citation
-from agent.callback import SaveOnBestRewardSimple, EvalCallback as SaveOnBestReturn
 from tools.schedule import schedule
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 
-def get_task(time_v: np.ndarray = np.arange(0, 30, 0.01)):
+def get_task(time_v: np.ndarray = np.arange(0, 10, 0.05)):
     state_indices = {'p': 0, 'q': 1, 'r': 2, 'V': 3, 'alpha': 4, 'beta': 5,
                      'phi': 6, 'theta': 7, 'psi': 8, 'h': 9, 'x': 10, 'y': 11}
     # noinspection PyDictCreation
@@ -31,17 +31,18 @@ def get_task(time_v: np.ndarray = np.arange(0, 30, 0.01)):
     # task_type = 'altitude_2attitude'
 
     if task_type == 'body_rates':
-        signals['p'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 2 * np.pi * 0.2),
-                                  5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3.5 * np.pi * 0.2),
+        signals['p'] = np.hstack([np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                  5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3 * np.pi * 0.2),
+                                  # 5 * np.sin(time_v[:int(time_v.shape[0] / 4)] * 3.5 * np.pi * 0.2),
                                   # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                  # np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   ])
-        signals['q'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 2 * np.pi * 0.2),
-                                  5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3.5 * np.pi * 0.2),
+        signals['q'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3 * np.pi * 0.2),
+                                  # 5 * np.sin(time_v[:int(time_v.shape[0] / 4)] * 3.5 * np.pi * 0.2),
                                   # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                  np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   ])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['r']]
@@ -180,22 +181,22 @@ def plot_response(name, env, task, perf):
 env_train = Citation(task=get_task()[:3], time_vector=get_task()[3])
 env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
 
-learn = True
+learn = False
 
 if learn:
     # todo: choose and study callback functions!
-    # callback = SaveOnBestReturn(eval_env=env_eval, callback_on_new_best=None, eval_freq=5000,
-    #                             best_model_save_path="agent/trained/tmp/", n_eval_episodes=5)
+    callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=1000, log_path="agent/trained/tmp/",
+                                best_model_save_path="agent/trained/tmp/", n_eval_episodes=5)
 
-    env_train = Monitor(env_train, "agent/trained/tmp")
-    callback = SaveOnBestRewardSimple(check_freq=5000, log_dir="agent/trained/tmp/")
+    # env_train = Monitor(env_train, "agent/trained/tmp")
+    # callback = SaveOnBestRewardSimple(check_freq=5000, log_dir="agent/trained/tmp/")
 
     model = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256, learning_rate=schedule(0.001))
+                ent_coef='auto', batch_size=256, learning_rate=schedule(0.00094))
 
     # model = SAC.load("tmp/best_model.zip", env=env_train)
     tic = time.time()
-    model.learn(total_timesteps=int(5e5), log_interval=10, callback=callback)
+    model.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     model = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
     model.save(f'agent/trained/{get_task()[4]}_{ID}.zip')
@@ -207,7 +208,7 @@ if learn:
     print('')
 
 else:
-    ID = '2b4ht9'
+    ID = '4Dnfdu'
     # ID = 'tmp/best_model'
     model = SAC.load(f"agent/trained/{get_task()[4]}_{ID}.zip")
 

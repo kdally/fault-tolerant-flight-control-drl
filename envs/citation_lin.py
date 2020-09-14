@@ -96,7 +96,7 @@ class Citation(gym.Env):
                                ])
         ref_beta = np.zeros(int(self.time.shape[0]))
 
-        return np.vstack([ref_pbody, ref_qbody, ref_beta]), np.array([0, 1, 5])
+        return np.vstack([ref_pbody, ref_qbody, ref_beta]), [0, 1, 5], [0, 1, 5, 2]
 
     def get_obs(self):
         return np.hstack([self.error, self.state[2]])
@@ -124,10 +124,10 @@ class Citation(gym.Env):
     def get_eom():
 
         eng = matlab.engine.start_matlab()
-        try:
-            eng.cd('envs')
-        except matlab.engine.MatlabExecutionError:
-            pass
+        # try:
+        #     eng.cd('envs')
+        # except matlab.engine.MatlabExecutionError:
+        #     pass
         eng.save_mat(nargout=0)
         A = np.asarray(eng.eval('Alin'))
         B = np.asarray(eng.eval('Blin'))[:, :3]
