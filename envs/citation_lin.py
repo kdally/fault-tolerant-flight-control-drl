@@ -54,7 +54,7 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:   # for sideslip angle
-            self.error[self.track_indices.index(5)] *= 100
+            self.error[self.track_indices.index(5)] *= 50
 
         self.state_history[:, self.step_count] = np.multiply(self.state, self.scale_s)
         self.action_history[:, self.step_count] = self.scale_a(action, to='fig')

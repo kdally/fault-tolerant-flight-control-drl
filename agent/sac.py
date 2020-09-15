@@ -382,9 +382,6 @@ class SAC(BaseRLModel):
             n_updates = 0
             infos_values = []
 
-            callback.on_training_start(locals(), globals())
-            callback.on_rollout_start()
-
             for step in range(total_timesteps):
                 # Before training starts, randomly sample actions
                 # from a uniform distribution for better exploration.
@@ -412,7 +409,6 @@ class SAC(BaseRLModel):
 
                 # Only stop training if return value is False, not when it is None. This is for backwards
                 # compatibility with callbacks that have no return statement.
-                callback.update_locals(locals())
                 if callback.on_step() is False:
                     break
 
@@ -444,7 +440,6 @@ class SAC(BaseRLModel):
                                                         ep_done, writer, self.num_timesteps)
 
                 if self.num_timesteps % self.train_freq == 0:
-                    callback.on_rollout_end()
 
                     mb_infos_vals = []
                     # Update policy, critics and target networks
@@ -467,8 +462,6 @@ class SAC(BaseRLModel):
                     # Log losses and entropy, useful for monitor training
                     if len(mb_infos_vals) > 0:
                         infos_values = np.mean(mb_infos_vals, axis=0)
-
-                    callback.on_rollout_start()
 
                 episode_rewards[-1] += reward_
                 if done:
@@ -509,7 +502,6 @@ class SAC(BaseRLModel):
                     logger.dumpkvs()
                     # Reset infos:
                     infos_values = []
-            callback.on_training_end()
             return self
 
     def learn_online(self, total_timesteps, initial_state, callback=None,
@@ -543,9 +535,6 @@ class SAC(BaseRLModel):
             n_updates = 0
             infos_values = []
 
-            callback.on_training_start(locals(), globals())
-            callback.on_rollout_start()
-
             for step in range(total_timesteps):
 
                 action = self.policy_tf.step(obs[None], deterministic=True).flatten()
@@ -565,7 +554,6 @@ class SAC(BaseRLModel):
 
                 # Only stop training if return value is False, not when it is None. This is for backwards
                 # compatibility with callbacks that have no return statement.
-                callback.update_locals(locals())
                 if callback.on_step() is False:
                     break
 
@@ -597,7 +585,6 @@ class SAC(BaseRLModel):
                                                         ep_done, writer, self.num_timesteps)
 
                 if self.num_timesteps % self.train_freq == 0:
-                    callback.on_rollout_end()
 
                     mb_infos_vals = []
                     # Update policy, critics and target networks
@@ -620,8 +607,6 @@ class SAC(BaseRLModel):
                     # Log losses and entropy, useful for monitor training
                     if len(mb_infos_vals) > 0:
                         infos_values = np.mean(mb_infos_vals, axis=0)
-
-                    callback.on_rollout_start()
 
                 episode_rewards[-1] += reward_
                 if done:
@@ -662,7 +647,6 @@ class SAC(BaseRLModel):
                     logger.dumpkvs()
                     # Reset infos:
                     infos_values = []
-            callback.on_training_end()
             return self
 
     def action_probability(self, observation, state=None, mask=None, actions=None, logp=False):

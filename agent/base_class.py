@@ -12,7 +12,7 @@ import numpy as np
 import tensorflow as tf
 
 from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params
-from agent.callback import BaseCallback
+from agent.callback import SaveOnBestReturn
 
 
 def set_global_seeds(seed):
@@ -150,10 +150,10 @@ class BaseRLModel(ABC):
         pass
 
     def _init_callback(self,
-                      callback: Union[None, BaseCallback]) -> BaseCallback:
+                      callback: Union[None, SaveOnBestReturn]) -> SaveOnBestReturn:
         """
-        :param callback: (Union[None, Callable, List[BaseCallback], BaseCallback])
-        :return: (BaseCallback)
+        :param callback: (Union[None, SaveOnBestReturn])
+        :return: (SaveOnBestReturn)
         """
         callback.init_callback(self)
         return callback
@@ -332,12 +332,8 @@ class BaseRLModel(ABC):
         """
         Return a trained model.
         :param total_timesteps: (int) The total number of samples to train on
-        :param callback: (Union[callable, [callable], BaseCallback])
-            function called at every steps with state of the algorithm.
-            It takes the local and global variables. If it returns False, training is aborted.
-            When the callback inherits from BaseCallback, you will have access
-            to additional stages of the training (training start/end),
-            please read the documentation for more details.
+        :param callback: SaveOnBestReturn function called at every steps with state of the algorithm.
+            If it returns False, training is aborted.
         :param log_interval: (int) The number of timesteps before logging.
         :param tb_log_name: (str) the name of the run for tensorboard log
         :param reset_num_timesteps: (bool) whether or not to reset the current timestep number (used in logging)

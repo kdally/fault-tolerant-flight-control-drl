@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
-from agent.callback import SaveOnBestRewardSimple, EvalCallback as SaveOnBestReturn
+from agent.callback import SaveOnBestReturn
 
 from envs.citation import Citation
 from tools.schedule import schedule
@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 
-def get_task(time_v: np.ndarray = np.arange(0, 10, 0.05)):
+def get_task(time_v: np.ndarray = np.arange(0, 10, 0.005)):
     state_indices = {'p': 0, 'q': 1, 'r': 2, 'V': 3, 'alpha': 4, 'beta': 5,
                      'phi': 6, 'theta': 7, 'psi': 8, 'h': 9, 'x': 10, 'y': 11}
     # noinspection PyDictCreation
@@ -181,18 +181,16 @@ def plot_response(name, env, task, perf):
 env_train = Citation(task=get_task()[:3], time_vector=get_task()[3])
 env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
 
-learn = False
+learn = True
 
 if learn:
-    # todo: choose and study callback functions!
-    callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=1000, log_path="agent/trained/tmp/",
-                                best_model_save_path="agent/trained/tmp/", n_eval_episodes=5)
 
     # env_train = Monitor(env_train, "agent/trained/tmp")
-    # callback = SaveOnBestRewardSimple(check_freq=5000, log_dir="agent/trained/tmp/")
+    callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=1000, log_path="agent/trained/tmp/",
+                                best_model_save_path="agent/trained/tmp/")
 
     model = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256, learning_rate=schedule(0.00094))
+                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0005))
 
     # model = SAC.load("tmp/best_model.zip", env=env_train)
     tic = time.time()
@@ -208,7 +206,7 @@ if learn:
     print('')
 
 else:
-    ID = '4Dnfdu'
+    ID = 'WMKDKU'
     # ID = 'tmp/best_model'
     model = SAC.load(f"agent/trained/{get_task()[4]}_{ID}.zip")
 
