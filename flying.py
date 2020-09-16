@@ -19,8 +19,12 @@ from stable_baselines.bench import Monitor
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
+# todo: adjust refresh rate
+# trim actions
+# adjust reward scale
 
-def get_task(time_v: np.ndarray = np.arange(0, 10, 0.005)):
+
+def get_task(time_v: np.ndarray = np.arange(0, 10, 0.01)):
     state_indices = {'p': 0, 'q': 1, 'r': 2, 'V': 3, 'alpha': 4, 'beta': 5,
                      'phi': 6, 'theta': 7, 'psi': 8, 'h': 9, 'x': 10, 'y': 11}
     # noinspection PyDictCreation
@@ -49,17 +53,17 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.005)):
 
     elif task_type == '3attitude':
         signals['theta'] = np.hstack([7 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 1.5 * np.pi * 0.2),
-                                  7 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3 * np.pi * 0.2),
-                                  # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
-                                  ])
+                                      7 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3 * np.pi * 0.2),
+                                      # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                      # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                      np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                      ])
         signals['phi'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 1.5 * np.pi * 0.2),
-                                  5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3 * np.pi * 0.2),
-                                  # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
-                                  ])
+                                    5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3 * np.pi * 0.2),
+                                    # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                    # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                    np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                    ])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
 
@@ -68,11 +72,11 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.005)):
                                   np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
                                   ])
         signals['phi'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 1.5 * np.pi * 0.2),
-                                  5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3 * np.pi * 0.2),
-                                  # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
-                                  ])
+                                    5 * np.sin(time_v[:int(time_v.shape[0] / 3)] * 3 * np.pi * 0.2),
+                                    # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                    # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                    np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                    ])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
 
@@ -88,9 +92,8 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.005)):
 
 
 def plot_response(name, env, task, perf):
-
     subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
-                     6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
+                       6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
     fig = make_subplots(rows=6, cols=2)
 
@@ -185,16 +188,16 @@ learn = True
 
 if learn:
 
-    # env_train = Monitor(env_train, "agent/trained/tmp")
-    callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=1000, log_path="agent/trained/tmp/",
+    callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=5000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
 
     model = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0005))
+                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0004))
 
+    # env_train = Monitor(env_train, "agent/trained/tmp")
     # model = SAC.load("tmp/best_model.zip", env=env_train)
     tic = time.time()
-    model.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
+    model.learn(total_timesteps=int(5e5), log_interval=50, callback=callback)
     model = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
     model.save(f'agent/trained/{get_task()[4]}_{ID}.zip')

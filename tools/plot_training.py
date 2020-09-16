@@ -6,10 +6,10 @@ import plotly.graph_objects as go
 def plot_training(ID: str, task_type: str):
 
     df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                     f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=1)
+                     f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)
 
-    training_steps = np.arange(0, len(df['r']) * 3000, 3000)
-    df['training_steps'] = training_steps
+    # training_steps = np.arange(0, len(df['r']) * 3000, 3000)
+    # df['training_steps'] = training_steps
     # df['r'] = -np.log10(-df['r'])
     # return_ticks = np.array([-50, -20, -10, -5, -2, -1, -0.5, -0.1])
     fig = go.Figure()
@@ -33,7 +33,7 @@ def plot_training(ID: str, task_type: str):
     # ))
 
     fig.add_trace(go.Scatter(
-        x=df['training_steps'], y=df['r'],
+        x=df['l'], y=df['r'],
     ))
 
     fig.update_layout(
@@ -43,7 +43,7 @@ def plot_training(ID: str, task_type: str):
             # tickvals=-np.log10(-return_ticks),
             # ticktext=return_ticks,
             # range=[-np.log10(300), -np.log10(50)],
-            range=[-500,0],
+            # range=[-500, 0],
             tickfont=dict(size=18)
         ),
         xaxis=dict(
@@ -54,4 +54,7 @@ def plot_training(ID: str, task_type: str):
         margin=dict(l=50, r=5, b=50, t=10)
     )
     fig.update_traces(mode='lines')
-    fig.write_image(f"figures/{task_type}_{ID}_training.eps")
+    # fig.write_image(f"figures/{task_type}_{ID}_training.eps")
+    fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
+                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_training.eps")
+

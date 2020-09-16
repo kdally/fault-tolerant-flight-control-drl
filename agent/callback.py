@@ -86,15 +86,15 @@ class SaveOnBestReturn(ABC):
             self.logger.writerow(ep_info)
             self.file_handler.flush()
 
-            if self.verbose > 0:
-                print(f"Eval num_timesteps={self.num_timesteps}, "
-                      f"current return={episode_reward:.2f}, best return={self.best_mean_reward:.2f}")
-
             if episode_reward > self.best_mean_reward:
                 if self.verbose > 0:
                     print("New best mean reward!")
                 self.model.save(os.path.join(self.best_model_save_path, 'best_model'))
                 self.best_mean_reward = episode_reward
+
+            if self.verbose > 0:
+                print(f"Eval num_timesteps={self.num_timesteps}, "
+                      f"current return={episode_reward:.2f}, best return={self.best_mean_reward:.2f}")
 
         return True
 

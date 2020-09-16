@@ -85,29 +85,15 @@ class Citation(gym.Env):
 
     def get_reward(self):
 
-        sum_error = r2d(self.error.sum() / 30)
-        return -abs(max(min(sum_error, 1), -1))
-
-    def get_task_default(self):
-
-        ref_pbody = np.hstack([5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 2 * np.pi * 0.2),
-                               5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 3.5 * np.pi * 0.2),
-                               - 5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               np.zeros(int(5 * self.time.shape[0] / self.time[-1].round())),
-                               ])
-        ref_qbody = np.hstack([5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 2 * np.pi * 0.2),
-                               5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 3.5 * np.pi * 0.2),
-                               - 5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               np.zeros(int(5 * self.time.shape[0] / self.time[-1].round())),
-                               ])
-        ref_beta = np.zeros(int(self.time.shape[0]))
-
-        return np.vstack([ref_pbody, ref_qbody, ref_beta]), [0, 1, 5], [0, 1, 5, 2]
+        reward = 0
+        for sig in self.error:
+            reward += -abs(max(min(r2d(sig / 30), 1), -1) / self.error.shape[0])
+        return reward
 
     def get_obs(self):
-        return np.hstack([self.error, self.state[2]])
+
+        untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
+        return np.hstack([self.error, self.state[untracked_obs_index]])
 
     @staticmethod
     def scale_a(action_unscaled: np.ndarray, to: str = 'model') -> np.ndarray:
@@ -131,6 +117,24 @@ class Citation(gym.Env):
         else:
             return r2d(action_scaled)
 
+    def get_task_default(self):
+
+        ref_pbody = np.hstack([5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 2 * np.pi * 0.2),
+                               5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 3.5 * np.pi * 0.2),
+                               - 5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
+                               5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
+                               np.zeros(int(5 * self.time.shape[0] / self.time[-1].round())),
+                               ])
+        ref_qbody = np.hstack([5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 2 * np.pi * 0.2),
+                               5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 3.5 * np.pi * 0.2),
+                               - 5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
+                               5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
+                               np.zeros(int(5 * self.time.shape[0] / self.time[-1].round())),
+                               ])
+        ref_beta = np.zeros(int(self.time.shape[0]))
+
+        return np.vstack([ref_pbody, ref_qbody, ref_beta]), [0, 1, 5], [0, 1, 5, 2]
+
     def render(self, mode='any'):
         raise NotImplementedError()
 
@@ -147,31 +151,3 @@ class Citation(gym.Env):
 # print("Action space:", envs.action_space)
 #
 # check_env(envs, warn=True)
-
-
-# C_MODEL.initialize()
-# print(C_MODEL.step(np.array([-0.07829045, -0.19252336, 0.03627374, 0., 0., 0.,
-#                              0., 0., 0., 0.])))
-#
-# import random
-# for j in range(1000):
-#     C_MODEL.initialize()
-#     state_old = np.ones(12)
-#     for i in range(1000):
-#         action = np.array([random.randint(-20, 14),
-#                            random.randint(-37, 37),
-#                            random.randint(-21, 21),
-#                            0,
-#                            0,
-#                            0,
-#                            0,
-#                            0,
-#                            0,
-#                            0
-#                            ])
-#
-#         state = C_MODEL.step(action)
-#         if np.isnan(state).sum() > 0:
-#             print(action, state, state_old)
-#             raise Exception(f'Nan')
-#         state_old = state
