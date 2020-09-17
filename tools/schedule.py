@@ -1,6 +1,6 @@
 import math
 
-def schedule(initial_value):
+def schedule(initial_value, second_value):
     """
     Linear learning rate schedule.
 
@@ -22,6 +22,9 @@ def schedule(initial_value):
         :param progress: (float)
         :return: (float)
         """
-        return progress * initial_value
+        if progress < 0.5:
+            return progress * initial_value
+        else:
+            return progress * second_value
 
     return func

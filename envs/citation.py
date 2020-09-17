@@ -1,8 +1,6 @@
 import gym
 import numpy as np
 
-np.seterr(all='raise')
-
 # # Import the low-level C/C++ module
 if __package__ or "." in __name__:
     from . import _citation as C_MODEL
@@ -39,7 +37,7 @@ class Citation(gym.Env):
         self.ref_signal = task[0]
         self.track_indices = task[1]
         self.obs_indices = task[2]
-        self.observation_space = gym.spaces.Box(-3000, 3000, shape=(4,), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-3000, 3000, shape=(len(self.obs_indices),), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
 
         self.state = None
@@ -54,11 +52,11 @@ class Citation(gym.Env):
         self.state = C_MODEL.step(self.scale_a(action))
         if np.isnan(self.state).sum() > 0:
             print(self.scale_a(action), action, self.state)
-            raise Exception(f'Nan')
+            raise Exception('Nan')
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
-        if 5 in self.track_indices:  # for sideslip angle
-            self.error[self.track_indices.index(5)] *= 50  # todo: multiply by 20 instead
+        if 5 in self.track_indices:  # for sideslip angle, change reward scale due to dimensions difference
+            self.error[self.track_indices.index(5)] *= 20
 
         self.state_history[:, self.step_count] = np.multiply(self.state, self.scale_s)
         self.action_history[:, self.step_count] = self.scale_a(action, to='fig')
@@ -88,6 +86,18 @@ class Citation(gym.Env):
         reward = 0
         for sig in self.error:
             reward += -abs(max(min(r2d(sig / 30), 1), -1) / self.error.shape[0])
+
+        reward_track = reward
+        action_delta_allow = np.array([15, 30, 15])
+        action_delta = np.abs(self.action_history[:, self.step_count-1]
+                            - self.action_history[:, self.step_count-2]) # step count has already been incremented
+        if (action_delta > action_delta_allow).any():
+            reward += -np.max(np.abs(action_delta-action_delta_allow)) / 200
+        #     print(f'Reward for tracking error = {reward_track:.2f}, '
+        #           f'penalty = {np.max(np.abs(action_delta-action_delta_allow)) / 250:.2f}')
+        # else:
+        #     print('safe')
+
         return reward
 
     def get_obs(self):
@@ -107,7 +117,7 @@ class Citation(gym.Env):
             action_unscaled[1] = max(min(action_unscaled[1], 1), -1)
             # raise Exception(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds.')
 
-        action_scaled = np.ndarray(3)
+        action_scaled = np.ndarray((3,))
         action_scaled[0] = map_to(action_unscaled[0], d2r(-20.05), d2r(14.90))
         action_scaled[1] = map_to(action_unscaled[1], d2r(-37.24), d2r(37.24))
         action_scaled[2] = map_to(action_unscaled[2], d2r(-21.77), d2r(21.77))

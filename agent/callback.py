@@ -22,7 +22,7 @@ class SaveOnBestReturn(ABC):
     :param render: (bool) Whether to render or not the environment during evaluation
     :param verbose: (int)
     """
-    # todo: option to average out the training plot
+
     def __init__(self, eval_env: gym.Env,
                  log_path: str,
                  eval_freq: int = 10000,
