@@ -18,14 +18,13 @@ from tools.plot_training import plot_training
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# > GENERAL
-# todo: fix plot y labels font and position
-
 # > LESS NOISY POLICY
+# todo: tune penalty
 # ? control input as deflection angle derivative
 
 # > NOT LEARNING
 # todo: change network width
+# todo: give more observations
 # ? change reward function
 
 
@@ -34,8 +33,8 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.01)):
                      'phi': 6, 'theta': 7, 'psi': 8, 'h': 9, 'x': 10, 'y': 11}
     signals = {}
 
-    # task_type = 'body_rates'
-    task_type = '3attitude'
+    task_type = 'body_rates'
+    # task_type = '3attitude'
     # task_type = 'altitude_2attitude'
 
     if task_type == 'body_rates':
@@ -56,17 +55,23 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.01)):
         obs_indices = [state_indices['r']]
 
     elif task_type == '3attitude':
-        signals['theta'] = np.hstack([20 * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.26 * np.pi * 2),
-                         20 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-                         20 * np.cos(time_v[:np.argwhere(time_v == 0.5)[0, 0]] * 0.33 * np.pi * 2),
-                         10 * np.ones(int(4.5 * time_v.shape[0] / time_v[-1].round())),
-                         ])
-        signals['phi'] = np.hstack([np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
-                          30 * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
-                          30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-                          30 * np.cos(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
-                          np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
-                          ])
+        # signals['theta'] = np.hstack([20 * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.26 * np.pi * 2),
+        #                  20 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+        #                  20 * np.cos(time_v[:np.argwhere(time_v == 0.5)[0, 0]] * 0.33 * np.pi * 2),
+        #                  10 * np.ones(int(4.5 * time_v.shape[0] / time_v[-1].round())),
+        #                  ])
+        # signals['phi'] = np.hstack([np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
+        #                   30 * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
+        #                   30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+        #                   30 * np.cos(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
+        #                   np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
+        #                   ])
+        signals['theta'] = np.hstack([np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                  5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
+                                  ])
+        signals['phi'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
+                                  np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                  ])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
 
@@ -112,59 +117,59 @@ def plot_response(name, env, task, perf):
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p \:[^\circ/s]$', row=1, col=2)
+    fig.update_yaxes(title_text='p [&deg;/s]', row=1, col=2, title_standoff=0)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q \:[^\circ/s]$', row=1, col=1)
+    fig.update_yaxes(title_text='q [&deg;/s]', row=1, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[2, :].T, name=r'$r [^\circ/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$r \:[^\circ/s]$', row=2, col=2)
+    fig.update_yaxes(title_text='r [&deg;/s]', row=2, col=2, title_standoff=6)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=4, col=1)
-    fig.update_yaxes(title_text=r'$V \:[m/s]$', row=4, col=1, title_standoff=0)
+    fig.update_yaxes(title_text='V [m/s]', row=4, col=1, title_standoff=23)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[4, :].T, name=r'$\alpha [^\circ]$',
         line=dict(color='#636EFA')), row=2, col=1)
-    fig.update_yaxes(title_text=r'$\alpha \:[^\circ]$', row=2, col=1)
+    fig.update_yaxes(title_text='&#945; [&deg;]', row=2, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[5, :].T, name=r'$\beta [^\circ]$',
         line=dict(color='#636EFA')), row=4, col=2)
-    fig.update_yaxes(title_text=r'$\beta \:[^\circ]$', row=4, col=2, range=[-0.5, 0.5])
+    fig.update_yaxes(title_text='&#946; [&deg;]', row=4, col=2, range=[-0.5, 0.5], title_standoff=0)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[6, :].T, name=r'$\phi [^\circ]$',
         line=dict(color='#636EFA')), row=3, col=2)
-    fig.update_yaxes(title_text=r'$\phi \:[^\circ]$', row=3, col=2)
+    fig.update_yaxes(title_text='&#966; [&deg;]', row=3, col=2, title_standoff=16)
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[7, :].T, name=r'$\theta [^\circ]$',
         line=dict(color='#636EFA')), row=3, col=1)
-    fig.update_yaxes(title_text=r'$\theta \:[^\circ]$', row=3, col=1)
+    fig.update_yaxes(title_text='&#952; [&deg;]', row=3, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[9, :].T, name=r'$h [m]$',
         line=dict(color='#636EFA')), row=5, col=1)
-    fig.update_yaxes(title_text=r'$h \:[m]$', row=5, col=1)
+    fig.update_yaxes(title_text='h [m]', row=5, col=1, title_standoff=8)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.action_history[0, :].T,
         name=r'$\delta_e [^\circ]$', line=dict(color='#00CC96')), row=6, col=1)
-    fig.update_yaxes(title_text=r'$\delta_e \:[^\circ]$', row=6, col=1)
+    fig.update_yaxes(title_text='&#948;<sub>e</sub> [&deg;]', row=6, col=1)
     fig.append_trace(go.Scatter(
         x=env.time, y=env.action_history[1, :].T,
-        name=r'$\delta_a [^\circ]$', line=dict(color='#00CC96')), row=5, col=2)
-    fig.update_yaxes(title_text=r'$\delta_a \:[^\circ]$', row=5, col=2)
+        name='&#948; [&deg;]', line=dict(color='#00CC96')), row=5, col=2)
+    fig.update_yaxes(title_text='&#948;<sub>a</sub> [&deg;]', row=5, col=2, title_standoff=5)
     fig.append_trace(go.Scatter(
         x=env.time, y=env.action_history[2, :].T,
         name=r'$\delta_r [^\circ]$', line=dict(color='#00CC96')), row=6, col=2)
-    fig.update_yaxes(title_text=r'$\delta_r \:[^\circ]$', row=6, col=2)
+    fig.update_yaxes(title_text='&#948;<sub>r</sub> [&deg;]', row=6, col=2, title_standoff=5)
 
     fig.update_layout(showlegend=False, width=800, height=500, margin=dict(
         l=10,
@@ -198,7 +203,7 @@ if learn:
                                 best_model_save_path="agent/trained/tmp/")
 
     model = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0005, 0.00015))
+                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0005, 0.0002))
 
     # env_train = Monitor(env_train, "agent/trained/tmp")
     # model = SAC.load("tmp/best_model.zip", env=env_train)
@@ -215,7 +220,7 @@ if learn:
     print('')
 
 else:
-    ID = 'WMKDKU'
+    ID = 'W7V37O'
     # ID = 'tmp/best_model'
     model = SAC.load(f"agent/trained/{get_task()[4]}_{ID}.zip")
 
@@ -224,6 +229,7 @@ return_a = 0
 
 for i, current_time in enumerate(env_eval.time):
     action, _ = model.predict(obs, deterministic=True)
+    # print(action*180/np.pi)
     obs, reward, done, info = env_eval.step(action)
     return_a += reward
     if current_time == env_eval.time[-1]:

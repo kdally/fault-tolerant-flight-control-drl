@@ -131,4 +131,4 @@ def plot_trainings(IDs: list, task_type: str, avg_param: int = 2):
 
 # plot_training('MDl9EX', 'body_rates')
 # plot_training('tlfpip', 'body_rates')
-# plot_trainings(['4U6HSJ', '5DVX67','PSD34Q','DY3HDX'], 'body_rates')
+# plot_trainings(['CQJTZA', 'PDB9SI'], '3attitude')

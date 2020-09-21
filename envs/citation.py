@@ -86,17 +86,21 @@ class Citation(gym.Env):
         reward = 0
         for sig in self.error:
             reward += -abs(max(min(r2d(sig / 30), 1), -1) / self.error.shape[0])
-
         reward_track = reward
-        action_delta_allow = np.array([15, 30, 15])
-        action_delta = np.abs(self.action_history[:, self.step_count-1]
-                            - self.action_history[:, self.step_count-2]) # step count has already been incremented
-        if (action_delta > action_delta_allow).any():
-            reward += -np.max(np.abs(action_delta-action_delta_allow)) / 200
-        #     print(f'Reward for tracking error = {reward_track:.2f}, '
-        #           f'penalty = {np.max(np.abs(action_delta-action_delta_allow)) / 250:.2f}')
-        # else:
-        #     print('safe')
+
+        if (self.step_count-1) >= 1:
+            action_2delta_allow = np.array([15, 40, 40])
+            # step count has already been incremented
+            lower_index = max(0, self.step_count - 21)
+            action_2delta = np.abs(self.action_history[:, lower_index:self.step_count - 1].max(axis=1)
+                                   - self.action_history[:, lower_index:self.step_count - 1].min(axis=1))
+
+            if (action_2delta > action_2delta_allow).any():
+                reward += -action_2delta.sum() / 300
+            #     print(f'Reward for tracking error = {reward_track:.2f}, '
+            #           f'penalty = {-action_2delta.sum() / 500:.2f}')
+            # else:
+            #     print('safe')
 
         return reward
 
