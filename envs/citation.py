@@ -37,7 +37,7 @@ class Citation(gym.Env):
         self.ref_signal = task[0]
         self.track_indices = task[1]
         self.obs_indices = task[2]
-        self.observation_space = gym.spaces.Box(-3000, 3000, shape=(len(self.obs_indices),), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices),), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
 
         self.state = None
@@ -88,19 +88,16 @@ class Citation(gym.Env):
             reward += -abs(max(min(r2d(sig / 30), 1), -1) / self.error.shape[0])
         reward_track = reward
 
-        if (self.step_count-1) >= 1:
-            action_2delta_allow = np.array([15, 40, 40])
-            # step count has already been incremented
-            lower_index = max(0, self.step_count - 21)
-            action_2delta = np.abs(self.action_history[:, lower_index:self.step_count - 1].max(axis=1)
-                                   - self.action_history[:, lower_index:self.step_count - 1].min(axis=1))
-
-            if (action_2delta > action_2delta_allow).any():
-                reward += -action_2delta.sum() / 300
-            #     print(f'Reward for tracking error = {reward_track:.2f}, '
-            #           f'penalty = {-action_2delta.sum() / 500:.2f}')
-            # else:
-            #     print('safe')
+        action_delta_allow = np.array([1, 2, 1])
+        action_delta = np.abs(self.action_history[:, self.step_count - 1]
+                              - self.action_history[:, self.step_count - 2])  # step count has already been incremented
+        if (action_delta > action_delta_allow).any():
+            penalty = np.maximum(np.zeros(3), (action_delta - action_delta_allow))
+            reward += -penalty.sum() / 200
+        #     print(f'Reward for tracking error = {reward_track:.2f}, '
+        #           f'penalty = {-penalty.sum() / 200:.2f}')
+        # else:
+        #     print('safe')
 
         return reward
 

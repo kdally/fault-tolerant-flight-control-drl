@@ -28,7 +28,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 # ? change reward function
 
 
-def get_task(time_v: np.ndarray = np.arange(0, 10, 0.01)):
+def get_task(time_v: np.ndarray = np.arange(0, 10, 0.07)):
     state_indices = {'p': 0, 'q': 1, 'r': 2, 'V': 3, 'alpha': 4, 'beta': 5,
                      'phi': 6, 'theta': 7, 'psi': 8, 'h': 9, 'x': 10, 'y': 11}
     signals = {}
@@ -94,6 +94,8 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.01)):
     track_signals = np.zeros(time_v.shape[0])
     track_indices = []
     for state in signals:
+        if signals[state].shape[0] != time_v.shape[0]:
+            signals[state] = np.append(signals[state], signals[state][-1])
         track_signals = np.vstack([track_signals, signals[state]])
         track_indices.append(int(state_indices[state]))
     track_signals = track_signals[1:]
@@ -203,7 +205,7 @@ if learn:
                                 best_model_save_path="agent/trained/tmp/")
 
     model = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0005, 0.0002))
+                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0003, 0.0001))
 
     # env_train = Monitor(env_train, "agent/trained/tmp")
     # model = SAC.load("tmp/best_model.zip", env=env_train)
@@ -220,7 +222,7 @@ if learn:
     print('')
 
 else:
-    ID = 'W7V37O'
+    ID = '5DVX67'
     # ID = 'tmp/best_model'
     model = SAC.load(f"agent/trained/{get_task()[4]}_{ID}.zip")
 
@@ -238,4 +240,4 @@ for i, current_time in enumerate(env_eval.time):
         print('')
         break
 
-os.system('say "your program has finished"')
+# os.system('say "your program has finished"')
