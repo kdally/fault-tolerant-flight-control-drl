@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 pd.set_option('mode.chained_assignment', None)
 
 
-def plot_training(ID: str, task_type: str, avg_param: int = 2):
+def plot_training(ID: str, task_type: str, avg_param: int = 3):
 
     df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
                      f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)

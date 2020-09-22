@@ -1,6 +1,7 @@
 import os
 import time
 import warnings
+import signal
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ from tools.plot_training import plot_training
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
+
 
 # > LESS NOISY POLICY
 # todo: tune penalty
@@ -67,11 +69,11 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.07)):
         #                   np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
         #                   ])
         signals['theta'] = np.hstack([np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
-                                  ])
+                                      5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
+                                      ])
         signals['phi'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
-                                  np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  ])
+                                    np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
+                                    ])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
 
@@ -194,22 +196,37 @@ def plot_response(name, env, task, perf):
     fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.eps")
 
 
-env_train = Citation(task=get_task()[:3], time_vector=get_task()[3])
-env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
+def get_response(env, ID=None):
 
-learn = True
+    if ID is None:
+        agent = SAC.load(f"agent/trained/tmp/best_model.zip")
+        ID = 'last'
+    else:
+        agent = SAC.load(f"agent/trained/{get_task()[4]}_{ID}.zip")
 
-if learn:
+    obs = env.reset()
+    return_a = 0
+
+    for i, current_time in enumerate(env.time):
+        action, _ = agent.predict(obs, deterministic=True)
+        obs, reward, done, info = env.step(action)
+        return_a += reward
+        if current_time == env.time[-1]:
+            plot_response(ID, env, get_task(), return_a)
+            print(f"Goal reached! Return = {return_a:.2f}")
+            print('')
+            break
+
+
+def learn():
+
+    env_train = Citation(task=get_task()[:3], time_vector=get_task()[3])
+    env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=5000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
-
     model = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0003, 0.0001))
-
-    # env_train = Monitor(env_train, "agent/trained/tmp")
-    # model = SAC.load("tmp/best_model.zip", env=env_train)
-    tic = time.time()
+                ent_coef='auto', batch_size=256, learning_rate=schedule(0.0015, 0.0001))
     model.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     model = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
@@ -217,27 +234,29 @@ if learn:
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task()[4]}_{ID}.csv')
     plot_training(ID, get_task()[4])
-    print('')
-    print(f'Elapsed time = {time.time() - tic}s')
-    print('')
+    get_response(env_eval, ID)
 
-else:
-    ID = '5DVX67'
-    # ID = 'tmp/best_model'
-    model = SAC.load(f"agent/trained/{get_task()[4]}_{ID}.zip")
+    return
 
-obs = env_eval.reset()
-return_a = 0
 
-for i, current_time in enumerate(env_eval.time):
-    action, _ = model.predict(obs, deterministic=True)
-    # print(action*180/np.pi)
-    obs, reward, done, info = env_eval.step(action)
-    return_a += reward
-    if current_time == env_eval.time[-1]:
-        plot_response(ID, env_eval, get_task(), return_a)
-        print(f"Goal reached! Return = {return_a}")
-        print('')
-        break
+def run_preexisting(ID=None):
+
+    env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
+
+    if ID is None:
+        get_response(env_eval)
+    else:
+        get_response(env_eval, ID)
+
+
+def keyboardInterruptHandler(signal, frame):
+    run_preexisting()
+    exit(0)
+
+
+signal.signal(signal.SIGINT, keyboardInterruptHandler)
+learn()
+# run_preexisting()
+# run_preexisting('5DVX67')
 
 # os.system('say "your program has finished"')
