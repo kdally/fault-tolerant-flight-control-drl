@@ -36,9 +36,10 @@ class Citation(gym.Env):
             task = self.get_task_default()
         self.ref_signal = task[0]
         self.track_indices = task[1]
-        self.obs_indices = task[2]
+        self.obs_indices = task[2] + 3
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices),), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
+        self.current_deflection = np.zeros(3)
 
         self.state = None
         self.scale_s = None
@@ -47,11 +48,12 @@ class Citation(gym.Env):
         self.error = None
         self.step_count = None
 
-    def step(self, action: np.ndarray):
+    def step(self, action_rates: np.ndarray):
 
-        self.state = C_MODEL.step(self.scale_a(action))
+        self.current_deflection = self.current_deflection + self.scale_a(action_rates)*self.dt
+        self.state = C_MODEL.step(np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
         if np.isnan(self.state).sum() > 0:
-            print(self.scale_a(action), action, self.state)
+            print(self.state)
             raise Exception('Nan')
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
@@ -59,7 +61,7 @@ class Citation(gym.Env):
             self.error[self.track_indices.index(5)] *= 20
 
         self.state_history[:, self.step_count] = np.multiply(self.state, self.scale_s)
-        self.action_history[:, self.step_count] = self.scale_a(action, to='fig')
+        self.action_history[:, self.step_count] = self.current_deflection
 
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
@@ -79,6 +81,7 @@ class Citation(gym.Env):
         self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         self.error = np.zeros(len(self.track_indices))
         self.step_count = 0
+        self.current_deflection = np.zeros(3)
         return np.zeros(self.observation_space.shape)
 
     def get_reward(self):
@@ -88,14 +91,12 @@ class Citation(gym.Env):
             reward += -abs(max(min(r2d(sig / 30), 1), -1) / self.error.shape[0])
         reward_track = reward
 
-        action_delta_allow = np.array([1, 1, 1])
-        action_delta = np.abs(self.action_history[:, self.step_count - 1]
-                              - self.action_history[:, self.step_count - 2])  # step count has already been incremented
-        if (action_delta > action_delta_allow).any():
-            penalty = np.maximum(np.zeros(3), (action_delta - action_delta_allow))
-            if (penalty < np.zeros(3)).any():
-                print('Cry')
-            reward += -penalty.sum() / 100
+        # action_delta_allow = np.array([1, 2, 1])
+        # action_delta = np.abs(self.action_history[:, self.step_count - 1]
+        #                       - self.action_history[:, self.step_count - 2])  # step count has already been incremented
+        # if (action_delta > action_delta_allow).any():
+        #     penalty = np.maximum(np.zeros(3), (action_delta - action_delta_allow))
+        #     reward += -penalty.sum() / 200
         #     print(f'Reward for tracking error = {reward_track:.2f}, '
         #           f'penalty = {-penalty.sum() / 200:.2f}')
         # else:
@@ -106,10 +107,10 @@ class Citation(gym.Env):
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        return np.hstack([self.error, self.state[untracked_obs_index]])
+        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
 
     @staticmethod
-    def scale_a(action_unscaled: np.ndarray, to: str = 'model') -> np.ndarray:
+    def scale_a(action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
 
         if np.greater(np.abs(action_unscaled), 1).any():
@@ -121,14 +122,11 @@ class Citation(gym.Env):
             # raise Exception(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds.')
 
         action_scaled = np.ndarray((3,))
-        action_scaled[0] = map_to(action_unscaled[0], d2r(-20.05), d2r(14.90))
-        action_scaled[1] = map_to(action_unscaled[1], d2r(-37.24), d2r(37.24))
-        action_scaled[2] = map_to(action_unscaled[2], d2r(-21.77), d2r(21.77))
+        action_scaled[0] = map_to(action_unscaled[0], d2r(-50), d2r(50))
+        action_scaled[1] = map_to(action_unscaled[1], d2r(-100), d2r(100))
+        action_scaled[2] = map_to(action_unscaled[2], d2r(-50), d2r(50))
 
-        if to == 'model':
-            return np.hstack([action_scaled, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        else:
-            return r2d(action_scaled)
+        return r2d(action_scaled)
 
     def get_task_default(self):
 

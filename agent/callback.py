@@ -6,6 +6,7 @@ from typing import Union
 
 import gym
 import numpy as np
+from tools.plot_response import get_response
 
 
 class SaveOnBestReturn(ABC):
@@ -91,6 +92,7 @@ class SaveOnBestReturn(ABC):
                     print("New best mean reward!")
                 self.model.save(os.path.join(self.best_model_save_path, 'best_model'))
                 self.best_mean_reward = episode_reward
+                get_response(self.eval_env, self.model, during_training=True)
 
             if self.verbose > 0:
                 print(f"Eval num_timesteps={self.num_timesteps}, "
