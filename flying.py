@@ -32,11 +32,11 @@ def learn():
     env_train = Citation(task=get_task()[:3], time_vector=get_task()[3])
     env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
 
-    callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=1000, log_path="agent/trained/tmp/",
+    callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule(0.0003, 0.0003)
+                learning_rate=schedule(0.0004, 0.0002)
                 )
     agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")

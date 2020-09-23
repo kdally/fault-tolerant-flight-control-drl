@@ -36,8 +36,8 @@ class Citation(gym.Env):
             task = self.get_task_default()
         self.ref_signal = task[0]
         self.track_indices = task[1]
-        self.obs_indices = task[2] + 3
-        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices),), dtype=np.float64)
+        self.obs_indices = task[2]
+        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
 

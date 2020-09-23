@@ -13,11 +13,21 @@ from tools.schedule import schedule
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_response import get_response
-from flying import run_preexisting
 from get_task import get_task
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
+
+
+def run_preexisting(ID=None, directory: str = 'tmp'):
+
+    env_eval = Citation(task=get_task()[:3], time_vector=get_task()[3])
+    agent = SAC.load(f"agent/trained/{directory}/best_model.zip")
+
+    if ID is None:
+        get_response(env_eval, agent=agent)
+    else:
+        get_response(env_eval, agent=agent, ID=ID)
 
 
 def keyboardInterruptHandler(signal, frame):

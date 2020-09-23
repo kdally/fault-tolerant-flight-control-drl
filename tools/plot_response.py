@@ -4,7 +4,7 @@ import numpy as np
 from get_task import get_task
 
 
-def plot_response(name, env, task, perf):
+def plot_response(name, env, task, perf, during_training=False):
     subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
@@ -91,7 +91,10 @@ def plot_response(name, env, task, perf):
             fig.update_xaxes(showticklabels=False, nticks=7, row=row, col=col)
 
     fig.update_traces(mode='lines')
-    fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.eps")
+    if during_training:
+        fig.write_image(f"figures/during_training/{get_task()[4]}_r{abs(int(perf))}.eps")
+    else:
+        fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.eps")
 
 
 def get_response(env, agent, ID=None, during_training=False, verbose = 1):
@@ -113,7 +116,7 @@ def get_response(env, agent, ID=None, during_training=False, verbose = 1):
         obs, reward, done, info = env.step(action)
         return_a += reward
         if current_time == env.time[-1]:
-            plot_response(ID, env, get_task(), return_a)
+            plot_response(ID, env, get_task(), return_a, during_training)
             if verbose > 0:
                 print(f"Goal reached! Return = {return_a:.2f}")
                 print('')
