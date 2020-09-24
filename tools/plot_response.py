@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-from get_task import get_task_eval as get_task
+from tools.get_task import get_task_eval as get_task
 
 
 def plot_response(name, env, task, perf, during_training=False):
@@ -105,7 +105,7 @@ def get_response(env, agent, ID=None, during_training=False, verbose=1):
         agent.save(f'agent/trained/{get_task()[4]}_last.zip')
         ID = 'last'
 
-    obs = env.reset()
+    obs = env.reset_soft()
     return_a = 0
 
     for i, current_time in enumerate(env.time):

@@ -1,5 +1,6 @@
 import gym
 import numpy as np
+from tools.get_task import get_task_eval, get_task_tr
 
 # # Import the low-level C/C++ module
 if __package__ or "." in __name__:
@@ -25,19 +26,21 @@ class Citation(gym.Env):
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['graph']}
 
-    def __init__(self, time_vector: np.ndarray = np.arange(0, 30, 0.01), task=None):
+    def __init__(self, eval=False):
 
         super(Citation, self).__init__()
 
-        self.time = time_vector
+        if eval:
+            self.task_fun = get_task_eval
+        else:
+            self.task_fun = get_task_tr
+
+        self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
 
-        if task is None:
-            task = self.get_task_default()
-        self.task_fun = task
-        self.ref_signal = self.task_fun[0]
-        self.track_indices = self.task_fun[1]
-        self.obs_indices = self.task_fun[2]
+        self.ref_signal = self.task_fun()[0]
+        self.track_indices = self.task_fun()[1]
+        self.obs_indices = self.task_fun()[2]
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
@@ -69,6 +72,22 @@ class Citation(gym.Env):
 
         return self.get_obs(), self.get_reward(), done, {}
 
+    def reset_soft(self):
+
+        C_MODEL.initialize()
+        action_trim = np.array(
+            [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0., 0., 0., 0., 0.,
+             0.38576210972746433, 0.38576210972746433, ])
+        self.state = C_MODEL.step(action_trim)
+        self.scale_s = np.ones(self.state.shape)
+        self.scale_s[[0, 1, 2, 4, 5, 6, 7, 8]] = 180 / np.pi
+        self.state_history = np.zeros((self.state.shape[0], self.time.shape[0]))
+        self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
+        self.error = np.zeros(len(self.track_indices))
+        self.step_count = 0
+        self.current_deflection = np.zeros(3)
+        return np.zeros(self.observation_space.shape)
+
     def reset(self):
 
         C_MODEL.initialize()
@@ -83,7 +102,7 @@ class Citation(gym.Env):
         self.error = np.zeros(len(self.track_indices))
         self.step_count = 0
         self.current_deflection = np.zeros(3)
-        self.ref_signal = self.task_fun[0]
+        self.ref_signal = self.task_fun()[0]
         return np.zeros(self.observation_space.shape)
 
     def get_reward(self):
@@ -129,24 +148,6 @@ class Citation(gym.Env):
         action_scaled[2] = map_to(action_unscaled[2], d2r(-20), d2r(20))
 
         return r2d(action_scaled)
-
-    def get_task_default(self):
-
-        ref_pbody = np.hstack([5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 2 * np.pi * 0.2),
-                               5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 3.5 * np.pi * 0.2),
-                               - 5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               np.zeros(int(5 * self.time.shape[0] / self.time[-1].round())),
-                               ])
-        ref_qbody = np.hstack([5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 2 * np.pi * 0.2),
-                               5 * np.sin(self.time[:int(self.time.shape[0] / 3)] * 3.5 * np.pi * 0.2),
-                               - 5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               5 * np.ones(int(2.5 * self.time.shape[0] / self.time[-1].round())),
-                               np.zeros(int(5 * self.time.shape[0] / self.time[-1].round())),
-                               ])
-        ref_beta = np.zeros(int(self.time.shape[0]))
-
-        return np.vstack([ref_pbody, ref_qbody, ref_beta]), [0, 1, 5], [0, 1, 5, 2]
 
     def render(self, mode='any'):
         raise NotImplementedError()

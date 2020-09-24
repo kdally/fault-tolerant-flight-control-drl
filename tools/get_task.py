@@ -48,7 +48,7 @@ def get_task_tr(time_v: np.ndarray = np.arange(0, 10, 0.01)):
                                       angle_theta/2 * np.ones(int(4.5 * time_v.shape[0] / time_v[-1].round())),
                                       ])
 
-        angle_phi = random.choice([35, 30, 25, 20, 15, -35, -30, -25, -20, -15])
+        angle_phi = random.choice([35, 30, 25, 20, -35, -30, -25, -20])
         signals['phi'] = np.hstack([np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
                                     angle_phi * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
                                     angle_phi * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),

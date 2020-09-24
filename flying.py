@@ -11,7 +11,7 @@ from tools.schedule import schedule
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_response import get_response
-from get_task import get_task_tr, get_task_eval
+from tools.get_task import get_task_tr, get_task_eval
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
@@ -25,8 +25,8 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 def learn():
 
-    env_train = Citation(task=get_task_tr()[:3], time_vector=get_task_tr()[3])
-    env_eval = Citation(task=get_task_tr()[:3], time_vector=get_task_tr()[3])
+    env_train = Citation()
+    env_eval = Citation()
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
@@ -48,7 +48,7 @@ def learn():
 
 def run_preexisting(ID=None, directory: str = 'tmp'):
 
-    env_eval = Citation(task=get_task_eval()[:3], time_vector=get_task_eval()[3])
+    env_eval = Citation(eval=True)
 
     if ID is None:
         agent = SAC.load(f"agent/trained/{directory}/best_model.zip")

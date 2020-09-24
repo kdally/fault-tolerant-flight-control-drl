@@ -473,11 +473,6 @@ class SAC(BaseRLModel):
                     if maybe_is_success is not None:
                         episode_successes.append(float(maybe_is_success))
 
-                if len(episode_rewards[-101:-1]) == 0:
-                    mean_reward = -np.inf
-                else:
-                    mean_reward = round(float(np.mean(episode_rewards[-101:-1])), 1)
-
                 num_episodes = len(episode_rewards)
                 # Display training infos
                 if self.verbose >= 1 and done and log_interval is not None and len(episode_rewards) % log_interval == 0:
@@ -616,11 +611,6 @@ class SAC(BaseRLModel):
                     maybe_is_success = info.get('is_success')
                     if maybe_is_success is not None:
                         episode_successes.append(float(maybe_is_success))
-
-                if len(episode_rewards[-101:-1]) == 0:
-                    mean_reward = -np.inf
-                else:
-                    mean_reward = round(float(np.mean(episode_rewards[-101:-1])), 1)
 
                 num_episodes = len(episode_rewards)
                 # Display training infos
