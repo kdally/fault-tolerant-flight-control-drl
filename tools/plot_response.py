@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-from get_task import get_task
+from get_task import get_task_eval as get_task
 
 
 def plot_response(name, env, task, perf, during_training=False):
@@ -82,9 +82,9 @@ def plot_response(name, env, task, perf, during_training=False):
 
     end_time = env.time[-1] + env.dt * 2
     fig.update_xaxes(title_text="Time [s]", range=[0, end_time], tickmode='array',
-                     tickvals=np.arange(0, end_time, 2.5), row=6, col=1)
+                     tickvals=np.arange(0, end_time, 10), row=6, col=1)
     fig.update_xaxes(title_text="Time [s]", range=[0, end_time], tickmode='array',
-                     tickvals=np.arange(0, end_time, 2.5), row=6, col=2)
+                     tickvals=np.arange(0, end_time, 10), row=6, col=2)
 
     for row in range(6):
         for col in range(3):
@@ -111,8 +111,8 @@ def get_response(env, agent, ID=None, during_training=False, verbose=1):
     for i, current_time in enumerate(env.time):
         action, _ = agent.predict(obs, deterministic=True)
         obs, reward, done, info = env.step(action)
-        if verbose > 0:
-            print(env.action_history[:, env.step_count - 1])
+        # if verbose > 0:
+        #     print(env.action_history[:, env.step_count - 1])
         return_a += reward
         if current_time == env.time[-1]:
             plot_response(ID, env, get_task(), return_a, during_training)

@@ -34,9 +34,10 @@ class Citation(gym.Env):
 
         if task is None:
             task = self.get_task_default()
-        self.ref_signal = task[0]
-        self.track_indices = task[1]
-        self.obs_indices = task[2]
+        self.task_fun = task
+        self.ref_signal = self.task_fun[0]
+        self.track_indices = self.task_fun[1]
+        self.obs_indices = self.task_fun[2]
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
@@ -82,6 +83,7 @@ class Citation(gym.Env):
         self.error = np.zeros(len(self.track_indices))
         self.step_count = 0
         self.current_deflection = np.zeros(3)
+        self.ref_signal = self.task_fun[0]
         return np.zeros(self.observation_space.shape)
 
     def get_reward(self):
