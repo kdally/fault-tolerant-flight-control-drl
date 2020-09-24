@@ -56,9 +56,6 @@ class Citation(gym.Env):
 
         self.current_deflection = self.current_deflection + self.scale_a(action_rates)*self.dt
         self.state = C_MODEL.step(np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
-        if np.isnan(self.state).sum() > 0:
-            print(self.state)
-            raise Exception('Nan')
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:  # for sideslip angle, change reward scale due to dimensions difference
@@ -69,6 +66,8 @@ class Citation(gym.Env):
 
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
+        if np.isnan(self.state).sum() > 0:
+            done = True
 
         return self.get_obs(), self.get_reward(), done, {}
 

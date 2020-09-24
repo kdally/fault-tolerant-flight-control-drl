@@ -2,7 +2,7 @@
 /figures/
 /envs/phlab/
 .idea
-testing.py
+scratchpad.py
 
 *.xml
 *.pyc
