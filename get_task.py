@@ -1,24 +1,25 @@
 import numpy as np
 
 
-def get_task(time_v: np.ndarray = np.arange(0, 10, 0.07)):
+def get_task(time_v: np.ndarray = np.arange(0, 10, 0.01),):
     state_indices = {'p': 0, 'q': 1, 'r': 2, 'V': 3, 'alpha': 4, 'beta': 5,
                      'phi': 6, 'theta': 7, 'psi': 8, 'h': 9, 'x': 10, 'y': 11}
     signals = {}
 
-    task_type = 'body_rates'
+    # task_type = 'body_rates'
     # task_type = '3attitude'
+    task_type = '3attitude_step'
     # task_type = 'altitude_2attitude'
 
     if task_type == 'body_rates':
         signals['p'] = np.hstack([np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                  5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
+                                  5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 0.2 * np.pi * 2),
                                   # 5 * np.sin(time_v[:int(time_v.shape[0] / 4)] * 3.5 * np.pi * 0.2),
                                   # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   # np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   ])
-        signals['q'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
+        signals['q'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 0.2 * np.pi * 2),
                                   # 5 * np.sin(time_v[:int(time_v.shape[0] / 4)] * 3.5 * np.pi * 0.2),
                                   # -5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                   # 5 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
@@ -28,23 +29,27 @@ def get_task(time_v: np.ndarray = np.arange(0, 10, 0.07)):
         obs_indices = [state_indices['r']]
 
     elif task_type == '3attitude':
-        # signals['theta'] = np.hstack([20 * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.26 * np.pi * 2),
-        #                  20 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-        #                  20 * np.cos(time_v[:np.argwhere(time_v == 0.5)[0, 0]] * 0.33 * np.pi * 2),
-        #                  10 * np.ones(int(4.5 * time_v.shape[0] / time_v[-1].round())),
-        #                  ])
-        # signals['phi'] = np.hstack([np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
-        #                   30 * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
-        #                   30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-        #                   30 * np.cos(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
-        #                   np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
-        #                   ])
         signals['theta'] = np.hstack([np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                      5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
+                                      5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 0.2 * np.pi * 2),
                                       ])
-        signals['phi'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 3.75 * np.pi * 0.2),
+        signals['phi'] = np.hstack([5 * np.sin(time_v[:int(time_v.shape[0] * 3 / 4)] * 0.2 * np.pi * 2),
                                     np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
                                     ])
+        signals['beta'] = np.zeros(int(time_v.shape[0]))
+        obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
+
+    elif task_type == '3attitude_step':
+        signals['theta'] = np.hstack([20 * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                         20 * np.ones(int(3.5 * time_v.shape[0] / time_v[-1].round())),
+                         20 * np.cos(time_v[:np.argwhere(time_v == 0.5)[0, 0]] * 0.33 * np.pi * 2),
+                         10 * np.ones(int(4.5 * time_v.shape[0] / time_v[-1].round())),
+                         ])
+        signals['phi'] = np.hstack([np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
+                          30 * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
+                          30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          30 * np.cos(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
+                          np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
+                          ])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
 

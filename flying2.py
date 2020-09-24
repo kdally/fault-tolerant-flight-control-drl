@@ -44,9 +44,9 @@ def learn():
                                 best_model_save_path="agent/trained/tmp_rates/")
     model = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule(0.0003, 0.0003)
+                learning_rate=schedule(0.0004, 0.0002)
                 )
-    model.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
+    model.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     model = SAC.load("agent/trained/tmp_rates/best_model.zip")
     ID = get_ID(6)
     model.save(f'agent/trained/{get_task()[4]}_{ID}.zip')

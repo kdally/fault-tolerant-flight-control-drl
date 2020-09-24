@@ -90,9 +90,9 @@ class BaseRLModel(ABC):
         :param env: (Gym Environment) The environment for learning a policy
         """
         if env is None and self.env is None:
-            if self.verbose >= 1:
-                print("Loading a model without an environment, "
-                      "this model cannot be trained until it has a valid environment.")
+            # if self.verbose >= 1:
+            #     print("Loading a model without an environment, "
+            #           "this model cannot be trained until it has a valid environment.")
             return
         elif env is None:
             raise ValueError("Error: trying to replace the current environment with None")
@@ -563,11 +563,7 @@ class BaseRLModel(ABC):
                         serialized_params, parameter_list
                     )
         except zipfile.BadZipFile:
-            # load_path wasn't a zip file. Possibly a cloudpickle
-            # file. Show a warning and fall back to loading cloudpickle.
-            warnings.warn("It appears you are loading from a file with old format. " +
-                          "Older cloudpickle format has been replaced with zip-archived " +
-                          "models. Consider saving the model with new format.",
+            warnings.warn("It appears you are loading from a file with wrong format. " ,
                           DeprecationWarning)
 
         return data, params

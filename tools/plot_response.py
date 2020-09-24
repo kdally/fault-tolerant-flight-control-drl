@@ -44,7 +44,7 @@ def plot_response(name, env, task, perf, during_training=False):
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[5, :].T, name=r'$\beta [^\circ]$',
         line=dict(color='#636EFA')), row=4, col=2)
-    fig.update_yaxes(title_text='&#946; [&deg;]', row=4, col=2, range=[-0.5, 0.5], title_standoff=0)
+    fig.update_yaxes(title_text='&#946; [&deg;]', row=4, col=2, range=[-1, 1], title_standoff=0)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[6, :].T, name=r'$\phi [^\circ]$',
@@ -97,8 +97,7 @@ def plot_response(name, env, task, perf, during_training=False):
         fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.eps")
 
 
-def get_response(env, agent, ID=None, during_training=False, verbose = 1):
-
+def get_response(env, agent, ID=None, during_training=False, verbose=1):
     if during_training:
         ID = 'during_training'
         verbose = 0
@@ -111,9 +110,9 @@ def get_response(env, agent, ID=None, during_training=False, verbose = 1):
 
     for i, current_time in enumerate(env.time):
         action, _ = agent.predict(obs, deterministic=True)
-        if verbose > 0:
-            print(action * 180 / np.pi)
         obs, reward, done, info = env.step(action)
+        if verbose > 0:
+            print(env.action_history[:, env.step_count - 1])
         return_a += reward
         if current_time == env.time[-1]:
             plot_response(ID, env, get_task(), return_a, during_training)

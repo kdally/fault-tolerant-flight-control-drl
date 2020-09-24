@@ -6,7 +6,7 @@ from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 
-from envs.citation import Citation
+from envs.citation_rates import Citation
 from tools.schedule import schedule
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
@@ -38,7 +38,7 @@ def learn():
                 ent_coef='auto', batch_size=256,
                 learning_rate=schedule(0.0004, 0.0002)
                 )
-    agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(5e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
     agent.save(f'agent/trained/{get_task()[4]}_{ID}.zip')
@@ -62,6 +62,8 @@ def run_preexisting(ID=None, directory: str = 'tmp'):
 
 
 def keyboardInterruptHandler(signal, frame):
+    print('')
+    print('Early stopping. Getting last results...')
     run_preexisting()
     exit(0)
 
@@ -69,6 +71,6 @@ def keyboardInterruptHandler(signal, frame):
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
 # run_preexisting()
-# run_preexisting('5DVX67')
+# run_pre existing('5DVX67')
 
 # os.system('say "your program has finished"')

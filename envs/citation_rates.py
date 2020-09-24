@@ -58,7 +58,7 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:  # for sideslip angle, change reward scale due to dimensions difference
-            self.error[self.track_indices.index(5)] *= 20
+            self.error[self.track_indices.index(5)] *= 10
 
         self.state_history[:, self.step_count] = np.multiply(self.state, self.scale_s)
         self.action_history[:, self.step_count] = self.current_deflection
@@ -122,9 +122,9 @@ class Citation(gym.Env):
             # raise Exception(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds.')
 
         action_scaled = np.ndarray((3,))
-        action_scaled[0] = map_to(action_unscaled[0], d2r(-50), d2r(50))
-        action_scaled[1] = map_to(action_unscaled[1], d2r(-100), d2r(100))
-        action_scaled[2] = map_to(action_unscaled[2], d2r(-50), d2r(50))
+        action_scaled[0] = map_to(action_unscaled[0], d2r(-20), d2r(20))
+        action_scaled[1] = map_to(action_unscaled[1], d2r(-40), d2r(40))
+        action_scaled[2] = map_to(action_unscaled[2], d2r(-20), d2r(20))
 
         return r2d(action_scaled)
 
