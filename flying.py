@@ -6,7 +6,7 @@ from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 
-from envs.citation_rates import Citation
+from envs.normal.citation import Citation
 from tools.schedule import schedule, schedule_kink
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
@@ -16,10 +16,9 @@ from tools.get_task import get_task_tr
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# todo: filter high freq from reference
+# filter high freq from reference
 
 # > NOT LEARNING
-# todo: change network width
 # todo: give more observations
 
 
