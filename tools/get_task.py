@@ -46,13 +46,13 @@ def get_task_tr(time_v: np.ndarray = np.arange(0, 20, 0.01)):
                                       angle_theta * np.ones(int(3.5 * time_v.shape[0] / time_v[-1].round())),
                                       angle_theta * np.cos(time_v[:np.argwhere(time_v == 0.5)[0, 0]] * 0.33 * np.pi * 2),
                                       angle_theta/2 * np.ones(int(4.5 * time_v.shape[0] / time_v[-1].round())),
-                                      -angle_theta * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                                      -angle_theta * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.17 * np.pi * 2),
                                       -angle_theta * np.ones(int(3.5 * time_v.shape[0] / time_v[-1].round())),
                                       -angle_theta * np.cos(time_v[:np.argwhere(time_v == 0.5)[0, 0]] * 0.33 * np.pi * 2),
                                       -angle_theta / 2 * np.ones(int(4.5 * time_v.shape[0] / time_v[-1].round())),
                                       ])
 
-        angle_phi = random.choice([35, 30, 25, 20, -35, -30, -25, -20])
+        angle_phi = random.choice([45, 35, 25, -45, -35, -25])
         signals['phi'] = np.hstack([np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
                                     angle_phi * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
                                     angle_phi * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
@@ -138,34 +138,68 @@ def get_task_eval(time_v: np.ndarray = np.arange(0, 60, 0.01)):
 
     elif task_type == '3attitude_step':
         signals['theta'] = np.hstack([20 * np.sin(time_v[:np.argwhere(time_v == 5.0)[0, 0]] * 0.05 * np.pi * 2),
-                                      20 * np.ones(int(8 * time_v.shape[0] / time_v[-1].round())),
-                                      20 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.08 * np.pi * 2),
-                                      10 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-                                      10 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
-                                      0 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-                                      -15 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
-                                      -15 * np.ones(int(12 * time_v.shape[0] / time_v[-1].round())),
-                                      -15 * np.cos(time_v[:np.argwhere(time_v == 4)[0, 0]] * 0.06 * np.pi * 2),
-                                      0 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
-                                      ])
+                      20 * np.ones(int(8 * time_v.shape[0] / time_v[-1].round())),
+                      20 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.08 * np.pi * 2),
+                      10 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+                      10 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
+                      0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
+                      -15 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
+                      -15 * np.ones(int(7 * time_v.shape[0] / time_v[-1].round())),
+                      -15 * np.cos(time_v[:np.argwhere(time_v == 4)[0, 0]] * 0.06 * np.pi * 2),
+                      0 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+                      ])
         signals['phi'] = np.hstack([0 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
-                                    30 * np.sin(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
-                                    30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-                                    30 * np.cos(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
-                                    0 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-                                    -30 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
-                                    -30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-                                    -30 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
-                                    0 * np.ones(int(3 * time_v.shape[0] / time_v[-1].round())),
-                                    20 * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-                                    20 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-                                    20 * np.cos(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-                                    0 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
-                                    -20 * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-                                    -20 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
-                                    -20 * np.cos(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-                                    0 * np.ones(int(12 * time_v.shape[0] / time_v[-1].round())),
-                                    ])
+                          30 * np.sin(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
+                          30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          30 * np.cos(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
+                          0 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          -30 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
+                          -30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          -30 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
+                          0 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+                          45 * np.sin(time_v[:np.argwhere(time_v == 2.5)[0, 0]] * 0.1 * np.pi * 2),
+                          45 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          45 * np.cos(time_v[:np.argwhere(time_v == 2.5)[0, 0]] * 0.1 * np.pi * 2),
+                          0 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
+                          -25 * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                          -25 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          -25 * np.cos(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                          0 * np.ones(int(8 * time_v.shape[0] / time_v[-1].round())),
+                          ])
+        signals['beta'] = np.zeros(int(time_v.shape[0]))
+        obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
+
+    elif task_type == '3attitude_step_hard':
+
+        signals['theta'] = np.hstack([20 * np.sin(time_v[:np.argwhere(time_v == 5.0)[0, 0]] * 0.05 * np.pi * 2),
+                      20 * np.ones(int(8 * time_v.shape[0] / time_v[-1].round())),
+                      20 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.08 * np.pi * 2),
+                      10 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+                      10 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
+                      0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
+                      -15 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
+                      -15 * np.ones(int(7 * time_v.shape[0] / time_v[-1].round())),
+                      -15 * np.cos(time_v[:np.argwhere(time_v == 4)[0, 0]] * 0.06 * np.pi * 2),
+                      0 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+                      ])
+        signals['phi'] = np.hstack([0 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+                          30 * np.sin(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
+                          30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          30 * np.cos(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
+                          0 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          -30 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
+                          -30 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          -30 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
+                          0 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+                          70 * np.sin(time_v[:np.argwhere(time_v == 2.5)[0, 0]] * 0.1 * np.pi * 2),
+                          70 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          70 * np.cos(time_v[:np.argwhere(time_v == 2.5)[0, 0]] * 0.1 * np.pi * 2),
+                          0 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
+                          -25 * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                          -25 * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),
+                          -25 * np.cos(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                          0 * np.ones(int(8 * time_v.shape[0] / time_v[-1].round())),
+                          ])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['p'], state_indices['q'], state_indices['r']]
 
@@ -196,4 +230,6 @@ def get_task_eval(time_v: np.ndarray = np.arange(0, 60, 0.01)):
     obs_indices = track_indices + obs_indices
 
     return track_signals, track_indices, obs_indices, time_v, task_type
+
+
 

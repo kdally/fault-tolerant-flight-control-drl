@@ -45,11 +45,11 @@ def hyperparam_optimization(n_trials=30, n_timesteps=int(1e6),
     :return: (pd.Dataframe) detailed result of the optimization
     """
 
-    n_startup_trials = 10
+    n_startup_trials = 5
 
     sampler = TPESampler(n_startup_trials=n_startup_trials, seed=3)
 
-    pruner = MedianPruner(n_startup_trials=n_startup_trials, n_warmup_steps=10 // 3)
+    pruner = MedianPruner(n_startup_trials=n_startup_trials, n_warmup_steps=10)
 
     study = optuna.create_study(sampler=sampler, pruner=pruner)
     algo_sampler = sample_sac_params
@@ -65,7 +65,7 @@ def hyperparam_optimization(n_trials=30, n_timesteps=int(1e6),
         model = create_model(eval_env, **kwargs)
 
         eval_callback = SaveOnBestReturn(eval_env=eval_env, eval_freq=2000, log_path='optimization_logs/tmp/',
-                                         best_model_save_path='optimization_logs/tmp/', verbose=0)
+                                         best_model_save_path='optimization_logs/tmp/')
 
         try:
             model.learn(n_timesteps, callback=eval_callback)
@@ -78,14 +78,10 @@ def hyperparam_optimization(n_trials=30, n_timesteps=int(1e6),
             model.env.close()
             eval_env.close()
             raise optuna.exceptions.TrialPruned()
-        is_pruned = eval_callback.is_pruned
         cost = -1 * eval_callback.last_mean_reward
 
         del model.env, eval_env
         del model
-
-        if is_pruned:
-            raise optuna.exceptions.TrialPruned()
 
         return cost
 

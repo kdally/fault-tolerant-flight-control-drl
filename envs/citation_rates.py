@@ -67,7 +67,7 @@ class Citation(gym.Env):
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
-            done = True
+            return np.zeros(self.observation_space.shape), -1, True, {}
 
         return self.get_obs(), self.get_reward(), done, {}
 
@@ -160,7 +160,7 @@ class Citation(gym.Env):
 # envs = Citation()
 #
 # # Box(4,) means that it is a Vector with 4 components
-# print("Observation space:", envs.observation_space)
+# print("Observation space:", envs.observation_space.shape)
 # print("Action space:", envs.action_space)
 #
 # check_env(envs, warn=True)
