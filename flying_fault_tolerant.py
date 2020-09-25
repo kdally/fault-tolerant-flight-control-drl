@@ -17,6 +17,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 # todo: filter high freq from reference
+# todo: make training twice as long with opposite angles
 
 # > NOT LEARNING
 # todo: change network width
