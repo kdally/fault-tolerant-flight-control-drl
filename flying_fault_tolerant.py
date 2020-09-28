@@ -27,7 +27,7 @@ else:
     raise ValueError(f"Failure type not recognized.")
 
 
-def learn(pretrain_path: str = 'tmp/best_model.zip'):
+def learn():
 
     env_train = Citation()
     env_eval = Citation()
@@ -35,7 +35,6 @@ def learn(pretrain_path: str = 'tmp/best_model.zip'):
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
 
-    # agent = SAC.load(pretrain_path, env=env_train)
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
                 learning_rate=schedule_kink(0.0004, 0.0002)
@@ -72,7 +71,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-# learn()
-run_preexisting('9VZ5VE')
+learn()
+# learn('agent/trained/3attitude_step_9VZ5VE.zip')
+# run_preexisting('9VZ5VE')
 
 # os.system('say "your program has finished"')

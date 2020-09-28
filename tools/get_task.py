@@ -231,5 +231,3 @@ def get_task_eval(time_v: np.ndarray = np.arange(0, 60, 0.01)):
 
     return track_signals, track_indices, obs_indices, time_v, task_type
 
-
-

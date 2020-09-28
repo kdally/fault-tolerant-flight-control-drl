@@ -31,7 +31,7 @@ def learn():
                                 best_model_save_path="agent/trained/tmp/")
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0004, 0.0002)
+                learning_rate=schedule_kink(0.0004, 0.0002),
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")

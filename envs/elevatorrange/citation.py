@@ -54,7 +54,7 @@ class Citation(gym.Env):
 
     def step(self, action_rates: np.ndarray):
 
-        self.current_deflection = self.current_deflection + self.scale_a(action_rates)*self.dt
+        self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates)*self.dt)
         self.state = C_MODEL.step(np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
@@ -109,18 +109,6 @@ class Citation(gym.Env):
         reward = 0
         for sig in self.error:
             reward += -abs(max(min(r2d(sig / 30), 1), -1) / self.error.shape[0])
-        reward_track = reward
-
-        # action_delta_allow = np.array([1, 2, 1])
-        # action_delta = np.abs(self.action_history[:, self.step_count - 1]
-        #                       - self.action_history[:, self.step_count - 2])  # step count has already been incremented
-        # if (action_delta > action_delta_allow).any():
-        #     penalty = np.maximum(np.zeros(3), (action_delta - action_delta_allow))
-        #     reward += -penalty.sum() / 200
-        #     print(f'Reward for tracking error = {reward_track:.2f}, '
-        #           f'penalty = {-penalty.sum() / 200:.2f}')
-        # else:
-        #     print('safe')
 
         return reward
 
@@ -139,14 +127,22 @@ class Citation(gym.Env):
                 f'Corrected to {max(min(np.abs(action_unscaled).max(), 1), -1)}.')
             action_unscaled[0] = max(min(action_unscaled[0], 1), -1)
             action_unscaled[1] = max(min(action_unscaled[1], 1), -1)
-            # raise Exception(f'Control input {np.abs(action).max()} is outside [-1, 1] bounds.')
 
         action_scaled = np.ndarray((3,))
-        action_scaled[0] = map_to(action_unscaled[0], d2r(-20), d2r(20))
-        action_scaled[1] = map_to(action_unscaled[1], d2r(-40), d2r(40))
-        action_scaled[2] = map_to(action_unscaled[2], d2r(-20), d2r(20))
+        action_scaled[0] = map_to(action_unscaled[0], -20, 20)
+        action_scaled[1] = map_to(action_unscaled[1], -40, 40)
+        action_scaled[2] = map_to(action_unscaled[2], -20, 20)
 
-        return r2d(action_scaled)
+        return action_scaled
+
+    @staticmethod
+    def bound_a(action):
+
+        # min_bounds = np.array([-3, -37.24, -21.77])
+        # max_bounds = np.array([3, 37.24, 21.77])
+        min_bounds = np.array([-20.05, -37.24, -21.77])
+        max_bounds = np.array([14.9, 37.24, 21.77])
+        return np.minimum(np.maximum(action, min_bounds), max_bounds)
 
     def render(self, mode='any'):
         raise NotImplementedError()
