@@ -138,8 +138,6 @@ class Citation(gym.Env):
     @staticmethod
     def bound_a(action):
 
-        # min_bounds = np.array([-3, -37.24, -21.77])
-        # max_bounds = np.array([3, 37.24, 21.77])
         min_bounds = np.array([-20.05, -37.24, -21.77])
         max_bounds = np.array([14.9, 37.24, 21.77])
         return np.minimum(np.maximum(action, min_bounds), max_bounds)
