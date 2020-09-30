@@ -44,7 +44,9 @@ def plot_response(name, env, task, perf, during_training=False):
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[5, :].T, name=r'$\beta [^\circ]$',
         line=dict(color='#636EFA')), row=4, col=2)
-    fig.update_yaxes(title_text='&#946; [&deg;]', row=4, col=2, range=[-1, 1], title_standoff=0)
+    fig.update_yaxes(title_text='&#946; [&deg;]', row=4, col=2,
+                     # range=[-1, 1],
+                     title_standoff=0)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[6, :].T, name=r'$\phi [^\circ]$',

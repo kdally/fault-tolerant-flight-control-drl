@@ -37,7 +37,7 @@ def learn():
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0004, 0.0002)
+                learning_rate=schedule_kink(0.0004, 0.0002),
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")
@@ -71,8 +71,9 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
-# learn('agent/trained/3attitude_step_9VZ5VE.zip')
+# learn()
 # run_preexisting('9VZ5VE')
+run_preexisting('I2WUJ6_dr')
+
 
 # os.system('say "your program has finished"')

@@ -41,7 +41,7 @@ class Citation(gym.Env):
         self.ref_signal = self.task_fun()[0]
         self.track_indices = self.task_fun()[1]
         self.obs_indices = self.task_fun()[2]
-        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 +1,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
 
@@ -59,7 +59,7 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:  # for sideslip angle, change reward scale due to dimensions difference
-            self.error[self.track_indices.index(5)] *= 10
+            self.error[self.track_indices.index(5)] *= 9
 
         self.state_history[:, self.step_count] = np.multiply(self.state, self.scale_s)
         self.action_history[:, self.step_count] = self.current_deflection
@@ -115,7 +115,8 @@ class Citation(gym.Env):
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
+        # print(np.hstack([self.error, self.state[6]/10]))
+        return np.hstack([self.error, self.state[6]/10, self.state[untracked_obs_index], self.current_deflection])
 
     @staticmethod
     def scale_a(action_unscaled: np.ndarray) -> np.ndarray:
