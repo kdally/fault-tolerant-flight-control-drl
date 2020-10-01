@@ -5,8 +5,9 @@ import pandas as pd
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
+from envs.citation import Citation
 
-from tools.schedule import schedule, schedule_kink
+from tools.schedule import schedule_kink
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_response import get_response
@@ -18,26 +19,26 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 failure_type = 'dr' # de, da, dr
 
 if failure_type == 'de':
-    from envs.elevatorrange.citation import Citation
+    import envs.elevatorrange._citation as C_MODEL
 elif failure_type == 'da':
-    from envs.aileroneff.citation import Citation
+    import envs.aileroneff._citation as C_MODEL
 elif failure_type == 'dr':
-    from envs.rudderstuck.citation import Citation
+    import envs.rudderstuck._citation as C_MODEL
 else:
     raise ValueError(f"Failure type not recognized.")
 
 
 def learn():
 
-    env_train = Citation()
-    env_eval = Citation()
+    env_train = Citation(C_MODEL)
+    env_eval = Citation(C_MODEL)
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0004, 0.0002),
+                learning_rate=schedule_kink(0.0005, 0.0003),
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")
@@ -53,7 +54,7 @@ def learn():
 
 def run_preexisting(ID=None, directory: str = 'tmp'):
 
-    env_eval = Citation(eval=True)
+    env_eval = Citation(C_MODEL, eval=True)
 
     if ID is None:
         agent = SAC.load(f"agent/trained/{directory}/best_model.zip")
