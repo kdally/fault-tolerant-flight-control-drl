@@ -18,10 +18,8 @@ from tools.get_task import get_task_tr
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# filter high freq from reference
 
-# > NOT LEARNING
-# todo: give more observations
+# todo: give env_eval the evaluation task
 
 
 def learn():
@@ -33,7 +31,8 @@ def learn():
                                 best_model_save_path="agent/trained/tmp/")
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0005, 0.0003),
+                learning_rate=schedule_kink(0.0004, 0.0002),
+                # policy_kwargs=dict(layers=[128, 64]),
                 )
     agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")
@@ -68,7 +67,7 @@ def keyboardInterruptHandler(signal, frame):
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
-# run_preexisting()
+# run_preexisting('O5PN75')
 # run_preexisting('9VZ5VE')
 
 # os.system('say "your program has finished"')
