@@ -1,6 +1,18 @@
 import math
 
 
+def constant(initial_value):
+    def func(progress):
+        """
+        Progress will decrease from 1 (beginning) to 0
+        :param progress: (float)
+        :return: (float)
+        """
+        return initial_value
+
+    return func
+
+
 def schedule(initial_value):
     """
     Linear learning rate schedule.
