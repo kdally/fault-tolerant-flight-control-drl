@@ -11,3 +11,4 @@ scratchpad.py
 *.pyc
 *.pyc
 *.pyc
+.DS_Store
