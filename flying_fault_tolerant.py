@@ -16,7 +16,7 @@ from tools.get_task import get_task_tr_fail
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-failure_type = 'cg'  # de, da, dr5, dr15, struc, cg
+failure_type = 'struc'  # de, da, dr5, dr15, struc, cg
 
 if failure_type == 'de':
     import envs.elevatorrange._citation as C_MODEL

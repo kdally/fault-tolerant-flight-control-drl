@@ -57,7 +57,7 @@ class Citation(gym.Env):
     def step(self, action_rates: np.ndarray):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates)*self.dt)
-        self.state = self.C_MODEL.step(np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]))
+        self.state = self.C_MODEL.step(np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), 1.0)
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:  #  sideslip angle, change reward scale due to dimensions difference
@@ -79,7 +79,7 @@ class Citation(gym.Env):
         action_trim = np.array(
             [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0., 0., 0., 0., 0.,
              0.38576210972746433, 0.38576210972746433, ])
-        self.state = self.C_MODEL.step(action_trim)
+        self.state = self.C_MODEL.step(action_trim, 0.0)
         self.scale_s = np.ones(self.state.shape)
         self.scale_s[[0, 1, 2, 4, 5, 6, 7, 8]] = 180 / np.pi
         self.state_history = np.zeros((self.state.shape[0], self.time.shape[0]))

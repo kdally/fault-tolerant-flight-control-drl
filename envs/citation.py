@@ -42,7 +42,7 @@ class Citation(gym.Env):
         self.ref_signal = self.task_fun()[0]
         self.track_indices = self.task_fun()[1]
         self.obs_indices = self.task_fun()[2]
-        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 +1,), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 ,), dtype=np.float64)
         # self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 ,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
@@ -119,7 +119,7 @@ class Citation(gym.Env):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
         # print(np.hstack([self.error, self.state[6]/10, self.state[7]/10, self.state[untracked_obs_index], d2r(self.current_deflection)]))
-        return np.hstack([self.error, self.state[6]/5, self.state[untracked_obs_index], self.current_deflection])
+        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection/5])
         # return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
 
     @staticmethod
