@@ -4,7 +4,7 @@ import numpy as np
 from tools.get_task import get_task_eval as get_task
 
 
-def plot_response(name, env, task, perf, during_training=False):
+def plot_response(name, env, task, perf, during_training=False, failure=False):
     subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
@@ -75,6 +75,18 @@ def plot_response(name, env, task, perf, during_training=False):
         name=r'$\delta_r [^\circ]$', line=dict(color='#00CC96')), row=6, col=2)
     fig.update_yaxes(title_text='&#948;<sub>r</sub> [&deg;]', row=6, col=2, title_standoff=5)
 
+    # for row in range(6):
+    #     for col in range(3):
+    #         if failure:
+
+                # fig.add_shape(
+                #     # Line Vertical
+                #     dict(
+                #         type='line',
+                #         yref='paper', y0=0, y1=1,
+                #         xref='x', x0=5, x1=5,
+                #     ), row=row, col=col)
+
     fig.update_layout(showlegend=False, width=800, height=500, margin=dict(
         l=10,
         r=10,
@@ -99,7 +111,7 @@ def plot_response(name, env, task, perf, during_training=False):
         fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.eps")
 
 
-def get_response(env, agent, ID=None, during_training=False, verbose=1):
+def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=False):
     if during_training:
         ID = 'during_training'
         verbose = 0
@@ -117,7 +129,7 @@ def get_response(env, agent, ID=None, during_training=False, verbose=1):
         #     print(env.action_history[:, env.step_count - 1])
         return_a += reward
         if current_time == env.time[-1]:
-            plot_response(ID, env, get_task(), return_a, during_training)
+            plot_response(ID, env, get_task(), return_a, during_training, failure)
             if verbose > 0:
                 print(f"Goal reached! Return = {return_a:.2f}")
                 print('')

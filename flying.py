@@ -6,7 +6,6 @@ from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 from envs.citation import Citation
-import envs.normal._citation as C_MODEL
 
 from tools.schedule import schedule_kink, constant
 from tools.identifier import get_ID
@@ -24,8 +23,8 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 def learn():
 
-    env_train = Citation(C_MODEL)
-    env_eval = Citation(C_MODEL)
+    env_train = Citation(eval=True)
+    env_eval = Citation(eval=True)
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
@@ -42,14 +41,14 @@ def learn():
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr()[4]}_{ID}.csv')
     plot_training(ID, get_task_tr()[4])
-    get_response(Citation(C_MODEL, eval=True), agent=agent, ID=ID)
+    get_response(Citation(eval=True), agent=agent, ID=ID)
 
     return
 
 
 def run_preexisting(ID=None, directory: str = 'tmp'):
 
-    env_eval = Citation(C_MODEL, eval=True)
+    env_eval = Citation(eval=True)
 
     if ID is None:
         agent = SAC.load(f"agent/trained/{directory}/best_model.zip")
@@ -67,8 +66,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
-# run_preexisting('O5PN75')
-# run_preexisting('9VZ5VE')
+# learn()
+# run_preexisting('N28KZO')
+run_preexisting('9VZ5VE')
 
 # os.system('say "your program has finished"')
