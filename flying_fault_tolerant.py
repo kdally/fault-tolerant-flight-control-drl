@@ -5,7 +5,7 @@ import pandas as pd
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
-from envs.citation2 import Citation
+from envs.citation import Citation
 
 from tools.schedule import schedule_kink
 from tools.identifier import get_ID
@@ -17,8 +17,8 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 # failure_inputs = ['de', 20.05, 3.0]
-# failure_inputs = ['da', 1.0, 0.3]
-failure_inputs = ['dr', 0.0, 15.0]
+failure_inputs = ['da', 1.0, 0.3]
+# failure_inputs = ['dr', 0.0, 5.0]
 # failure_inputs = ['struc', 1.0, 0.5]
 # failure_inputs = ['cg', 1.0, 1.04]
 # failure_inputs = ['cg', 1.0, 1.0631]

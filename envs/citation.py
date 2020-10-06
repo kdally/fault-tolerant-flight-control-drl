@@ -140,6 +140,8 @@ class Citation(gym.Env):
 
         max_bound = np.ones(self.error.shape)
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        # reward_vec = 0.5*np.exp(-np.absolute(self.error)*1000)
+        # print(reward_vec)
         # reward = -reward_vec[:2].sum() / (self.error.shape[0]-1)
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward

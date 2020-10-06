@@ -10,6 +10,15 @@ def plot_response(name, env, task, perf, during_training=False, failure=False):
 
     fig = make_subplots(rows=6, cols=2)
 
+    if failure:
+        fig.update_layout(
+            shapes=[
+                dict(type="line", xref="x1", yref="paper",
+                     x0=5, y0=0, x1=5, y1=1, line=dict(color="Grey", width=1)),
+                dict(type="line", xref="x2", yref="paper",
+                     x0=5, y0=0, x1=5, y1=1, line=dict(color="Grey", width=1)),
+            ])
+
     for sig_index, state_index in enumerate(task[1]):
         fig.append_trace(go.Scatter(
             x=env.time, y=env.ref_signal[sig_index, :],
@@ -74,18 +83,6 @@ def plot_response(name, env, task, perf, during_training=False, failure=False):
         x=env.time, y=env.action_history[2, :].T,
         name=r'$\delta_r [^\circ]$', line=dict(color='#00CC96')), row=6, col=2)
     fig.update_yaxes(title_text='&#948;<sub>r</sub> [&deg;]', row=6, col=2, title_standoff=5)
-
-    # for row in range(6):
-    #     for col in range(3):
-    #         if failure:
-
-                # fig.add_shape(
-                #     # Line Vertical
-                #     dict(
-                #         type='line',
-                #         yref='paper', y0=0, y1=1,
-                #         xref='x', x0=5, x1=5,
-                #     ), row=row, col=col)
 
     fig.update_layout(showlegend=False, width=800, height=500, margin=dict(
         l=10,

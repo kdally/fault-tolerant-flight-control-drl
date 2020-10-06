@@ -7,7 +7,7 @@ from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 from envs.citation import Citation
 
-from tools.schedule import schedule_kink, constant
+from tools.schedule import schedule_kink, constant, schedule_exp
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_response import get_response
@@ -18,20 +18,20 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 
-# todo: give env_eval the evaluation task
+# todo: cloud training plot +moving average
 
 
 def learn():
 
-    env_train = Citation(eval=True)
-    env_eval = Citation(eval=True)
+    env_train = Citation()
+    env_eval = Citation()
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
                 learning_rate=schedule_kink(0.0004, 0.0002),
-                # learning_rate=constant(0.0003),
+                # learning_rate=schedule_exp(0.0009),
                 # policy_kwargs=dict(layers=[128, 64]),
                 )
     agent.learn(total_timesteps=int(5e6), log_interval=50, callback=callback)
@@ -66,8 +66,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-# learn()
+learn()
 # run_preexisting('N28KZO')
-run_preexisting('9VZ5VE')
+# run_preexisting('9VZ5VE')
 
 # os.system('say "your program has finished"')
