@@ -17,6 +17,7 @@ from tools.get_task import get_task_tr
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
+# todo: get back to best perf: change ERROR SCALING, TASK
 
 # todo: cloud training plot +moving average
 
@@ -34,7 +35,7 @@ def learn():
                 # learning_rate=schedule_exp(0.0009),
                 # policy_kwargs=dict(layers=[128, 64]),
                 )
-    agent.learn(total_timesteps=int(5e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
     agent.save(f'agent/trained/{get_task_tr()[4]}_{ID}.zip')
@@ -66,8 +67,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
+# learn()
 # run_preexisting('N28KZO')
-# run_preexisting('9VZ5VE')
+run_preexisting('9VZ5VE')
 
 # os.system('say "your program has finished"')

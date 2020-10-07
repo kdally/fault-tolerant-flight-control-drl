@@ -149,6 +149,7 @@ class Citation(gym.Env):
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
+        # self.current_deflection[1] =  self.current_deflection[1]*0.3
         # print(np.hstack([self.error, self.state[6]/10]))
         # return np.hstack([self.error, self.state[6]/10, self.state[7]/10, self.state[untracked_obs_index], self.current_deflection])
         return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
