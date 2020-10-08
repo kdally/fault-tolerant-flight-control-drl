@@ -105,7 +105,7 @@ def plot_response(name, env, task, perf, during_training=False, failure=False):
     if during_training:
         fig.write_image(f"figures/during_training/{get_task()[4]}_r{abs(int(perf))}.eps")
     else:
-        fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.eps")
+        fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.pdf")
 
 
 def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=False):

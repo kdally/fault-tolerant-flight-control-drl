@@ -149,7 +149,6 @@ class Citation(gym.Env):
         max_bound = np.ones(self.error.shape)
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = 0.5*np.exp(-np.absolute(self.error)*1000)
-        # print(reward_vec)
         # reward = -reward_vec[:2].sum() / (self.error.shape[0]-1)
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
@@ -157,10 +156,8 @@ class Citation(gym.Env):
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        self.current_deflection[1] =  self.current_deflection[1]*0.3
-        # print(np.hstack([self.error, self.state[6]/10]))
         # return np.hstack([self.error, self.state[6]/10, self.state[7]/10, self.state[untracked_obs_index], self.current_deflection])
-        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
+        return np.hstack([self.error, self.state[untracked_obs_index],  self.current_deflection])
 
     @staticmethod
     def scale_a(action_unscaled: np.ndarray) -> np.ndarray:

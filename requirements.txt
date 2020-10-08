@@ -1,11 +1,8 @@
 numpy~=1.18.5
 tensorflow~=1.15.3
-pandas~=1.0.5
 
 gym~=0.15.7
 plotly~=4.9.0
 optuna~=1.5.0
-psutil
-requests
-plotly-orca
-poppler
+cloudpickle~=1.2.1
+pandas~=1.1.3

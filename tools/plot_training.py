@@ -4,44 +4,31 @@ import plotly.graph_objects as go
 pd.set_option('mode.chained_assignment', None)
 
 
-def plot_training(ID: str, task_type: str, avg_param: int = 3):
+def plot_training(ID: str, task_type: str):
 
     df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
                      f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)
 
-    df['r_avg'] = df['r']
-
-    for i in range(1, df.shape[0]):
-        lower_index = max(int(i - avg_param), 1)
-        df['r_avg'][i] = df['r'][lower_index:i+1].mean().copy()
-
+    df['r_avg'] = df['r'].ewm(alpha=0.1).mean()
+    df['r'] = -np.log10(-df['r'])
     df['r_avg'] = -np.log10(-df['r_avg'])
     return_ticks = np.array([-2000, -1000, -500, -250, -125, -60, -30, -15])
     fig = go.Figure()
 
-    # x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    # x_rev = x[::-1]
-    #
-    # # Line 1
-    # y1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    # y1_upper = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    # y1_lower = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    # y1_lower = y1_lower[::-1]
-    # fig.add_trace(go.Scatter(
-    #     x=x+x_rev,
-    #     y=y1_upper+y1_lower,
-    #     fill='toself',
-    #     fillcolor='rgba(0,100,80,0.2)',
-    #     line_color='rgba(255,255,255,0)',
-    #     showlegend=False,
-    #     name='Fair',
-    # ))
+    fig.add_trace(go.Scatter(
+        x=df['l'], y=df['r'], mode='markers',
+        marker=dict(
+            color='rgba(99,110,250,0.6)',
+        ),
+    ))
 
     fig.add_trace(go.Scatter(
-        x=df['l'], y=df['r_avg'],
+        x=df['l'], y=df['r_avg'], mode='lines', line=dict(color='darkblue'),
     ))
 
     fig.update_layout(
+        showlegend=False,
+        width=800, height=300,
         font=dict(size=17),
         yaxis=dict(
             tickmode='array',
@@ -52,15 +39,16 @@ def plot_training(ID: str, task_type: str, avg_param: int = 3):
             tickfont=dict(size=18)
         ),
         xaxis=dict(
-            tickfont=dict(size=18)
+            tickfont=dict(size=18),
+            range=[0, df['l'].iloc[-1]]
         ),
         xaxis_title='Training steps', yaxis_title='Return',
-        template="plotly", height=400,
+        template="plotly",
         margin=dict(l=50, r=5, b=50, t=10)
     )
-    fig.update_traces(mode='lines')
+
     fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
-                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_training.eps")
+                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_training.pdf")
 
 
 def plot_trainings(IDs: list, task_type: str, avg_param: int = 2):
@@ -130,5 +118,5 @@ def plot_trainings(IDs: list, task_type: str, avg_param: int = 2):
 
 
 # plot_training('MDl9EX', 'body_rates')
-# plot_training('BRK291', '3attitude')
+# plot_training('HP533L', '3attitude_step')
 # plot_trainings(['CQJTZA', 'PDB9SI'], '3attitude')
