@@ -33,18 +33,16 @@ class Citation(gym.Env):
                 import envs.aileroneff._citation as C_MODEL
             elif self.failure_input[0] == 'dr':
                 import envs.rudderstuck._citation as C_MODEL
-            elif self.failure_input[0] == 'struc':
-                import envs.structural._citation as C_MODEL
             elif self.failure_input[0] == 'cg':
                 import envs.cgshift._citation as C_MODEL
             elif self.failure_input[0] == 'ice':
                 import envs.icing._citation as C_MODEL
             elif self.failure_input[0] == 'wg':
                 import envs.wingbreaks._citation as C_MODEL
-            elif self.failure_input[0] == 'hs':
-                import envs.horzstabbreaks._citation as C_MODEL
-            elif self.failure_input[0] == 'el':
-                import envs.elevbreaks._citation as C_MODEL
+            elif self.failure_input[0] == 'ht':
+                import envs.horztailbreaks._citation as C_MODEL
+            elif self.failure_input[0] == 'vt':
+                import envs.verttailbreaks._citation as C_MODEL
             else:
                 raise ValueError(f"Failure type not recognized.")
 
@@ -163,7 +161,7 @@ class Citation(gym.Env):
     def scale_a(action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
 
-        max_bound = np.array([20, 40, 20])
+        max_bound = np.array([15, 40, 20])
         action_scaled = map_to(action_unscaled, -max_bound, max_bound)
 
         return action_scaled

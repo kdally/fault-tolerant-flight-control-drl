@@ -19,14 +19,13 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 # todo:  check aileron failure after training with correct observations
 
 # failure_inputs = ['de', 20.05, 3.0]
-failure_inputs = ['da', 1.0, 0.3]
+# failure_inputs = ['da', 1.0, 0.3]
 # failure_inputs = ['dr', 0.0, 15.0]
 # failure_inputs = ['cg', 1.0, 1.04]
-# failure_inputs = ['ice', 1.0, 1.3]
-# failure_inputs = ['hs', 1.0, 0.7]
+failure_inputs = ['ice', 1.0, 1.9]
 # failure_inputs = ['wg', 1.0, 0.7]
-# failure_inputs = ['el', 1.0, 0.7]
-
+# failure_inputs = ['ht', 1.0, 0.0]
+# failure_inputs = ['vt', 1.0, 0.0]
 
 
 def learn():
@@ -73,8 +72,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
-# run_preexisting('9VZ5VE') # general, robust
+# learn()
+run_preexisting('9VZ5VE') # general, robust
 # run_preexisting('I2WUJ6_dr')
 # run_preexisting('last')
 
