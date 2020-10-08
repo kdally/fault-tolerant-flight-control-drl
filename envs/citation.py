@@ -37,6 +37,14 @@ class Citation(gym.Env):
                 import envs.structural._citation as C_MODEL
             elif self.failure_input[0] == 'cg':
                 import envs.cgshift._citation as C_MODEL
+            elif self.failure_input[0] == 'ice':
+                import envs.icing._citation as C_MODEL
+            elif self.failure_input[0] == 'wg':
+                import envs.wingbreaks._citation as C_MODEL
+            elif self.failure_input[0] == 'hs':
+                import envs.horzstabbreaks._citation as C_MODEL
+            elif self.failure_input[0] == 'el':
+                import envs.elevbreaks._citation as C_MODEL
             else:
                 raise ValueError(f"Failure type not recognized.")
 
@@ -86,8 +94,8 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:  #  sideslip angle, change reward scale due to dimensions difference
-            self.error[self.track_indices.index(5)] *= 4
-        self.error[self.track_indices.index(7)] *= 1.2
+            self.error[self.track_indices.index(5)] *= 10
+        # self.error[self.track_indices.index(7)] *= 1.1
 
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection
@@ -149,7 +157,7 @@ class Citation(gym.Env):
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        # self.current_deflection[1] =  self.current_deflection[1]*0.3
+        self.current_deflection[1] =  self.current_deflection[1]*0.3
         # print(np.hstack([self.error, self.state[6]/10]))
         # return np.hstack([self.error, self.state[6]/10, self.state[7]/10, self.state[untracked_obs_index], self.current_deflection])
         return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])

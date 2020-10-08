@@ -17,8 +17,7 @@ from tools.get_task import get_task_tr
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# todo: get back to best perf: change ERROR SCALING, TASK
-
+# todo: make training task more symmetric
 # todo: cloud training plot +moving average
 
 
