@@ -9,9 +9,11 @@ def plot_training(ID: str, task_type: str):
     df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
                      f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)
 
-    df['r_avg'] = df['r'].ewm(alpha=0.1).mean()
     df['r'] = -np.log10(-df['r'])
-    df['r_avg'] = -np.log10(-df['r_avg'])
+    # df['r_avg'] = -np.log10(-df['r_avg'])
+    # df['r_avg'] = df['r'].ewm(alpha=0.1).mean()
+    df['r_avg'] = df['r'].rolling(50).mean()
+
     return_ticks = np.array([-2000, -1000, -500, -250, -125, -60, -30, -15])
     fig = go.Figure()
 
@@ -118,5 +120,5 @@ def plot_trainings(IDs: list, task_type: str, avg_param: int = 2):
 
 
 # plot_training('MDl9EX', 'body_rates')
-# plot_training('HP533L', '3attitude_step')
+# plot_training('PNKK59', '3attitude_step')
 # plot_trainings(['CQJTZA', 'PDB9SI'], '3attitude')

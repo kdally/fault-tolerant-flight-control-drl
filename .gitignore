@@ -3,6 +3,7 @@
 /envs/phlab/
 .idea
 scratchpad.py
+flying2.py
 
 *.xml
 *.pyc

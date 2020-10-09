@@ -31,7 +31,7 @@ def learn():
                 ent_coef='auto', batch_size=256,
                 learning_rate=schedule_kink(0.0004, 0.0002),
                 # learning_rate=schedule_exp(0.0009),
-                # policy_kwargs=dict(layers=[128, 64]),
+                policy_kwargs=dict(layers=[64, 64, 32]),
                 )
     agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")

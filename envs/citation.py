@@ -1,6 +1,6 @@
 import gym
 import numpy as np
-from tools.get_task import get_task_eval, get_task_tr, get_task_eval_fail, get_task_tr_fail
+from tools.get_task import get_task_eval, get_task_tr, get_task_eval_fail, get_task_tr_fail, get_task_eval_FDD
 
 
 def d2r(num):
@@ -20,7 +20,7 @@ class Citation(gym.Env):
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['graph']}
 
-    def __init__(self, eval=False, failure=None):
+    def __init__(self, eval=False, failure=None, FDD=False):
 
         super(Citation, self).__init__()
 
@@ -37,8 +37,6 @@ class Citation(gym.Env):
                 import envs.cgshift._citation as C_MODEL
             elif self.failure_input[0] == 'ice':
                 import envs.icing._citation as C_MODEL
-            elif self.failure_input[0] == 'wg':
-                import envs.wingbreaks._citation as C_MODEL
             elif self.failure_input[0] == 'ht':
                 import envs.horztailbreaks._citation as C_MODEL
             elif self.failure_input[0] == 'vt':
@@ -47,7 +45,10 @@ class Citation(gym.Env):
                 raise ValueError(f"Failure type not recognized.")
 
             if eval:
-                self.task_fun = get_task_eval_fail
+                if FDD:
+                    self.task_fun = get_task_eval_FDD
+                else:
+                    self.task_fun = get_task_eval_fail
             else:
                 self.task_fun = get_task_tr_fail
 

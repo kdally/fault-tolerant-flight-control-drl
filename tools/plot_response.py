@@ -4,20 +4,29 @@ import numpy as np
 from tools.get_task import get_task_eval as get_task
 
 
-def plot_response(name, env, task, perf, during_training=False, failure=False):
+def plot_response(name, env, task, perf, during_training=False, failure=False, FDD=False):
     subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
     fig = make_subplots(rows=6, cols=2)
 
     if failure:
-        fig.update_layout(
-            shapes=[
-                dict(type="line", xref="x1", yref="paper",
-                     x0=5, y0=0, x1=5, y1=1, line=dict(color="Grey", width=1)),
-                dict(type="line", xref="x2", yref="paper",
-                     x0=5, y0=0, x1=5, y1=1, line=dict(color="Grey", width=1)),
-            ])
+        fig.add_shape(
+            dict(type="line", xref="x1", yref="paper",
+                 x0=5, y0=0, x1=5, y1=1, line=dict(color="Grey", width=1)))
+        fig.add_shape(
+            dict(type="line", xref="x2", yref="paper",
+                 x0=5, y0=0, x1=5, y1=1, line=dict(color="Grey", width=1)),
+        )
+
+    if FDD:
+        fig.add_shape(
+            dict(type="line", xref="x1", yref="paper",
+                 x0=60, y0=0, x1=60, y1=1, line=dict(color="Grey", width=1, dash='dash')))
+        fig.add_shape(
+            dict(type="line", xref="x2", yref="paper",
+                 x0=60, y0=0, x1=60, y1=1, line=dict(color="Grey", width=1, dash='dash')),
+        )
 
     for sig_index, state_index in enumerate(task[1]):
         fig.append_trace(go.Scatter(
@@ -116,18 +125,40 @@ def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=
         agent.save(f'agent/trained/{get_task()[4]}_last.zip')
         ID = 'last'
 
-    obs = env.reset_soft()
-    return_a = 0
+    if isinstance(agent, tuple):
+        agent_robust = agent[0]
+        agent_adaptive = agent[1]
 
-    for i, current_time in enumerate(env.time):
-        action, _ = agent.predict(obs, deterministic=True)
-        obs, reward, done, info = env.step(action)
-        # if verbose > 0:
-        #     print(env.action_history[:, env.step_count - 1])
-        return_a += reward
-        if current_time == env.time[-1]:
-            plot_response(ID, env, get_task(), return_a, during_training, failure)
-            if verbose > 0:
-                print(f"Goal reached! Return = {return_a:.2f}")
-                print('')
-            break
+        obs = env.reset_soft()
+        return_a = 0
+
+        for i, current_time in enumerate(env.time):
+            if current_time < env.time[-1] / 2:
+                action, _ = agent_robust.predict(obs, deterministic=True)
+            else:
+                action, _ = agent_adaptive.predict(obs, deterministic=True)
+            obs, reward, done, info = env.step(action)
+            return_a += reward
+            if current_time == env.time[-1]:
+                plot_response(ID, env, get_task(), return_a, during_training, failure, FDD=True)
+                if verbose > 0:
+                    print(f"Goal reached! Return = {return_a:.2f}")
+                    print('')
+                break
+
+    else:
+        obs = env.reset_soft()
+        return_a = 0
+
+        for i, current_time in enumerate(env.time):
+            action, _ = agent.predict(obs, deterministic=True)
+            obs, reward, done, info = env.step(action)
+            # if verbose > 0:
+            #     print(env.action_history[:, env.step_count - 1])
+            return_a += reward
+            if current_time == env.time[-1]:
+                plot_response(ID, env, get_task(), return_a, during_training, failure)
+                if verbose > 0:
+                    print(f"Goal reached! Return = {return_a:.2f}")
+                    print('')
+                break
