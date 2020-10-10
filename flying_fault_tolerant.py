@@ -16,11 +16,9 @@ from tools.get_task import get_task_tr_fail
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# todo:  check aileron failure after training with correct observations
-
-failure_inputs = ['de', 20.05, 3.0]
+# failure_inputs = ['de', 20.05, 3.0]
 # failure_inputs = ['da', 1.0, 0.3]
-# failure_inputs = ['dr', 0.0, 15.0]
+failure_inputs = ['dr', 0.0, 15.0]
 # failure_inputs = ['cg', 1.0, 1.04]
 # failure_inputs = ['ice', 1.0, 1.9]
 # failure_inputs = ['ht', 1.0, 0.0]
@@ -37,7 +35,7 @@ def learn():
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0004, 0.0002),
+                learning_rate=schedule_kink(0.0002, 0.0002),
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")
@@ -46,7 +44,7 @@ def learn():
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr_fail()[4]}_{ID}.csv')
     plot_training(ID, get_task_tr_fail()[4])
-    get_response(Citation(eval=True, failure=True), agent=agent, ID=ID, failure=True)
+    get_response(Citation(eval=True, failure=failure_inputs), agent=agent, ID=ID, failure=True)
 
     return
 
@@ -73,7 +71,7 @@ def keyboardInterruptHandler(signal, frame):
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
 # run_preexisting('9VZ5VE') # general, robust
-# run_preexisting('I2WUJ6_dr')
+# run_preexisting('0YXD05_dr')
 # run_preexisting('last')
 
 # os.system('say "your program has finished"')

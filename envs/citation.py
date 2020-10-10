@@ -108,8 +108,6 @@ class Citation(gym.Env):
 
     def reset_soft(self):
 
-        if self.failure_input[0] == 'dr':
-            self.failure_input[2] = -self.failure_input[2]
         self.C_MODEL.initialize()
         action_trim = np.array(
             [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0., 0., 0., 0., 0.,
@@ -126,8 +124,6 @@ class Citation(gym.Env):
 
     def reset(self):
 
-        if self.failure_input[0] == 'dr':
-            self.failure_input[2] = -self.failure_input[2]
         self.C_MODEL.initialize()
         action_trim = np.array(
             [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0., 0., 0., 0., 0.,

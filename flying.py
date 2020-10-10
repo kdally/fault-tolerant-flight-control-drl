@@ -18,6 +18,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 # todo: ensure training task makes symmetric agent
+# todo: give attitudes
 
 
 def learn():
