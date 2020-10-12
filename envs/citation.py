@@ -99,16 +99,15 @@ class Citation(gym.Env):
             else:
                 self.error[self.track_indices.index(5)] *= 10
 
-
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection
 
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
-            return np.zeros(self.observation_space.shape), -1, True, {}
+            return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
-        return self.get_obs(), self.get_reward(), done, {}
+        return self.get_obs(), self.get_reward(), done, {'is_success': True}
 
     def reset_soft(self):
 

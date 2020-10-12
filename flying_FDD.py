@@ -22,8 +22,8 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 # failure_inputs = ['da', 1.0, 0.3]
 # failure_inputs = ['dr', 0.0, -15.0]
 # failure_inputs = ['cg', 1.0, 1.04]
-failure_inputs = ['ice', 1.0, 1.9]
-# failure_inputs = ['ht', 1.0, 0.1]
+# failure_inputs = ['ice', 1.0, 1.9]
+failure_inputs = ['ht', 1.0, 0.1]
 # failure_inputs = ['vt', 1.0, 0.0]
 
 
@@ -47,7 +47,7 @@ def keyboardInterruptHandler(signal, frame):
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 # learn()
-run_preexisting('9VZ5VE', 'EG8WWW_ice')  # general, robust
-# run_preexisting('9VZ5VE', '9VZ5VE')  # general, robust
+# run_preexisting('9VZ5VE', '2KGDYQ_vt')  # general, robust
+run_preexisting('9VZ5VE', '9VZ5VE')  # general, robust
 
 # os.system('say "your program has finished"')

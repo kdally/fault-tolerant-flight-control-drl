@@ -383,7 +383,7 @@ def get_task_eval_FDD(time_v: np.ndarray = np.arange(0, 120, 0.01)):
 
     if task_type == '3attitude_step':
 
-        theta_angle = 10
+        theta_angle = 15
         signals['theta'] = np.hstack([np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
                                       theta_angle * np.sin(time_v[:np.argwhere(time_v == 4.0)[0, 0]] * 0.06 * np.pi * 2),
                                       theta_angle * np.ones(int(14 * time_v.shape[0] / time_v[-1].round())),

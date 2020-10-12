@@ -441,6 +441,7 @@ class SAC(BaseRLModel):
                         if not self.replay_buffer.can_sample(self.batch_size) \
                                 or self.num_timesteps < self.learning_starts:
                             break
+
                         n_updates += 1
                         # Compute current learning_rate
                         frac = 1.0 - step / total_timesteps
@@ -468,8 +469,10 @@ class SAC(BaseRLModel):
                         episode_successes.append(float(maybe_is_success))
 
                 num_episodes = len(episode_rewards)
+
                 # Display training infos
-                if self.verbose >= 1 and done and log_interval is not None and len(episode_rewards) % log_interval == 0:
+                if self.verbose >= 1 and done and log_interval is not None and len(episode_rewards) % log_interval == 0\
+                        and bool(episode_successes[-1]):
                     fps = int(step / (time.time() - start_time))
                     logger.logkv("episodes", num_episodes)
                     if len(self.ep_info_buf) > 0 and len(self.ep_info_buf[0]) > 0:
