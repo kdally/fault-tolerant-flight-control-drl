@@ -379,7 +379,8 @@ class SAC(BaseRLModel):
                 # from a uniform distribution for better exploration.
                 # Afterwards, use the learned policy
                 # if random_exploration is set to 0 (normal setting)
-                if self.num_timesteps < self.learning_starts or np.random.rand() < self.random_exploration:
+                if self.num_timesteps < self.learning_starts or np.random.rand() < self.random_exploration or\
+                        (len(episode_successes) > 1 and not bool(episode_successes[-1])):
                     # actions sampled from action space are from range specific to the environment
                     # but algorithm operates on tanh-squashed actions therefore simple scaling is used
                     unscaled_action = self.env.action_space.sample()

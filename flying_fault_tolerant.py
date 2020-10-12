@@ -18,10 +18,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 # failure_inputs = ['de', 20.05, 3.0]
 # failure_inputs = ['da', 1.0, 0.3]
-# failure_inputs = ['dr', 0.0, -15.0]
+failure_inputs = ['dr', 0.0, -15.0]
 # failure_inputs = ['cg', 1.0, 1.04]
 # failure_inputs = ['ice', 1.0, 1.9]
-failure_inputs = ['ht', 1.0, 0.0]
+# failure_inputs = ['ht', 1.0, 0.0]
 # failure_inputs = ['vt', 1.0, 0.0]
 
 
@@ -35,7 +35,7 @@ def learn():
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0004, 0.0001),
+                learning_rate=schedule_kink(0.0004, 0.0002),
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")
@@ -71,7 +71,7 @@ def keyboardInterruptHandler(signal, frame):
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
 # run_preexisting('9VZ5VE') # general, robust
-# run_preexisting('E919SW_da')
+# run_preexisting('5A50AG_dr')
 # run_preexisting('last')
 
 # os.system('say "your program has finished"')
