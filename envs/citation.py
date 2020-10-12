@@ -93,8 +93,8 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:  #  sideslip angle, change reward scale due to dimensions difference
-            self.error[self.track_indices.index(5)] *= 10
-        # self.error[self.track_indices.index(7)] *= 1.1
+            self.error[self.track_indices.index(5)] *= 4
+        self.error[self.track_indices.index(7)] *= 1.1
 
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection
