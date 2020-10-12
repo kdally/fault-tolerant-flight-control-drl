@@ -20,10 +20,11 @@ class Citation(gym.Env):
     """Custom Environment that follows gym interface"""
     metadata = {'render.modes': ['graph']}
 
-    def __init__(self, eval=False, failure=None, FDD=False):
+    def __init__(self, evaluation=False, failure=None, FDD=False):
 
         super(Citation, self).__init__()
 
+        self.eval = evaluation
         if failure is not None:
 
             self.failure_input = failure
@@ -44,7 +45,7 @@ class Citation(gym.Env):
             else:
                 raise ValueError(f"Failure type not recognized.")
 
-            if eval:
+            if evaluation:
                 if FDD:
                     self.task_fun = get_task_eval_FDD
                 else:
@@ -56,7 +57,7 @@ class Citation(gym.Env):
 
             import envs.normal._citation as C_MODEL
             self.failure_input = ['', 0.0, 0.0]
-            if eval:
+            if evaluation:
                 self.task_fun = get_task_eval
             else:
                 self.task_fun = get_task_tr
@@ -93,8 +94,11 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         if 5 in self.track_indices:  #  sideslip angle, change reward scale due to dimensions difference
-            self.error[self.track_indices.index(5)] *= 4
-        self.error[self.track_indices.index(7)] *= 1.1
+            if self.eval:
+                self.error[self.track_indices.index(5)] *= 4
+            else:
+                self.error[self.track_indices.index(5)] *= 10
+
 
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection

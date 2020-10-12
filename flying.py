@@ -41,14 +41,14 @@ def learn():
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr()[4]}_{ID}.csv')
     plot_training(ID, get_task_tr()[4])
-    get_response(Citation(eval=True), agent=agent, ID=ID)
+    get_response(Citation(evaluation=True), agent=agent, ID=ID)
 
     return
 
 
 def run_preexisting(ID=None, directory: str = 'tmp'):
 
-    env_eval = Citation(eval=True)
+    env_eval = Citation(evaluation=True)
 
     if ID is None:
         agent = SAC.load(f"agent/trained/{directory}/best_model.zip")
@@ -66,8 +66,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
+# learn()
 # run_preexisting('N28KZO')
-# run_preexisting('9VZ5VE')
+run_preexisting('9VZ5VE')
 
 # os.system('say "your program has finished"')
