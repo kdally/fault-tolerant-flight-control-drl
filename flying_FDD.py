@@ -20,12 +20,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 # failure_inputs = ['de', 20.05, 3.0]
 # failure_inputs = ['da', 1.0, 0.3]
-failure_inputs = ['dr', 0.0, -15.0]
-
-
+# failure_inputs = ['dr', 0.0, -15.0]
 # failure_inputs = ['cg', 1.0, 1.04]
 # failure_inputs = ['ice', 1.0, 1.9]
-# failure_inputs = ['ht', 1.0, 0.1]
+failure_inputs = ['ht', 1.0, 0.1]
 # failure_inputs = ['vt', 1.0, 0.0]
 
 
@@ -41,7 +39,7 @@ def run_preexisting(ID1: str, ID2: str):
 
 
 # learn()
-run_preexisting('9VZ5VE', '1BD7L2_dr')  # general, robust
+run_preexisting('9VZ5VE', 'HNAKCC_dr')  # general, robust
 # run_preexisting('9VZ5VE', '9VZ5VE')  # general, robust
 
 # os.system('say "your program has finished"')

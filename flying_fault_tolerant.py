@@ -5,7 +5,7 @@ import pandas as pd
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
-from envs.citation import Citation
+from envs.citation2 import Citation
 
 from tools.schedule import schedule_kink
 from tools.identifier import get_ID
@@ -35,7 +35,7 @@ def learn():
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0004, 0.0002),
+                learning_rate=schedule_kink(0.0001, 0.0001),
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     agent = SAC.load("agent/trained/tmp/best_model.zip")

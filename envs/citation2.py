@@ -87,10 +87,10 @@ class Citation(gym.Env):
     def step(self, action_rates: np.ndarray):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates)*self.dt)
-        if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2]= 0.0
-        # self.current_deflection[0] = 0.0
+        # if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2]= 0.0
+        self.current_deflection[0] = 0.0
 
-        if self.time[self.step_count] < 5.0:
+        if self.time[self.step_count] < 0.0:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
         else:
@@ -98,7 +98,9 @@ class Citation(gym.Env):
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
-        self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
+        # self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
+        self.error[0] *= 0.0
+        # self.error[2] *= 2.0
 
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection
@@ -106,6 +108,7 @@ class Citation(gym.Env):
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
+            exit()
             return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
@@ -148,7 +151,9 @@ class Citation(gym.Env):
         if self.sideslip_factor[self.step_count-1] == 0.0:
             return np.hstack([self.error[:2], 0.0, self.state[untracked_obs_index], self.current_deflection[:2], 0.0])
 
-        return np.hstack([self.error, self.state[untracked_obs_index],  self.current_deflection])
+        return np.hstack([0.0, self.error[1:], self.state[untracked_obs_index], 0.0, self.current_deflection[1:]])
+
+        # return np.hstack([self.error, self.state[untracked_obs_index],  self.current_deflection])
 
     @staticmethod
     def scale_a(action_unscaled: np.ndarray) -> np.ndarray:
