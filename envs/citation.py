@@ -56,18 +56,18 @@ class Citation(gym.Env):
             if evaluation: self.task_fun = get_task_eval
             else: self.task_fun = get_task_tr
 
-        if evaluation:
-            self.sideslip_factor = 4.0 * np.ones(self.task_fun()[3].shape[0])
-        else:
-            self.sideslip_factor = 10.0 * np.ones(self.task_fun()[3].shape[0])
-        if self.failure_input[0] == 'dr':
-            self.sideslip_factor = np.zeros(self.task_fun()[3].shape[0])
-            if FDD:
-                self.sideslip_factor[int(self.task_fun()[3].shape[0]/2):] = 4.0 * np.ones(int(self.task_fun()[3].shape[0]/2))
-
         self.C_MODEL = C_MODEL
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
+
+        if evaluation:
+            self.sideslip_factor = 4.0 * np.ones(self.time.shape[0])
+        else:
+            self.sideslip_factor = 10.0 * np.ones(self.time.shape[0])
+        if self.failure_input[0] == 'dr':
+            self.sideslip_factor = np.zeros(self.time.shape[0])
+            if FDD:
+                self.sideslip_factor[:int(self.time.shape[0]/2)] = 4.0 * np.ones(int(self.time.shape[0]/2))
 
         self.ref_signal = self.task_fun()[0]
         self.track_indices = self.task_fun()[1]
@@ -88,7 +88,7 @@ class Citation(gym.Env):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates)*self.dt)
 
-        if self.time[self.step_count] < 0.0:  # todo: change time consttraint
+        if self.time[self.step_count] < 5.0:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
         else:
@@ -96,8 +96,7 @@ class Citation(gym.Env):
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
-        if 5 in self.track_indices:  # sideslip angle, change reward scale due to dimensions difference
-            self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
+        self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
 
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection
@@ -128,8 +127,8 @@ class Citation(gym.Env):
         self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         self.error = np.zeros(len(self.track_indices))
         self.step_count = 0
-        # self.current_deflection = np.zeros(3)  # todo: change first deflection
-        self.current_deflection = np.array([-5.46091167, 2.87520821, 20.35111693])
+        self.current_deflection = np.zeros(3)
+        # self.current_deflection = np.array([-5.46091167, 2.87520821, 20.35111693])
         return np.zeros(self.observation_space.shape)
 
     def get_reward(self):
@@ -145,7 +144,7 @@ class Citation(gym.Env):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
 
-        if self.failure_input[0] == 'dr':  # and self.time[self.step_count-1] == self.time[int(self.time.shape[0]/2)]:
+        if self.sideslip_factor[self.step_count-1] == 0.0:
             return np.hstack([self.error[:2], 0.0, self.state[untracked_obs_index], self.current_deflection[:2], 0.0])
 
         return np.hstack([self.error, self.state[untracked_obs_index],  self.current_deflection])
