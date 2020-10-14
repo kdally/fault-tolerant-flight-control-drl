@@ -24,6 +24,7 @@ class Citation(gym.Env):
 
         super(Citation, self).__init__()
 
+        self.evaluation = evaluation
         if failure is not None:
 
             self.failure_input = failure
@@ -44,7 +45,7 @@ class Citation(gym.Env):
             else:
                 raise ValueError(f"Failure type not recognized.")
 
-            if evaluation:
+            if self.evaluation:
                 if FDD: self.task_fun = get_task_eval_FDD
                 else: self.task_fun = get_task_eval_fail
             else:
@@ -53,14 +54,14 @@ class Citation(gym.Env):
         else:
             import envs.normal._citation as C_MODEL
             self.failure_input = ['', 0.0, 0.0]
-            if evaluation: self.task_fun = get_task_eval
+            if self.evaluation: self.task_fun = get_task_eval
             else: self.task_fun = get_task_tr
 
         self.C_MODEL = C_MODEL
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
 
-        if evaluation:
+        if self.evaluation:
             self.sideslip_factor = 4.0 * np.ones(self.time.shape[0])
         else:
             self.sideslip_factor = 10.0 * np.ones(self.time.shape[0])
@@ -69,11 +70,11 @@ class Citation(gym.Env):
             self.sideslip_factor = np.zeros(self.time.shape[0])
             if FDD:
                 self.sideslip_factor[:int(self.time.shape[0]/2)] = 4.0 * np.ones(int(self.time.shape[0]/2))
-        elif self.failure_input[0] == 'ht':
-            self.pitch_factor = np.zeros(self.time.shape[0])
-            if FDD:
-                self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
-        elif self.failure_input[0] == 'da' and evaluation:
+        # elif self.failure_input[0] == 'ht':
+        #     self.pitch_factor = np.zeros(self.time.shape[0])
+        #     if FDD:
+        #         self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
+        elif self.failure_input[0] == 'da' and self.evaluation:
             self.pitch_factor = 1.5*np.ones(self.time.shape[0])
             if FDD:
                 self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
@@ -97,9 +98,9 @@ class Citation(gym.Env):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates)*self.dt)
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2]= 0.0
-        if self.pitch_factor[self.step_count - 1] == 0.0: self.current_deflection[0] = 0.0
+        # if self.pitch_factor[self.step_count - 1] == 0.0: self.current_deflection[0] = 0.0
 
-        if self.time[self.step_count] < 5.0:
+        if self.time[self.step_count] < 5.0 and self.evaluation:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
         else:
@@ -116,6 +117,8 @@ class Citation(gym.Env):
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
+            print(self.state[9])
+        if self.state[9] <= 10.0 or self.state[9] >= 1e4:
             return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
@@ -147,15 +150,13 @@ class Citation(gym.Env):
         max_bound = np.ones(self.error.shape)
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = 0.5*np.exp(-np.absolute(self.error)*1000)
-        # reward = -reward_vec[:2].sum() / (self.error.shape[0]-1)
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
 
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-
-        # return np.hstack([0.0, self.error[1:], self.state[untracked_obs_index], 0.0, self.current_deflection[1:]])
+        # return np.hstack([self.error[:2], 0.0, self.state[untracked_obs_index], self.current_deflection[:2], 0.0])
         return np.hstack([self.error, self.state[untracked_obs_index],  self.current_deflection])
 
     @staticmethod
