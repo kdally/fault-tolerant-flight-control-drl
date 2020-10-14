@@ -10,6 +10,7 @@ from envs.citation import Citation
 from tools.schedule import schedule_kink, constant, schedule_exp
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
+from tools.plot_weights import plot_weights
 from tools.plot_response import get_response
 from tools.get_task import get_task_tr
 
@@ -35,8 +36,9 @@ def learn():
                 policy_kwargs=dict(layers=[64, 64, 32]),
                 )
     agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
-    agent = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6)
+    plot_weights(agent.weights_sample, ID, get_task_tr()[4])
+    agent = SAC.load("agent/trained/tmp/best_model.zip")
     agent.save(f'agent/trained/{get_task_tr()[4]}_{ID}.zip')
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr()[4]}_{ID}.csv')

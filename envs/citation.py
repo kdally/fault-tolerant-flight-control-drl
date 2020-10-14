@@ -60,11 +60,15 @@ class Citation(gym.Env):
         self.C_MODEL = C_MODEL
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
+        self.ref_signal = self.task_fun()[0]
+        self.track_indices = self.task_fun()[1]
+        self.obs_indices = self.task_fun()[2]
 
         if self.evaluation:
             self.sideslip_factor = 4.0 * np.ones(self.time.shape[0])
         else:
             self.sideslip_factor = 10.0 * np.ones(self.time.shape[0])
+
         self.pitch_factor = np.ones(self.time.shape[0])
         if self.failure_input[0] == 'dr':
             self.sideslip_factor = np.zeros(self.time.shape[0])
@@ -79,9 +83,9 @@ class Citation(gym.Env):
             if FDD:
                 self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
 
-        self.ref_signal = self.task_fun()[0]
-        self.track_indices = self.task_fun()[1]
-        self.obs_indices = self.task_fun()[2]
+        elif self.failure_input[0] == 'ice':
+            self.ref_signal = self.task_fun(theta_angle=-25)[0]
+
         # self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 + 2,), dtype=np.float64)
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 ,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
@@ -98,7 +102,6 @@ class Citation(gym.Env):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates)*self.dt)
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2]= 0.0
-        # if self.pitch_factor[self.step_count - 1] == 0.0: self.current_deflection[0] = 0.0
 
         if self.time[self.step_count] < 5.0 and self.evaluation:
             self.state = self.C_MODEL.step(
@@ -117,8 +120,9 @@ class Citation(gym.Env):
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
-            print(self.state[9])
-        if self.state[9] <= 10.0 or self.state[9] >= 1e4:
+            print(self.state_history[:, self.step_count-2])
+            # exit()
+        if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any():
             return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}

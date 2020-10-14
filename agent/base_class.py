@@ -46,7 +46,7 @@ class BaseRLModel(ABC):
     """
 
     def __init__(self, policy, env, replay_buffer=None, _init_setup_model=False, verbose=0, *, policy_base=None,
-                 policy_kwargs=None, seed=None, n_cpu_tf_sess=None):
+                 policy_kwargs=None, seed=None):
 
         self.policy = policy
         self.env = env
@@ -62,10 +62,10 @@ class BaseRLModel(ABC):
         self.params = None
         self.seed = seed
         self._param_load_ops = None
-        self.n_cpu_tf_sess = n_cpu_tf_sess
         self.episode_reward = None
         self.ep_info_buf = None
         self.replay_buffer = replay_buffer
+        self.weights_sample = np.zeros((1, 10))
 
         if env is not None:
 
@@ -195,6 +195,16 @@ class BaseRLModel(ABC):
         :return: (list) List of tensorflow Variables
         """
         pass
+
+    def get_sample_weights(self):
+        """
+        Get current model parameters as dictionary of variable name -> ndarray.
+        :return: (OrderedDict) Dictionary of variable name -> ndarray of model's parameters.
+        """
+        parameters = self.get_parameter_list()
+        self.weights_sample = np.vstack([self.weights_sample, self.sess.run(parameters[4])[11][:10]])
+
+        return
 
     def get_parameters(self):
         """

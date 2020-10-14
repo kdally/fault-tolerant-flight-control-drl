@@ -62,13 +62,13 @@ class SAC(BaseRLModel):
                  learning_starts=100, train_freq=1, batch_size=64,
                  tau=0.005, ent_coef='auto', target_update_interval=1,
                  gradient_steps=1, target_entropy='auto', action_noise=None,
-                 random_exploration=0.0, verbose=0, tensorboard_log=None,
-                 _init_setup_model=True, policy_kwargs=None, full_tensorboard_log=False,
-                 seed=None, n_cpu_tf_sess=None):
+                 random_exploration=0.0, verbose=0,
+                 _init_setup_model=True, policy_kwargs=None,
+                 seed=None):
 
         super(SAC, self).__init__(policy=policy, env=env, replay_buffer=None, verbose=verbose,
                                   policy_base=LnMlpPolicy, policy_kwargs=policy_kwargs,
-                                  seed=seed, n_cpu_tf_sess=n_cpu_tf_sess)
+                                  seed=seed)
 
         self.buffer_size = buffer_size
         self.learning_rate = learning_rate
@@ -93,13 +93,11 @@ class SAC(BaseRLModel):
         self.graph = None
         self.replay_buffer = None
         self.sess = None
-        self.tensorboard_log = tensorboard_log
         self.verbose = verbose
         self.params = None
         self.summary = None
         self.policy_tf = None
         self.target_entropy = target_entropy
-        self.full_tensorboard_log = full_tensorboard_log
 
         self.obs_target = None
         self.target_policy = None
@@ -128,7 +126,7 @@ class SAC(BaseRLModel):
             self.graph = tf.Graph()
             with self.graph.as_default():
                 self.set_random_seed(self.seed)
-                self.sess = tf_util.make_session(num_cpu=self.n_cpu_tf_sess, graph=self.graph)
+                self.sess = tf_util.make_session(graph=self.graph)
 
                 self.replay_buffer = ReplayBuffer(self.buffer_size)
 
@@ -471,6 +469,7 @@ class SAC(BaseRLModel):
                         episode_successes.append(float(maybe_is_success))
 
                 num_episodes = len(episode_rewards)
+                self.get_sample_weights()
 
                 # Display training infos
                 if self.verbose >= 1 and done and log_interval is not None and len(episode_rewards) % log_interval == 0\
@@ -498,7 +497,6 @@ class SAC(BaseRLModel):
     def learn_online(self, total_timesteps, initial_state, callback=None,
                      log_interval=4, tb_log_name="SAC", reset_num_timesteps=True, replay_wrapper=None):
 
-        new_tb_log = self._init_num_timesteps(reset_num_timesteps)
         callback = self._init_callback(callback)
 
         if replay_wrapper is not None:
@@ -612,6 +610,7 @@ class SAC(BaseRLModel):
                         episode_successes.append(float(maybe_is_success))
 
                 num_episodes = len(episode_rewards)
+
                 # Display training infos
                 if self.verbose >= 1 and n_updates == total_timesteps:
                     fps = int(step / (time.time() - start_time))
@@ -679,7 +678,6 @@ class SAC(BaseRLModel):
             "action_space": self.action_space,
             "policy": self.policy,
             "n_envs": self.n_envs,
-            "n_cpu_tf_sess": self.n_cpu_tf_sess,
             "seed": self.seed,
             "action_noise": self.action_noise,
             "random_exploration": self.random_exploration,

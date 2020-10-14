@@ -10,8 +10,10 @@ from envs.citation import Citation
 from tools.schedule import schedule_kink
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
+from tools.plot_weights import plot_weights
 from tools.plot_response import get_response
 from tools.get_task import get_task_tr_fail
+
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
@@ -20,8 +22,8 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 # failure_inputs = ['da', 1.0, 0.3]
 # failure_inputs = ['dr', 0.0, -15.0]
 # failure_inputs = ['cg', 1.0, 1.04]
-# failure_inputs = ['ice', 1.0, 1.9]
-failure_inputs = ['ht', 1.0, 0.1]
+failure_inputs = ['ice', 1.0, 0.7] # https://doi.org/10.1016/S0376-0421(01)00018-5
+# failure_inputs = ['ht', 1.0, 0.1]
 # failure_inputs = ['vt', 1.0, 0.0]
 
 
@@ -38,8 +40,9 @@ def learn():
                 learning_rate=schedule_kink(0.0004, 0.0002),
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
-    agent = SAC.load("agent/trained/tmp/best_model.zip")
     ID = get_ID(6) + f'_{failure_inputs[0]}'
+    plot_weights(agent.weights_sample, ID, get_task_tr_fail()[4])
+    agent = SAC.load("agent/trained/tmp/best_model.zip")
     agent.save(f'agent/trained/{get_task_tr_fail()[4]}_{ID}.zip')
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr_fail()[4]}_{ID}.csv')
