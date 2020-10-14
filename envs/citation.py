@@ -64,10 +64,19 @@ class Citation(gym.Env):
             self.sideslip_factor = 4.0 * np.ones(self.time.shape[0])
         else:
             self.sideslip_factor = 10.0 * np.ones(self.time.shape[0])
+        self.pitch_factor = np.ones(self.time.shape[0])
         if self.failure_input[0] == 'dr':
             self.sideslip_factor = np.zeros(self.time.shape[0])
             if FDD:
                 self.sideslip_factor[:int(self.time.shape[0]/2)] = 4.0 * np.ones(int(self.time.shape[0]/2))
+        elif self.failure_input[0] == 'ht':
+            self.pitch_factor = np.zeros(self.time.shape[0])
+            if FDD:
+                self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
+        elif self.failure_input[0] == 'da' and evaluation:
+            self.pitch_factor = 1.5*np.ones(self.time.shape[0])
+            if FDD:
+                self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
 
         self.ref_signal = self.task_fun()[0]
         self.track_indices = self.task_fun()[1]
@@ -88,7 +97,7 @@ class Citation(gym.Env):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates)*self.dt)
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2]= 0.0
-        # self.current_deflection[0] = 0.0
+        if self.pitch_factor[self.step_count - 1] == 0.0: self.current_deflection[0] = 0.0
 
         if self.time[self.step_count] < 5.0:
             self.state = self.C_MODEL.step(
@@ -99,6 +108,7 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
+        self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
 
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection
@@ -145,9 +155,7 @@ class Citation(gym.Env):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
 
-        if self.sideslip_factor[self.step_count-1] == 0.0:
-            return np.hstack([self.error[:2], 0.0, self.state[untracked_obs_index], self.current_deflection[:2], 0.0])
-
+        # return np.hstack([0.0, self.error[1:], self.state[untracked_obs_index], 0.0, self.current_deflection[1:]])
         return np.hstack([self.error, self.state[untracked_obs_index],  self.current_deflection])
 
     @staticmethod
