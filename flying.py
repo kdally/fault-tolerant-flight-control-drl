@@ -32,9 +32,9 @@ def learn():
                 # learning_rate=schedule_exp(0.0009),
                 policy_kwargs=dict(layers=[64, 64]),
                 )
-    agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
     ID = get_ID(6)
-    plot_weights(agent.weights_sample, ID, get_task_tr()[4])
+    plot_weights(ID, get_task_tr()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip")
     agent.save(f'agent/trained/{get_task_tr()[4]}_{ID}.zip')
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')

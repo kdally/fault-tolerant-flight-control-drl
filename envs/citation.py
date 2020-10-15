@@ -92,6 +92,7 @@ class Citation(gym.Env):
         self.current_deflection = np.zeros(3)
 
         self.state = None
+        self.state_deg = None
         self.scale_s = None
         self.state_history = None
         self.action_history = None
@@ -109,13 +110,16 @@ class Citation(gym.Env):
         else:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
+        self.state_deg = self.state*self.scale_s
 
-        self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
+        self.error = d2r(self.ref_signal[:, self.step_count] - self.state_deg[self.track_indices])
         self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
         if 7 in self.track_indices:
             self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
+        if 9 in self.track_indices:
+            self.error[self.track_indices.index(9)] *= 0.1
 
-        self.state_history[:, self.step_count] = self.state*self.scale_s
+        self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
 
         self.step_count += 1
@@ -143,6 +147,7 @@ class Citation(gym.Env):
         self.state = self.C_MODEL.step(action_trim)
         self.scale_s = np.ones(self.state.shape)
         self.scale_s[[0, 1, 2, 4, 5, 6, 7, 8]] = 180 / np.pi
+        self.state_deg = self.state*self.scale_s
         self.state_history = np.zeros((self.state.shape[0], self.time.shape[0]))
         self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         self.error = np.zeros(len(self.track_indices))
@@ -156,6 +161,7 @@ class Citation(gym.Env):
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = 0.5*np.exp(-np.absolute(self.error)*1000)
         reward = -reward_vec.sum() / self.error.shape[0]
+        # print(reward_vec/3)
         # if r2d(self.state[4]) > 11.0: #todo: remove that
         #     reward -= 0.2
 
