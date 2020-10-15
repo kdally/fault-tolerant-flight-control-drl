@@ -39,7 +39,7 @@ def run_preexisting(ID1: str, ID2: str):
 
 
 # learn()
-run_preexisting('9VZ5VE', '6KPOOS_ice')  # general, robust
+# run_preexisting('9VZ5VE', 'KD0XD4_ice')  # general, robust
 # run_preexisting('9VZ5VE', '9VZ5VE')  # general, robust
 
 # os.system('say "your program has finished"')

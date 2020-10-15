@@ -42,7 +42,7 @@ def learn():
                 )
     agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     ID = get_ID(6) + f'_{failure_inputs[0]}'
-    plot_weights(agent.weights_sample, ID, get_task_tr_fail()[4])
+    plot_weights(ID, get_task_tr_fail()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip")
     agent.save(f'agent/trained/{get_task_tr_fail()[4]}_{ID}.zip')
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
@@ -73,9 +73,9 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
+# learn()
 # run_preexisting('9VZ5VE') # general, robust
-# run_preexisting('KD0XD3_ice')
+# run_preexisting('KD0XD4_ice')
 
 # run_preexisting('last')
 

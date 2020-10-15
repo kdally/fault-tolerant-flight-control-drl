@@ -112,7 +112,8 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count]) - self.state[self.track_indices]
         self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
-        self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
+        if 7 in self.track_indices:
+            self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
 
         self.state_history[:, self.step_count] = self.state*self.scale_s
         self.action_history[:, self.step_count] = self.current_deflection
@@ -155,8 +156,8 @@ class Citation(gym.Env):
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = 0.5*np.exp(-np.absolute(self.error)*1000)
         reward = -reward_vec.sum() / self.error.shape[0]
-        if r2d(self.state[4]) > 11.0:
-            reward -= 0.2
+        # if r2d(self.state[4]) > 11.0: #todo: remove that
+        #     reward -= 0.2
 
         return reward
 

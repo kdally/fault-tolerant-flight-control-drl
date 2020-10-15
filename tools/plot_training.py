@@ -120,5 +120,5 @@ def plot_trainings(IDs: list, task_type: str, avg_param: int = 2):
 
 
 # plot_training('MDl9EX', 'body_rates')
-# plot_training('PBUGP7_ht', '3attitude_step')
+# plot_training('KD0XD4_ice', '3attitude_step')
 # plot_trainings(['CQJTZA', 'PDB9SI'], '3attitude')
