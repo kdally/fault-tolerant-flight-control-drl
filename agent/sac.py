@@ -1,19 +1,25 @@
 import time
 import warnings
 import os
+import json
+import random
+import zipfile
+from abc import ABC
+from collections import OrderedDict, deque
+from typing import Union, Optional
 
 import numpy as np
 import tensorflow as tf
 import gym
+from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params
+from agent.callback import SaveOnBestReturn
 
 from tools import tf_util, logger
-from agent.base_class import BaseRLModel
 from agent.buffer import ReplayBuffer
-from agent.policy import LnMlpPolicy
-from tools.math_util import safe_mean, unscale_action, scale_action
+from tools.math_util import safe_mean, unscale_action, scale_action, set_global_seeds
 
 
-class SAC(BaseRLModel):
+class SAC(ABC):
     """
     Soft Actor-Critic (SAC)
     Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor,
@@ -66,9 +72,24 @@ class SAC(BaseRLModel):
                  _init_setup_model=True, policy_kwargs=None,
                  seed=None):
 
-        super(SAC, self).__init__(policy=policy, env=env, replay_buffer=None, verbose=verbose,
-                                  policy_base=LnMlpPolicy, policy_kwargs=policy_kwargs,
-                                  seed=seed)
+        self.policy = policy
+        self.env = env
+        self.verbose = verbose
+        self.policy_kwargs = {} if policy_kwargs is None else policy_kwargs
+        self._vectorize_action = False
+        self.num_timesteps = 0
+        self.sess = None
+        self.params = None
+        self.seed = seed
+        self._param_load_ops = None
+        self.episode_reward = None
+        self.ep_info_buf = None
+
+        self.observation_space = env.observation_space
+        self.action_space = env.action_space
+
+        self._vec_normalize_env = None
+        self.n_envs = 1
 
         self.buffer_size = buffer_size
         self.learning_rate = learning_rate
@@ -76,12 +97,6 @@ class SAC(BaseRLModel):
         self.train_freq = train_freq
         self.batch_size = batch_size
         self.tau = tau
-        # In the original paper, same learning rate is used for all networks
-        # self.policy_lr = learning_rate
-        # self.qf_lr = learning_rate
-        # self.vf_lr = learning_rate
-        # Entropy coefficient / Entropy temperature
-        # Inverse of the reward scale
         self.ent_coef = ent_coef
         self.target_update_interval = target_update_interval
         self.gradient_steps = gradient_steps
@@ -92,7 +107,6 @@ class SAC(BaseRLModel):
         self.value_fn = None
         self.graph = None
         self.replay_buffer = None
-        self.sess = None
         self.verbose = verbose
         self.params = None
         self.summary = None
@@ -469,7 +483,6 @@ class SAC(BaseRLModel):
                         episode_successes.append(float(maybe_is_success))
 
                 num_episodes = len(episode_rewards)
-                self.get_sample_weights()
 
                 # Display training infos
                 if self.verbose >= 1 and done and log_interval is not None and len(episode_rewards) % log_interval == 0\
@@ -633,15 +646,6 @@ class SAC(BaseRLModel):
                     infos_values = []
             return self
 
-    def action_probability(self, observation, state=None, mask=None, actions=None, logp=False):
-        if actions is not None:
-            raise ValueError("Error: SAC does not have action probabilities.")
-
-        warnings.warn("Even though SAC has a Gaussian policy, it cannot return a distribution as it "
-                      "is squashed by a tanh before being scaled and outputed.")
-
-        return None
-
     def predict(self, observation, state=None, mask=None, deterministic=True):
         observation = np.array(observation)
 
@@ -658,7 +662,234 @@ class SAC(BaseRLModel):
         return (self.params +
                 self.target_params)
 
-    def save(self, save_path, cloudpickle=False):
+    def get_parameters(self):
+        """
+        Get current model parameters as dictionary of variable name -> ndarray.
+        :return: (OrderedDict) Dictionary of variable name -> ndarray of model's parameters.
+        """
+        parameters = self.get_parameter_list()
+        parameter_values = self.sess.run(parameters)
+        return_dictionary = OrderedDict((param.name, value) for param, value in zip(parameters, parameter_values))
+        return return_dictionary
+
+    def _setup_load_operations(self):
+        """
+        Create tensorflow operations for loading model parameters
+        """
+        # Assume tensorflow graphs are static -> check
+        # that we only call this function once
+        if self._param_load_ops is not None:
+            raise RuntimeError("Parameter load operations have already been created")
+        # For each loadable parameter, create appropiate
+        # placeholder and an assign op, and store them to
+        # self.load_param_ops as dict of variable.name -> (placeholder, assign)
+        loadable_parameters = self.get_parameter_list()
+        # Use OrderedDict to store order for backwards compatibility with
+        # list-based params
+        self._param_load_ops = OrderedDict()
+        with self.graph.as_default():
+            for param in loadable_parameters:
+                placeholder = tf.placeholder(dtype=param.dtype, shape=param.shape)
+                # param.name is unique (tensorflow variables have unique names)
+                self._param_load_ops[param.name] = (placeholder, param.assign(placeholder))
+
+    def get_env(self):
+        """
+        returns the current environment (can be None if not defined)
+        :return: (Gym Environment) The current environment
+        """
+        return self.env
+
+    def set_env(self, env):
+        """
+        Checks the validity of the environment, and if it is coherent, set it as the current environment.
+        :param env: (Gym Environment) The environment for learning a policy
+        """
+        if env is None and self.env is None:
+            # if self.verbose >= 1:
+            #     print("Loading a model without an environment, "
+            #           "this model cannot be trained until it has a valid environment.")
+            return
+        elif env is None:
+            raise ValueError("Error: trying to replace the current environment with None")
+
+        # sanity checking the environment
+        assert self.observation_space == env.observation_space, \
+            "Error: the environment passed must have at least the same observation space as the model was trained on."
+        assert self.action_space == env.action_space, \
+            "Error: the environment passed must have at least the same action space as the model was trained on."
+
+        self._vectorize_action = False
+
+        self.env = env
+        self._vec_normalize_env = None
+
+        # Invalidated by environment change.
+        self.episode_reward = None
+        self.ep_info_buf = None
+
+    def _init_num_timesteps(self, reset_num_timesteps=True):
+        """
+        Initialize and resets num_timesteps (total timesteps since beginning of training)
+        if needed. Mainly used logging and plotting (tensorboard).
+        :param reset_num_timesteps: (bool) Set it to false when continuing training
+            to not create new plotting curves in tensorboard.
+        :return: (bool) Whether a new tensorboard log needs to be created
+        """
+        if reset_num_timesteps:
+            self.num_timesteps = 0
+
+        new_tb_log = self.num_timesteps == 0
+        return new_tb_log
+
+    def replay_buffer_add(self, obs_t, action, reward, obs_tp1, done, info):
+        """
+        Add a new transition to the replay buffer
+        :param obs_t: (np.ndarray) the last observation
+        :param action: ([float]) the action
+        :param reward: (float) the reward of the transition
+        :param obs_tp1: (np.ndarray) the new observation
+        :param done: (bool) is the episode done
+        :param info: (dict) extra values used to compute the reward when using HER
+        """
+        # Pass info dict when using HER, as it can be used to compute the reward
+        kwargs = {}
+        self.replay_buffer.add(obs_t, action, reward, obs_tp1, float(done), **kwargs)
+
+    def _init_callback(self,
+                      callback: Union[None, SaveOnBestReturn]) -> SaveOnBestReturn:
+        """
+        :param callback: (Union[None, SaveOnBestReturn])
+        :return: (SaveOnBestReturn)
+        """
+        callback.init_callback(self)
+        return callback
+
+    def set_random_seed(self, seed: Optional[int]) -> None:
+        """
+        :param seed: (Optional[int]) Seed for the pseudo-random generators. If None,
+            do not change the seeds.
+        """
+        # Ignore if the seed is None
+        if seed is None:
+            return
+        # Seed python, numpy and tf random generator
+        set_global_seeds(seed)
+        if self.env is not None:
+            self.env.seed(seed)
+            # Seed the action space
+            # useful when selecting random actions
+            self.env.action_space.seed(seed)
+        self.action_space.seed(seed)
+
+    def _setup_learn(self):
+        """
+        Check the environment.
+        """
+        if self.env is None:
+            raise ValueError(
+                "Error: cannot train the model without a valid environment, please set an environment with"
+                "set_env(self, env) method.")
+        if self.episode_reward is None:
+            self.episode_reward = np.zeros((self.n_envs,))
+        if self.ep_info_buf is None:
+            self.ep_info_buf = deque(maxlen=100)
+
+    def load_parameters(self, load_path_or_dict, exact_match=True):
+        """
+        Load model parameters from a file or a dictionary
+        Dictionary keys should be tensorflow variable names, which can be obtained
+        with ``get_parameters`` function. If ``exact_match`` is True, dictionary
+        should contain keys for all model's parameters, otherwise RunTimeError
+        is raised. If False, only variables included in the dictionary will be updated.
+        This does not load agent's hyper-parameters.
+        .. warning::
+            This function does not update trainer/optimizer variables (e.g. momentum).
+            As such training after using this function may lead to less-than-optimal results.
+        :param load_path_or_dict: (str or file-like or dict) Save parameter location
+            or dict of parameters as variable.name -> ndarrays to be loaded.
+        :param exact_match: (bool) If True, expects load dictionary to contain keys for
+            all variables in the model. If False, loads parameters only for variables
+            mentioned in the dictionary. Defaults to True.
+        """
+        # Make sure we have assign ops
+        if self._param_load_ops is None:
+            self._setup_load_operations()
+
+        if isinstance(load_path_or_dict, dict):
+            # Assume `load_path_or_dict` is dict of variable.name -> ndarrays we want to load
+            params = load_path_or_dict
+        elif isinstance(load_path_or_dict, list):
+            warnings.warn("Loading model parameters from a list. This has been replaced " +
+                          "with parameter dictionaries with variable names and parameters. " +
+                          "If you are loading from a file, consider re-saving the file.",
+                          DeprecationWarning)
+            # Assume `load_path_or_dict` is list of ndarrays.
+            # Create param dictionary assuming the parameters are in same order
+            # as `get_parameter_list` returns them.
+            params = dict()
+            for i, param_name in enumerate(self._param_load_ops.keys()):
+                params[param_name] = load_path_or_dict[i]
+        else:
+            # Assume a filepath or file-like.
+            # Use existing deserializer to load the parameters.
+            # We only need the parameters part of the file, so
+            # only load that part.
+            _, params = self._load_from_file(load_path_or_dict, load_data=False)
+            params = dict(params)
+
+        feed_dict = {}
+        param_update_ops = []
+        # Keep track of not-updated variables
+        not_updated_variables = set(self._param_load_ops.keys())
+        for param_name, param_value in params.items():
+            placeholder, assign_op = self._param_load_ops[param_name]
+            feed_dict[placeholder] = param_value
+            # Create list of tf.assign operations for sess.run
+            param_update_ops.append(assign_op)
+            # Keep track which variables are updated
+            not_updated_variables.remove(param_name)
+
+        # Check that we updated all parameters if exact_match=True
+        if exact_match and len(not_updated_variables) > 0:
+            raise RuntimeError("Load dictionary did not contain all variables. " +
+                               "Missing variables: {}".format(", ".join(not_updated_variables)))
+
+        self.sess.run(param_update_ops, feed_dict=feed_dict)
+
+    @classmethod
+    def load(cls, load_path, env, custom_objects=None, **kwargs):
+        """
+        Load the model from file
+        :param load_path: (str or file-like) the saved parameter location
+        :param env: (Gym Environment) the new environment to run the loaded model on
+            (can be None if you only need prediction from a trained model)
+        :param custom_objects: (dict) Dictionary of objects to replace
+            upon loading. If a variable is present in this dictionary as a
+            key, it will not be deserialized and the corresponding item
+            will be used instead. Similar to custom_objects in
+            `keras.models.load_model`. Useful when you have an object in
+            file that can not be deserialized.
+        :param kwargs: extra arguments to change the model when loading
+        """
+        data, params = cls._load_from_file(load_path, custom_objects=custom_objects)
+
+        if 'policy_kwargs' in kwargs and kwargs['policy_kwargs'] != data['policy_kwargs']:
+            raise ValueError("The specified policy kwargs do not equal the stored policy kwargs. "
+                             "Stored kwargs: {}, specified kwargs: {}".format(data['policy_kwargs'],
+                                                                              kwargs['policy_kwargs']))
+
+        model = cls(policy=data["policy"], env=env, _init_setup_model=False)
+        model.__dict__.update(data)
+        model.__dict__.update(kwargs)
+        model.set_env(env)
+        model.setup_model()
+
+        model.load_parameters(params)
+
+        return model
+
+    def save(self, save_path):
         data = {
             "learning_rate": self.learning_rate,
             "buffer_size": self.buffer_size,
@@ -677,7 +908,6 @@ class SAC(BaseRLModel):
             "observation_space": self.observation_space,
             "action_space": self.action_space,
             "policy": self.policy,
-            "n_envs": self.n_envs,
             "seed": self.seed,
             "action_noise": self.action_noise,
             "random_exploration": self.random_exploration,
@@ -685,9 +915,90 @@ class SAC(BaseRLModel):
             "policy_kwargs": self.policy_kwargs
         }
 
-        params_to_save = self.get_parameters()
+        params = self.get_parameters()
 
-        self._save_to_file_zip(save_path, data=data, params=params_to_save)
+        if data is not None:
+            serialized_data = data_to_json(data)
+        if params is not None:
+            serialized_params = params_to_bytes(params)
+            # We also have to store list of the parameters
+            # to store the ordering for OrderedDict.
+            # We can trust these to be strings as they
+            # are taken from the Tensorflow graph.
+            serialized_param_list = json.dumps(
+                list(params.keys()),
+                indent=4
+            )
+
+        # Check postfix if save_path is a string
+        if isinstance(save_path, str):
+            _, ext = os.path.splitext(save_path)
+            if ext == "":
+                save_path += ".zip"
+
+        # Create a zip-archive and write our objects
+        # there. This works when save_path
+        # is either str or a file-like
+        with zipfile.ZipFile(save_path, "w") as file_:
+            # Do not try to save "None" elements
+            if data is not None:
+                file_.writestr("data", serialized_data)
+            if params is not None:
+                file_.writestr("parameters", serialized_params)
+                file_.writestr("parameter_list", serialized_param_list)
+
+    @staticmethod
+    def _load_from_file(load_path, load_data=True, custom_objects=None):
+        """Load model data from a .zip archive
+        :param load_path: (str or file-like) Where to load model from
+        :param load_data: (bool) Whether we should load and return data
+            (class parameters). Mainly used by `load_parameters` to
+            only load model parameters (weights).
+        :param custom_objects: (dict) Dictionary of objects to replace
+            upon loading. If a variable is present in this dictionary as a
+            key, it will not be deserialized and the corresponding item
+            will be used instead. Similar to custom_objects in
+            `keras.models.load_model`. Useful when you have an object in
+            file that can not be deserialized.
+        :return: (dict, OrderedDict) Class parameters and model parameters
+        """
+        # Check if file exists if load_path is
+        # a string
+        if isinstance(load_path, str):
+            if not os.path.exists(load_path):
+                if os.path.exists(load_path + ".zip"):
+                    load_path += ".zip"
+                else:
+                    raise ValueError("Error: the file {} could not be found".format(load_path))
+
+        # Open the zip archive and load data.
+        try:
+            with zipfile.ZipFile(load_path, "r") as file_:
+                namelist = file_.namelist()
+                # If data or parameters is not in the
+                # zip archive, assume they were stored
+                # as None (_save_to_file allows this).
+                data = None
+                params = None
+                if "data" in namelist and load_data:
+                    # Load class parameters and convert to string
+                    # (Required for json library in Python 3.5)
+                    json_data = file_.read("data").decode()
+                    data = json_to_data(json_data, custom_objects=custom_objects)
+
+                if "parameters" in namelist:
+                    # Load parameter list and and parameters
+                    parameter_list_json = file_.read("parameter_list").decode()
+                    parameter_list = json.loads(parameter_list_json)
+                    serialized_params = file_.read("parameters")
+                    params = bytes_to_params(
+                        serialized_params, parameter_list
+                    )
+        except zipfile.BadZipFile:
+            warnings.warn("It appears you are loading from a file with wrong format. ",
+                          DeprecationWarning)
+
+        return data, params
 
 
 class SetVerbosity:

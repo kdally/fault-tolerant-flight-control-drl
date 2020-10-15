@@ -18,9 +18,6 @@ from tools.get_task import get_task_tr
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# todo: ensure training task makes symmetric agent
-# todo: give attitudes
-
 
 def learn():
 
@@ -33,9 +30,9 @@ def learn():
                 ent_coef='auto', batch_size=256,
                 learning_rate=schedule_kink(0.0004, 0.0002),
                 # learning_rate=schedule_exp(0.0009),
-                policy_kwargs=dict(layers=[64, 64, 32]),
+                policy_kwargs=dict(layers=[64, 64]),
                 )
-    agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
     ID = get_ID(6)
     plot_weights(agent.weights_sample, ID, get_task_tr()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip")
@@ -53,10 +50,10 @@ def run_preexisting(ID=None, directory: str = 'tmp'):
     env_eval = Citation(evaluation=True)
 
     if ID is None:
-        agent = SAC.load(f"agent/trained/{directory}/best_model.zip")
+        agent = SAC.load(f"agent/trained/{directory}/best_model.zip", env=env_eval)
         get_response(env_eval, agent=agent)
     else:
-        agent = SAC.load(f"agent/trained/{get_task_tr()[4]}_{ID}.zip")
+        agent = SAC.load(f"agent/trained/{get_task_tr()[4]}_{ID}.zip", env=env_eval)
         get_response(env_eval, agent=agent, ID=ID)
 
 

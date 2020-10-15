@@ -6,11 +6,15 @@ import plotly.express as px
 pd.set_option('mode.chained_assignment', None)
 
 
-def plot_weights(param, ID: str, task_type: str):
+def plot_weights(ID: str, task_type: str):
 
-    df = pd.DataFrame(param[1:])
+    df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
+                     f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)
 
-    fig = px.line(df, x=df.index, y=df.columns)
+    # df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
+    #                  f'Thesis/DRL-cessna-citation-fc/agent/trained/tmp/monitor.csv', header=0)
+
+    fig = px.line(df, x=df.index, y=df.iloc[:, 3:].columns)
 
     fig.update_layout(
         showlegend=False,
@@ -28,11 +32,8 @@ def plot_weights(param, ID: str, task_type: str):
     )
 
     fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
-                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_weights.eps")
+                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_weights.pdf")
 
-#
-# inputs = np.array([[6,7,8],[3,8,4],[7,3,1],[6,9,5],[0,5,2]])
 
-# plot_weights(inputs, 'MDl9EX', 'body_rates')
-# plot_training('PBUGP7_ht', '3attitude_step')
-# plot_trainings(['CQJTZA', 'PDB9SI'], '3attitude')
+# plot_weights('MDl9EX', 'body_rates')
+

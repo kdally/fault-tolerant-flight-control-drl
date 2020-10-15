@@ -8,7 +8,7 @@ from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 
-from envs.citation_rates import Citation
+from envs.citation import Citation
 from tools.schedule import schedule
 
 

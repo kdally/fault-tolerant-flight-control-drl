@@ -46,7 +46,7 @@ class SaveOnBestReturn(ABC):
         self.best_mean_reward = -np.inf
         self.last_mean_reward = -np.inf
         self.deterministic = deterministic
-        self.render = render
+        self.weights_sample = None
 
         self.eval_env = eval_env
         self.best_model_save_path = best_model_save_path
@@ -54,7 +54,8 @@ class SaveOnBestReturn(ABC):
         self.log_path = log_path
         filename = os.path.join(log_path, "monitor.csv")
         self.file_handler = open(filename, "wt")
-        self.logger = csv.DictWriter(self.file_handler, fieldnames=('r', 'l', 't'))
+        self.logger = csv.DictWriter(self.file_handler, fieldnames=('r', 'l', 't')
+                                                                   + tuple([f'w{i}' for i in range(10)]))
         self.logger.writeheader()
         self.file_handler.flush()
         self.file_handler.flush()
@@ -82,8 +83,12 @@ class SaveOnBestReturn(ABC):
                 episode_reward += reward
                 episode_length += 1
 
+            self.weights_sample = self.model.get_parameter_list()[4][11, :10].eval(session=self.model.sess)
+
             self.last_mean_reward = episode_reward
-            ep_info = {"r": round(episode_reward, 6), "l": self.num_timesteps, "t": round(time.time() - self.t_start, 6)}
+            ep_info = {"r": round(episode_reward, 6), "l": self.num_timesteps,
+                       "t": round(time.time() - self.t_start, 6)}
+            ep_info = {**ep_info, **{f'w{i}': self.weights_sample[i] for i in range(10)}}
             self.logger.writerow(ep_info)
             self.file_handler.flush()
 

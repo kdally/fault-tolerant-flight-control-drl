@@ -26,6 +26,7 @@ failure_inputs = ['ice', 1.0, 0.7] # https://doi.org/10.1016/S0376-0421(01)00018
 # failure_inputs = ['ht', 1.0, 0.1]
 # failure_inputs = ['vt', 1.0, 0.0]
 
+# todo: change default task 25deg
 
 def learn():
 
@@ -57,10 +58,10 @@ def run_preexisting(ID=None, directory: str = 'tmp'):
     env_eval = Citation(evaluation=True, failure=failure_inputs)
 
     if ID is None:
-        agent = SAC.load(f"agent/trained/{directory}/best_model.zip")
+        agent = SAC.load(f"agent/trained/{directory}/best_model.zip", env=env_eval)
         get_response(env_eval, agent=agent, failure=True)
     else:
-        agent = SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_{ID}.zip")
+        agent = SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_{ID}.zip", env=env_eval)
         get_response(env_eval, agent=agent, ID=ID+f'_{failure_inputs[0]}', failure=True)
 
 
@@ -74,7 +75,8 @@ def keyboardInterruptHandler(signal, frame):
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
 # run_preexisting('9VZ5VE') # general, robust
-# run_preexisting('PBUGP7_ht')
+# run_preexisting('KD0XD3_ice')
+
 # run_preexisting('last')
 
 # os.system('say "your program has finished"')

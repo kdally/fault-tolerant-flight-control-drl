@@ -84,7 +84,7 @@ class Citation(gym.Env):
                 self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
 
         elif self.failure_input[0] == 'ice':
-            self.ref_signal = self.task_fun(theta_angle=-25)[0]
+            self.ref_signal = self.task_fun(theta_angle=25)[0]
 
         # self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 + 2,), dtype=np.float64)
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3 ,), dtype=np.float64)
@@ -120,8 +120,8 @@ class Citation(gym.Env):
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
-            print(self.state_history[:, self.step_count-2])
-            # exit()
+            print(self.state_history[:, self.step_count-2], self.time[self.step_count-1])
+            exit()
         if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any():
             return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
@@ -155,6 +155,9 @@ class Citation(gym.Env):
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = 0.5*np.exp(-np.absolute(self.error)*1000)
         reward = -reward_vec.sum() / self.error.shape[0]
+        if r2d(self.state[4]) > 11.0:
+            reward -= 0.2
+
         return reward
 
     def get_obs(self):

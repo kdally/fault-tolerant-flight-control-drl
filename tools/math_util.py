@@ -1,5 +1,7 @@
 import numpy as np
-
+import tensorflow as tf
+import gym
+import random
 
 def safe_mean(arr):
     """
@@ -36,3 +38,16 @@ def unscale_action(action_space, scaled_action):
     """
     low, high = action_space.low, action_space.high
     return low + (0.5 * (scaled_action + 1.0) * (high - low))
+
+
+def set_global_seeds(seed):
+    """
+    set the seed for python random, tensorflow, numpy and gym spaces
+    :param seed: (int) the seed
+    """
+    tf.set_random_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    # prng was removed in latest gym version
+    if hasattr(gym.spaces, 'prng'):
+        gym.spaces.prng.seed(seed)
