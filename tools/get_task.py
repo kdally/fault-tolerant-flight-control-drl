@@ -131,6 +131,9 @@ def get_task_tr(time_v: np.ndarray = np.arange(0, 20, 0.01)):
                           -angle_phi * np.cos(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
                           np.zeros(int(2 * time_v.shape[0] / time_v[-1].round())),
                           ])
+
+        # signals['h'] = np.hstack([signals['h'],signals['h']])
+        # signals['phi'] = np.hstack([signals['phi'], signals['phi']])
         signals['beta'] = np.zeros(int(time_v.shape[0]))
         obs_indices = [state_indices['p'], state_indices['q'], state_indices['r'], state_indices['theta']]
 
@@ -156,8 +159,8 @@ def get_task_eval(time_v: np.ndarray = np.arange(0, 80, 0.01)):
     signals = {}
 
     # task_type = 'body_rates'
-    # task_type = '3attitude_step'
-    task_type = 'altitude_2attitude'
+    task_type = '3attitude_step'
+    # task_type = 'altitude_2attitude'
 
     if task_type == 'body_rates':
         signals['p'] = np.hstack([np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
@@ -467,6 +470,28 @@ def get_task_eval_FDD(time_v: np.ndarray = np.arange(0, 120, 0.01), theta_angle=
     obs_indices = track_indices + obs_indices
 
     return track_signals, track_indices, obs_indices, time_v, task_type
+
+
+def choose_task(evaluation, failure, FDD):
+
+    if failure is not None:
+        failure_input = failure
+        if evaluation:
+            if FDD:
+                task_fun = get_task_eval_FDD
+            else:
+                task_fun = get_task_eval_fail
+        else:
+            task_fun = get_task_tr_fail
+
+    else:
+        failure_input = ['normal', 0.0, 0.0]
+        if evaluation:
+            task_fun = get_task_eval
+        else:
+            task_fun = get_task_tr
+
+    return task_fun, failure_input, evaluation, FDD
 
 #
 # import matplotlib.pyplot as plt

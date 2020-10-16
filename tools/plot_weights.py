@@ -38,3 +38,4 @@ def plot_weights(ID: str, task_type: str, last=None):
 
 
 # plot_weights('KD0XD4_ice', '3attitude_step', last=True)
+# plot_weights('ABCDEF','altitude_2attitude')
