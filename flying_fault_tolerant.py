@@ -7,7 +7,7 @@ from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 from envs.citation import Citation
 
-from tools.schedule import schedule_kink
+from tools.schedule import schedule_kink, constant
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_weights import plot_weights
@@ -22,11 +22,12 @@ warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 # failure_inputs = ['da', 1.0, 0.3]
 # failure_inputs = ['dr', 0.0, -15.0]
 # failure_inputs = ['cg', 1.0, 1.04]
-failure_inputs = ['ice', 1.0, 0.7] # https://doi.org/10.1016/S0376-0421(01)00018-5
-# failure_inputs = ['ht', 1.0, 0.1]
+# failure_inputs = ['ice', 1.0, 0.7] # https://doi.org/10.1016/S0376-0421(01)00018-5
+failure_inputs = ['ht', 1.0, 0.3]
 # failure_inputs = ['vt', 1.0, 0.0]
 
 # todo: change default task 25deg
+# todo: run later with 10* sideslip
 
 def learn():
 
@@ -37,17 +38,17 @@ def learn():
                                 best_model_save_path="agent/trained/tmp/")
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=256,
-                learning_rate=schedule_kink(0.0004, 0.0002),
+                ent_coef='auto', batch_size=512,
+                learning_rate=constant(0.0003),
                 )
-    agent.learn(total_timesteps=int(1e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
     ID = get_ID(6) + f'_{failure_inputs[0]}'
     plot_weights(ID, get_task_tr_fail()[4])
+    plot_training(ID, get_task_tr_fail()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip")
     agent.save(f'agent/trained/{get_task_tr_fail()[4]}_{ID}.zip')
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr_fail()[4]}_{ID}.csv')
-    plot_training(ID, get_task_tr_fail()[4])
     get_response(Citation(evaluation=True, failure=failure_inputs), agent=agent, ID=ID, failure=True)
 
     return
@@ -75,7 +76,7 @@ def keyboardInterruptHandler(signal, frame):
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 # learn()
 # run_preexisting('9VZ5VE') # general, robust
-# run_preexisting('KD0XD4_ice')
+# run_preexisting('6KPOOS_ht')
 
 # run_preexisting('last')
 

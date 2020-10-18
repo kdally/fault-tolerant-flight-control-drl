@@ -67,7 +67,7 @@ class SAC(ABC):
     def __init__(self, policy, env, gamma=0.99, learning_rate=3e-4, buffer_size=50000,
                  learning_starts=100, train_freq=1, batch_size=64,
                  tau=0.005, ent_coef='auto', target_update_interval=1,
-                 gradient_steps=1, target_entropy='auto', action_noise=None,
+                 target_entropy='auto', action_noise=None,
                  random_exploration=0.0, verbose=0,
                  _init_setup_model=True, policy_kwargs=None,
                  seed=None):
@@ -99,7 +99,7 @@ class SAC(ABC):
         self.tau = tau
         self.ent_coef = ent_coef
         self.target_update_interval = target_update_interval
-        self.gradient_steps = gradient_steps
+        self.gradient_steps = train_freq
         self.gamma = gamma
         self.action_noise = action_noise
         self.random_exploration = random_exploration

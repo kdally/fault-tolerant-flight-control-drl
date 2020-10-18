@@ -146,16 +146,12 @@ class Citation(gym.Env):
         if self.evaluation:
             sideslip_factor = 4.0 * np.ones(self.time.shape[0])
         else:
-            sideslip_factor = 10.0 * np.ones(self.time.shape[0])
+            sideslip_factor = 10.0 * np.ones(self.time.shape[0]) # todo: put back to 10
 
         if self.failure_input[0] == 'dr':
             sideslip_factor = np.zeros(self.time.shape[0])
             if self.FDD:
                 sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
-        # elif self.failure_input[0] == 'ht':
-        #     self.pitch_factor = np.zeros(self.time.shape[0])
-        #     if FDD:
-        #         self.pitch_factor[:int(self.time.shape[0]/2)] = np.ones(int(self.time.shape[0]/2))
         elif self.failure_input[0] == 'da' and self.evaluation:
             pitch_factor = 1.5 * np.ones(self.time.shape[0])
             if self.FDD:

@@ -9,7 +9,7 @@ from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 
 from envs.citation import Citation
-from tools.schedule import schedule
+from tools.schedule import schedule, constant
 
 
 def sample_sac_params(trial):
@@ -19,24 +19,28 @@ def sample_sac_params(trial):
     :param trial: (optuna.trial)
     :return: (dict)
     """
-    learning_rate = trial.suggest_loguniform('lr', 1e-5, 1e-2)
+    learning_rate = trial.suggest_loguniform('lr', 1e-4, 2e-3)
     net_arch = trial.suggest_categorical('net_arch', ["small", "medium", "big"])
+    train_freq = trial.suggest_categorical('train_freq', [1, 50, 100])
     batch_size = trial.suggest_categorical('batch_size', [256, 512])
+    buffer_size = trial.suggest_categorical('buffer_size', [int(5e4), int(1e6)])
 
     net_arch = {
-        'small': [64, 64],
-        'medium': [256, 256],
-        'big': [400, 300],
+        'small': [16, 16],
+        'medium': [32, 32],
+        'big': [64, 64],
     }[net_arch]
 
     return {
-        'learning_rate': schedule(learning_rate),
+        'learning_rate': constant(learning_rate),
+        'train_freq': train_freq,
+        'buffer_size':buffer_size,
         'batch_size': batch_size,
         'policy_kwargs': dict(layers=net_arch)
     }
 
 
-def hyperparam_optimization(n_trials=30, n_timesteps=int(1e6),
+def hyperparam_optimization(n_trials=50, n_timesteps=int(1e5),
                             n_jobs=1):
     """
     :param n_trials: (int) maximum number of trials for finding the best hyperparams
@@ -49,7 +53,7 @@ def hyperparam_optimization(n_trials=30, n_timesteps=int(1e6),
 
     sampler = TPESampler(n_startup_trials=n_startup_trials, seed=3)
 
-    pruner = MedianPruner(n_startup_trials=n_startup_trials, n_warmup_steps=10)
+    pruner = MedianPruner(n_startup_trials=n_startup_trials, n_warmup_steps=15)
 
     study = optuna.create_study(sampler=sampler, pruner=pruner)
     algo_sampler = sample_sac_params

@@ -14,13 +14,11 @@ from tools.plot_weights import plot_weights
 from tools.plot_response import get_response
 from tools.get_task import get_task_tr
 
-
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
 
 def learn():
-
     env_train = Citation()
     env_eval = Citation()
 
@@ -29,24 +27,24 @@ def learn():
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=512,
                 # learning_rate=schedule_kink(0.0004, 0.0004),
+                train_freq=100,
                 learning_rate=constant(0.0003),
                 policy_kwargs=dict(layers=[64, 64]),
                 )
-    agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(2.5e6), log_interval=50, callback=callback)
     ID = get_ID(6)
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr()[4]}_{ID}.csv')
     plot_weights(ID, get_task_tr()[4])
+    plot_training(ID, get_task_tr()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip", env=env_eval)
     agent.save(f'agent/trained/{get_task_tr()[4]}_{ID}.zip')
-    plot_training(ID, get_task_tr()[4])
     get_response(Citation(evaluation=True), agent=agent, ID=ID)
 
     return
 
 
 def run_preexisting(ID=None, directory: str = 'tmp'):
-
     env_eval = Citation(evaluation=True)
 
     if ID is None:
@@ -68,5 +66,6 @@ signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
 # run_preexisting('P7V00G')
 # run_preexisting('9VZ5VE')
+# run_preexisting('J32AG4')
 
 # os.system('say "your program has finished"')

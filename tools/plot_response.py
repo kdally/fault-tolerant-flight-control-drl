@@ -1,8 +1,6 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-from tools.get_task import get_task_eval as get_task
-
 
 def plot_response(name, env, task, perf, during_training=False, failure=False, FDD=False):
     subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
@@ -112,9 +110,9 @@ def plot_response(name, env, task, perf, during_training=False, failure=False, F
 
     fig.update_traces(mode='lines')
     if during_training:
-        fig.write_image(f"figures/during_training/{get_task()[4]}_r{abs(int(perf))}.eps")
+        fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
     else:
-        fig.write_image(f"figures/{get_task()[4]}_{name}_r{abs(int(perf))}.pdf")
+        fig.write_image(f"figures/{env.task_fun()[4]}_{name}_r{abs(int(perf))}.pdf")
 
 
 def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=False):
@@ -122,7 +120,7 @@ def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=
         ID = 'during_training'
         verbose = 0
     elif ID is None:
-        agent.save(f'agent/trained/{get_task()[4]}_last.zip')
+        agent.save(f'agent/trained/{env.task_fun[4]}_last.zip')
         ID = 'last'
 
     if isinstance(agent, tuple):
@@ -140,7 +138,7 @@ def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=
             obs, reward, done, info = env.step(action)
             return_a += reward
             if current_time == env.time[-1]:
-                plot_response(ID, env, get_task(), return_a, during_training, failure, FDD=True)
+                plot_response(ID, env, env.task_fun(), return_a, during_training, failure, FDD=True)
                 if verbose > 0:
                     print(f"Goal reached! Return = {return_a:.2f}")
                     print('')
@@ -157,7 +155,7 @@ def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=
             #     print(env.action_history[:, env.step_count - 1])
             return_a += reward
             if current_time == env.time[-1]:
-                plot_response(ID, env, get_task(), return_a, during_training, failure)
+                plot_response(ID, env, env.task_fun(), return_a, during_training, failure)
                 if verbose > 0:
                     print(f"Goal reached! Return = {return_a:.2f}")
                     print('')
