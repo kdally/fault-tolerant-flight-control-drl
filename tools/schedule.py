@@ -69,7 +69,7 @@ def schedule_exp(initial_value):
         :param progress: (float)
         :return: (float)
         """
-        k = 3.0
+        k = 2.0
         return initial_value * math.exp(-k * progress)
 
     return func

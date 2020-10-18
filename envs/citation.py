@@ -68,7 +68,7 @@ class Citation(gym.Env):
         if 7 in self.track_indices:
             self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
         if 9 in self.track_indices:
-            self.error[self.track_indices.index(9)] *= 0.5
+            self.error[self.track_indices.index(9)] *= 1.0
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
