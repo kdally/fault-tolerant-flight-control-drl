@@ -38,7 +38,8 @@ class Citation(gym.Env):
 
         self.sideslip_factor, self.pitch_factor = self.adapt_to_failure()
 
-        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
+        # self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3+1,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
 
@@ -69,6 +70,7 @@ class Citation(gym.Env):
             self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
         if 9 in self.track_indices:
             self.error[self.track_indices.index(9)] *= 1.0
+        # self.error[self.track_indices.index(6)] *= 1.2  #todo: remove that
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
@@ -110,7 +112,6 @@ class Citation(gym.Env):
 
         max_bound = np.ones(self.error.shape)
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        # reward_vec = 0.5*np.exp(-np.absolute(self.error)*1000)
         reward = -reward_vec.sum() / self.error.shape[0]
         # print(reward_vec/3)
         # if r2d(self.state[4]) > 11.0: #todo: remove that
@@ -121,8 +122,8 @@ class Citation(gym.Env):
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        # return np.hstack([self.error[:2], 0.0, self.state[untracked_obs_index], self.current_deflection[:2], 0.0])
-        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
+        return np.hstack([self.error, self.state[untracked_obs_index], self.state[6], self.current_deflection])
+        # return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
 
     @staticmethod
     def scale_a(action_unscaled: np.ndarray) -> np.ndarray:
@@ -146,7 +147,7 @@ class Citation(gym.Env):
         if self.evaluation:
             sideslip_factor = 4.0 * np.ones(self.time.shape[0])
         else:
-            sideslip_factor = 10.0 * np.ones(self.time.shape[0]) # todo: put back to 10
+            sideslip_factor = 10.0 * np.ones(self.time.shape[0])
 
         if self.failure_input[0] == 'dr':
             sideslip_factor = np.zeros(self.time.shape[0])

@@ -16,7 +16,6 @@ from tools.get_task import get_task_tr_fail
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# todo:  check aileron failure after training with correct observations
 
 # failure_inputs = ['de', 20.05, 3.0]
 # failure_inputs = ['da', 1.0, 0.3]

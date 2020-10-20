@@ -40,7 +40,7 @@ def sample_sac_params(trial):
     }
 
 
-def hyperparam_optimization(n_trials=50, n_timesteps=int(1e5),
+def hyperparam_optimization(n_trials=60, n_timesteps=int(1e5),
                             n_jobs=1):
     """
     :param n_trials: (int) maximum number of trials for finding the best hyperparams
@@ -66,21 +66,29 @@ def hyperparam_optimization(n_trials=50, n_timesteps=int(1e5),
         kwargs.update(algo_sampler(trial))
 
         eval_env = Citation()
-        model = create_model(eval_env, **kwargs)
+        env_train = Citation()
+        model = create_model(env_train, **kwargs)
 
         eval_callback = SaveOnBestReturn(eval_env=eval_env, eval_freq=2000, log_path='optimization_logs/tmp/',
-                                         best_model_save_path='optimization_logs/tmp/')
+                                         best_model_save_path='optimization_logs/tmp/', verbose=0)
 
         try:
             model.learn(n_timesteps, callback=eval_callback)
             # Free memory
             model.env.close()
             eval_env.close()
+            env_train.close()
         except AssertionError:
             # Sometimes, random hyperparams can generate NaN
             # Free memory
             model.env.close()
             eval_env.close()
+            env_train.close()
+            raise optuna.exceptions.TrialPruned()
+        except IndexError:
+            model.env.close()
+            eval_env.close()
+            env_train.close()
             raise optuna.exceptions.TrialPruned()
         cost = -1 * eval_callback.last_mean_reward
 

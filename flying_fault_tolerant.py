@@ -27,7 +27,6 @@ failure_inputs = ['ht', 1.0, 0.3]
 # failure_inputs = ['vt', 1.0, 0.0]
 
 # todo: change default task 25deg
-# todo: run later with 10* sideslip
 
 def learn():
 

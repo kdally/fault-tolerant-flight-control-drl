@@ -28,8 +28,8 @@ def learn():
                 ent_coef='auto', batch_size=512,
                 # learning_rate=schedule_kink(0.0004, 0.0004),
                 train_freq=100,
-                learning_rate=constant(0.0003),
-                policy_kwargs=dict(layers=[64, 64]),
+                learning_rate=constant(0.0009),
+                policy_kwargs=dict(layers=[32, 32]),
                 )
     agent.learn(total_timesteps=int(2.5e6), log_interval=50, callback=callback)
     ID = get_ID(6)
@@ -64,8 +64,8 @@ def keyboardInterruptHandler(signal, frame):
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
-# run_preexisting('P7V00G')
+# run_preexisting('P7V00G') # batch size 512, LR 0.0003 ct, buffer 5e4, size 64, train_freq=1
 # run_preexisting('9VZ5VE')
-# run_preexisting('J32AG4')
+# run_preexisting('EN0KMW')
 
 # os.system('say "your program has finished"')
