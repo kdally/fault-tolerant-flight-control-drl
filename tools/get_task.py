@@ -255,8 +255,8 @@ def get_task_eval(time_v: np.ndarray = np.arange(0, 80, 0.01)):
                                   2400 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
                                   ])
         sign = 1
-        angle1 = 25
-        angle2 = 20
+        angle1 = 40
+        angle2 = 30
         signals['phi'] = np.hstack([0 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
                                     sign * angle1 * np.sin(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
                                     sign * angle1 * np.ones(int(9 * time_v.shape[0] / time_v[-1].round())),

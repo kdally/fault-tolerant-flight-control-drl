@@ -36,7 +36,7 @@ class Citation(gym.Env):
         self.track_indices = self.task_fun()[1]
         self.obs_indices = self.task_fun()[2]
 
-        self.sideslip_factor, self.pitch_factor = self.adapt_to_failure()
+        self.sideslip_factor, self.pitch_factor, self.roll_factor = self.adapt_to_failure()
 
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
@@ -66,11 +66,11 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count] - self.state_deg[self.track_indices])
         self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
+        self.error[self.track_indices.index(6)] *= self.roll_factor[self.step_count]
         if 7 in self.track_indices:
             self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
         if 9 in self.track_indices:
             self.error[self.track_indices.index(9)] *= 1.0
-        # self.error[self.track_indices.index(6)] *= 1.2  #todo: remove that
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
@@ -139,8 +139,11 @@ class Citation(gym.Env):
     def adapt_to_failure(self):
 
         pitch_factor = np.ones(self.time.shape[0])
+        roll_factor = np.ones(self.time.shape[0])
         if self.evaluation:
             sideslip_factor = 4.0 * np.ones(self.time.shape[0])
+            if self.task_fun()[4] == 'altitude_2attitude':
+                roll_factor = 2 * np.ones(self.time.shape[0])
         else:
             sideslip_factor = 10.0 * np.ones(self.time.shape[0])
 
@@ -152,11 +155,10 @@ class Citation(gym.Env):
             pitch_factor = 1.5 * np.ones(self.time.shape[0])
             if self.FDD:
                 pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
-
         elif self.failure_input[0] == 'ice':
             self.ref_signal = self.task_fun(theta_angle=25)[0]
 
-        return sideslip_factor, pitch_factor
+        return sideslip_factor, pitch_factor, roll_factor
 
     def render(self, mode='any'):
         raise NotImplementedError()
