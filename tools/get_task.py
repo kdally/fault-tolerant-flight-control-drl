@@ -319,7 +319,7 @@ def get_task_tr_fail(time_v: np.ndarray = np.arange(0, 20, 0.01), theta_angle=15
              np.zeros(int(2.5 * time_v.shape[0] / time_v[-1].round())),
              ])
 
-        angle_phi = random.choice([20, -20, 25, -25])
+        angle_phi = random.choice([20, -20, 25, -25, -30])
         signals['phi'] = np.hstack([np.zeros(int(1.5 * time_v.shape[0] / time_v[-1].round())),
                                     angle_phi * np.sin(time_v[:np.argwhere(time_v == 1)[0, 0]] * 0.25 * np.pi * 2),
                                     angle_phi * np.ones(int(4 * time_v.shape[0] / time_v[-1].round())),

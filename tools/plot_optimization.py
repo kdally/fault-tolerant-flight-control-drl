@@ -6,7 +6,7 @@ import seaborn as sns
 sns.set()
 
 df = pd.read_csv('/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                 'Thesis/DRL-cessna-citation-fc/optimization_logs/report_sim1_5DoF.csv')
+                 'Thesis/DRL-cessna-citation-fc/optimization_logs/report_sim2_5DoF.csv')
 df['value'] = -df['value']
 df['params_lr'] = np.log10(df['params_lr'])
 df['params_buffer_size'] = np.log10(df['params_buffer_size'])
@@ -18,8 +18,8 @@ fig = go.FigureWidget()
 data = [go.Parcoords(
     line=dict(color=df['value'], showscale=True,
               colorscale='thermal', colorbar={'title': 'Return'},
-              cmin=-1500,
-              cmax=-900),
+              cmin=-1000,
+              cmax=-500),
     dimensions=list([
         dict(range=[np.log10(1e-4), np.log10(1e-2)],
              tickvals=[-4., -3., -2],
@@ -40,4 +40,4 @@ data = [go.Parcoords(
 fig = go.FigureWidget(data=data)
 fig.update_layout(template="plotly")
 fig.write_image("/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
-                    f"Thesis/DRL-cessna-citation-fc/figures/fig_par_coords.pdf")
+                    f"Thesis/DRL-cessna-citation-fc/figures/fig_par_coords2.pdf")

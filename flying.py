@@ -28,7 +28,7 @@ def learn():
                 ent_coef='auto', batch_size=512,
                 # learning_rate=schedule_kink(0.0004, 0.0004),
                 train_freq=100,
-                learning_rate=constant(0.0009),
+                learning_rate=constant(0.0004),
                 policy_kwargs=dict(layers=[32, 32]),
                 )
     agent.learn(total_timesteps=int(2.5e6), log_interval=50, callback=callback)

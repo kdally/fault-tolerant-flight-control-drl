@@ -11,11 +11,11 @@ from typing import Union, Optional
 import numpy as np
 import tensorflow as tf
 import gym
-from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params
+from agent.buffer import ReplayBuffer
 from agent.callback import SaveOnBestReturn
 
 from tools import tf_util, logger
-from agent.buffer import ReplayBuffer
+from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params
 from tools.math_util import safe_mean, unscale_action, scale_action, set_global_seeds
 
 
@@ -44,7 +44,6 @@ class SAC(ABC):
     :param train_freq: (int) Update the model every `train_freq` steps.
     :param learning_starts: (int) how many steps of the model to collect transitions for before learning starts
     :param target_update_interval: (int) update the target network every `target_network_update_freq` steps.
-    :param gradient_steps: (int) How many gradient update after each step
     :param target_entropy: (str or float) target entropy when learning ent_coef (ent_coef = 'auto')
     :param action_noise: (ActionNoise) the action noise type (None by default), this can help
         for hard exploration problem. Cf DDPG for the different action noise type.
@@ -52,16 +51,11 @@ class SAC(ABC):
         This is not needed for SAC normally but can help exploring when using HER + SAC.
         This hack was present in the original OpenAI Baselines repo (DDPG + HER)
     :param verbose: (int) the verbosity level: 0 none, 1 training information, 2 tensorflow debug
-    :param tensorboard_log: (str) the log location for tensorboard (if None, no logging)
     :param _init_setup_model: (bool) Whether or not to build the network at the creation of the instance
     :param policy_kwargs: (dict) additional arguments to be passed to the policy on creation
-    :param full_tensorboard_log: (bool) enable additional logging when using tensorboard
-        Note: this has no effect on SAC logging for now
     :param seed: (int) Seed for the pseudo-random generators (python, numpy, tensorflow).
         If None (default), use random seed. Note that if you want completely deterministic
         results, you must set `n_cpu_tf_sess` to 1.
-    :param n_cpu_tf_sess: (int) The number of threads for TensorFlow operations
-        If None, the number of cpu of the current machine will be used.
     """
 
     def __init__(self, policy, env, gamma=0.99, learning_rate=3e-4, buffer_size=50000,

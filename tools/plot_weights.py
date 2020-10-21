@@ -37,5 +37,5 @@ def plot_weights(ID: str, task_type: str, last=None):
                     f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_weights.pdf")
 
 
-# plot_weights('KD0XD4_ice', '3attitude_step', last=True)
+# plot_weights('7AJEAX_ice', '3attitude_step', last=True)
 # plot_weights('P7V00G','altitude_2attitude')

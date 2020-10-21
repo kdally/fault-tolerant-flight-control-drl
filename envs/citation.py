@@ -38,8 +38,7 @@ class Citation(gym.Env):
 
         self.sideslip_factor, self.pitch_factor = self.adapt_to_failure()
 
-        # self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
-        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3+1,), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
 
@@ -56,6 +55,7 @@ class Citation(gym.Env):
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt)
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
+        # todo: failure ht: make elev action*1.5
         if self.time[self.step_count] < 5.0 and self.evaluation:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
@@ -113,17 +113,12 @@ class Citation(gym.Env):
         max_bound = np.ones(self.error.shape)
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         reward = -reward_vec.sum() / self.error.shape[0]
-        # print(reward_vec/3)
-        # if r2d(self.state[4]) > 11.0: #todo: remove that
-        #     reward -= 0.2
-
         return reward
 
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        return np.hstack([self.error, self.state[untracked_obs_index], self.state[6], self.current_deflection])
-        # return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
+        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
 
     @staticmethod
     def scale_a(action_unscaled: np.ndarray) -> np.ndarray:
