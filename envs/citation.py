@@ -1,6 +1,9 @@
 import gym
 import numpy as np
+from abc import ABC, abstractmethod
+from agent.sac import SAC
 from tools.get_task import choose_task
+from tools.plot_response import plot_response
 import importlib
 
 
@@ -17,18 +20,14 @@ def map_to(num: np.ndarray, a, b):
     return ((num + 1.0) / 2.0) * (b - a) + a
 
 
-class Citation(gym.Env):
+class Citation(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, evaluation=False, failure=None, FDD=False):
-
+    def __init__(self, evaluation=False, FDD=False):
         super(Citation, self).__init__()
 
-        self.task_fun, self.failure_input, self.evaluation, self.FDD = choose_task(evaluation, failure, FDD)
-        try:
-            self.C_MODEL = importlib.import_module(f'envs.{self.failure_input[0]}._citation', package=None)
-        except ImportError:
-            raise ImportError(f"Failure type not recognized.")
+        self.failure_input, self.C_MODEL = self.get_plant()
+        self.task_fun, self.failure_input, self.evaluation, self.FDD = choose_task(evaluation, self.failure_input, FDD)
 
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
@@ -55,7 +54,6 @@ class Citation(gym.Env):
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt)
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
-        # todo: failure ht: make elev action*1.5
         if self.time[self.step_count] < 5.0 and self.evaluation:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
@@ -136,6 +134,62 @@ class Citation(gym.Env):
         max_bounds = np.array([14.9, 37.24, 21.77])
         return np.minimum(np.maximum(action, min_bounds), max_bounds)
 
+    @abstractmethod
+    def get_plant(self):
+        pass
+
+    @abstractmethod
+    def adapt_to_failure(self):
+        pass
+
+    def render(self, agent=None, during_training=False, verbose=1):
+
+        if agent is None:
+            agent = SAC.load(f"agent/trained/tmp/best_model.zip", env=self)
+            agent.save(f'agent/trained/{self.task_fun()[4]}_last.zip')
+            agent.ID = 'last'
+            assert not self.FDD
+
+        if during_training:
+            agent.ID = 'during_training'
+            verbose = 0
+
+        if self.FDD:
+            agent_robust = agent[0]
+            agent_adaptive = agent[1]
+        else:
+            agent_robust = agent
+
+        obs = self.reset_soft()
+        return_a = 0
+
+        for i, current_time in enumerate(self.time):
+            if current_time < self.time[-1] / 2 or not self.FDD:
+                action, _ = agent_robust.predict(obs, deterministic=True)
+            else:
+                action, _ = agent_adaptive.predict(obs, deterministic=True)
+            obs, reward, done, info = self.step(action)
+            return_a += reward
+            if current_time == self.time[-1]:
+                plot_response(agent.ID, self, self.task_fun(), return_a, during_training,
+                              self.failure_input[0], FDD=self.FDD)
+                if verbose > 0:
+                    print(f"Goal reached! Return = {return_a:.2f}")
+                    print('')
+                break
+
+    def close(self):
+        self.C_MODEL.terminate()
+        return
+
+
+class CitationNormal(Citation):
+
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.ice._citation', package=None)
+        return plant, ['normal', 1.0, 1.0]
+
     def adapt_to_failure(self):
 
         pitch_factor = np.ones(self.time.shape[0])
@@ -147,26 +201,56 @@ class Citation(gym.Env):
         else:
             sideslip_factor = 10.0 * np.ones(self.time.shape[0])
 
-        if self.failure_input[0] == 'dr':
-            sideslip_factor = np.zeros(self.time.shape[0])
-            if self.FDD:
-                sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
-        elif self.failure_input[0] == 'da' and self.evaluation:
-            pitch_factor = 1.5 * np.ones(self.time.shape[0])
-            if self.FDD:
-                pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
-        elif self.failure_input[0] == 'ice':
-            self.ref_signal = self.task_fun(theta_angle=25)[0]
+        return sideslip_factor, pitch_factor, roll_factor
+
+
+class CitationRudderStuck(Citation):
+
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.dr._citation', package=None)
+        return plant, ['dr', 0.0, -15.0]
+
+    def adapt_to_failure(self):
+
+        pitch_factor = np.ones(self.time.shape[0])
+        roll_factor = np.ones(self.time.shape[0])
+        if self.task_fun()[4] == 'altitude_2attitude' and self.evaluation:
+            roll_factor = 2 * np.ones(self.time.shape[0])
+
+        sideslip_factor = np.zeros(self.time.shape[0])
+        if self.FDD:
+            sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
 
         return sideslip_factor, pitch_factor, roll_factor
 
-    def render(self, mode='any'):
-        raise NotImplementedError()
 
-    def close(self):
-        self.C_MODEL.terminate()
-        return
+class CitationIcing(Citation):
 
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.ice._citation', package=None)
+        return plant, ['ice', 1.0, 0.7]
+
+    def reset(self):
+
+        self.reset_soft()
+        self.ref_signal = self.task_fun(theta_angle=25)[0]
+        return np.zeros(self.observation_space.shape)
+
+    def adapt_to_failure(self):
+
+        pitch_factor = np.ones(self.time.shape[0])
+        roll_factor = np.ones(self.time.shape[0])
+        if self.evaluation:
+            sideslip_factor = 4.0 * np.ones(self.time.shape[0])
+            if self.task_fun()[4] == 'altitude_2attitude':
+                roll_factor = 2 * np.ones(self.time.shape[0])
+        else:
+            sideslip_factor = 10.0 * np.ones(self.time.shape[0])
+        self.ref_signal = self.task_fun(theta_angle=25)[0]
+
+        return sideslip_factor, pitch_factor, roll_factor
 
 # from stable_baselines.common.env_checker import check_env
 #

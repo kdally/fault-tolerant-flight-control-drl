@@ -2,13 +2,15 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 
-def plot_response(name, env, task, perf, during_training=False, failure=False, FDD=False):
+
+def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False):
+
     subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
     fig = make_subplots(rows=6, cols=2)
 
-    if failure:
+    if failure != 'normal' and not during_training:
         fig.add_shape(
             dict(type="line", xref="x1", yref="paper",
                  x0=5, y0=0, x1=5, y1=1, line=dict(color="Grey", width=1)))
@@ -114,49 +116,3 @@ def plot_response(name, env, task, perf, during_training=False, failure=False, F
     else:
         fig.write_image(f"figures/{env.task_fun()[4]}_{name}_r{abs(int(perf))}.pdf")
 
-
-def get_response(env, agent, ID=None, during_training=False, verbose=1, failure=False):
-    if during_training:
-        ID = 'during_training'
-        verbose = 0
-    elif ID is None:
-        agent.save(f'agent/trained/{env.task_fun[4]}_last.zip')
-        ID = 'last'
-
-    if isinstance(agent, tuple):
-        agent_robust = agent[0]
-        agent_adaptive = agent[1]
-
-        obs = env.reset_soft()
-        return_a = 0
-
-        for i, current_time in enumerate(env.time):
-            if current_time < env.time[-1] / 2:
-                action, _ = agent_robust.predict(obs, deterministic=True)
-            else:
-                action, _ = agent_adaptive.predict(obs, deterministic=True)
-            obs, reward, done, info = env.step(action)
-            return_a += reward
-            if current_time == env.time[-1]:
-                plot_response(ID, env, env.task_fun(), return_a, during_training, failure, FDD=True)
-                if verbose > 0:
-                    print(f"Goal reached! Return = {return_a:.2f}")
-                    print('')
-                break
-
-    else:
-        obs = env.reset_soft()
-        return_a = 0
-
-        for i, current_time in enumerate(env.time):
-            action, _ = agent.predict(obs, deterministic=True)
-            obs, reward, done, info = env.step(action)
-            # if verbose > 0:
-            #     print(env.action_history[:, env.step_count - 1])
-            return_a += reward
-            if current_time == env.time[-1]:
-                plot_response(ID, env, env.task_fun(), return_a, during_training, failure)
-                if verbose > 0:
-                    print(f"Goal reached! Return = {return_a:.2f}")
-                    print('')
-                break

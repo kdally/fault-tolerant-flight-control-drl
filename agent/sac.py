@@ -66,6 +66,7 @@ class SAC(ABC):
                  _init_setup_model=True, policy_kwargs=None,
                  seed=None):
 
+        self.ID = None
         self.policy = policy
         self.env = env
         self.verbose = verbose

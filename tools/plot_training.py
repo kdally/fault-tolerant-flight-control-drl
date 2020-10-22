@@ -120,6 +120,6 @@ def plot_trainings(IDs: list, task_type: str, avg_param: int = 2):
 
 
 # plot_training('MDl9EX', 'body_rates')
-# plot_training('7AJEAX_ice', '3attitude_step')
+# plot_training('R0EV0U_ht', '3attitude_step')
 # plot_training('P7V00G','altitude_2attitude')
 # plot_trainings(['CQJTZA', 'PDB9SI'], '3attitude')
