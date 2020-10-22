@@ -269,7 +269,7 @@ class CitationIcing(Citation):
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.ice._citation', package=None)
-        return plant, ['ice', 1.0, 0.6]  # https://doi.org/10.1016/S0376-0421(01)00018-5
+        return plant, ['ice', 1.0, 0.7]  # https://doi.org/10.1016/S0376-0421(01)00018-5
 
     def reset(self):
 
