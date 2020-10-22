@@ -482,8 +482,7 @@ def get_task_eval_FDD(time_v: np.ndarray = np.arange(0, 120, 0.01), theta_angle=
 
 
 def choose_task(evaluation, failure, FDD):
-    if failure is not None:
-        failure_input = failure
+    if failure[0] is not 'normal':
         if evaluation:
             if FDD:
                 task_fun = get_task_eval_FDD
@@ -493,13 +492,12 @@ def choose_task(evaluation, failure, FDD):
             task_fun = get_task_tr_fail
 
     else:
-        failure_input = ['normal', 0.0, 0.0]
         if evaluation:
             task_fun = get_task_eval
         else:
             task_fun = get_task_tr
 
-    return task_fun, failure_input, evaluation, FDD
+    return task_fun, evaluation, FDD
 
 # #
 # import matplotlib.pyplot as plt

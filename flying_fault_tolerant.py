@@ -1,3 +1,4 @@
+import importlib
 import warnings
 import signal
 
@@ -6,7 +7,6 @@ import numpy as np
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
-from envs.citation import CitationIcing as Citation
 
 from tools.schedule import schedule_kink, constant
 from tools.identifier import get_ID
@@ -14,17 +14,18 @@ from tools.plot_training import plot_training
 from tools.plot_weights import plot_weights
 from tools.get_task import get_task_tr_fail
 
-
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-# failure_inputs = ['de', 20.05, 3.0]
-# failure_inputs = ['da', 1.0, 0.3]
-# failure_inputs = ['dr', 0.0, -15.0]
-# failure_inputs = ['cg', 1.0, 1.04]
-failure_inputs = ['ice', 1.0, 0.7] # https://doi.org/10.1016/S0376-0421(01)00018-5
-# failure_inputs = ['ht', 1.0, 0.5]
-# failure_inputs = ['vt', 1.0, 0.0]
+# from envs.citation import CitationElevRange as Citation
+# from envs.citation import CitationAileronEff as Citation
+# from envs.citation import CitationRudderStuck as Citation
+# from envs.citation import CitationHorzTail as Citation
+# from envs.citation import CitationVertTail as Citation
+# from envs.citation import CitationIcing as Citation
+# from envs.citation import CitationCgShift as Citation
+
+Citation = importlib.import_module(f'envs.ice._citation', package=None)
 
 
 def learn():
@@ -43,7 +44,7 @@ def learn():
                 )
     # agent = SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_9VZ5VE.zip", env=env_train)
     agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
-    agent.ID = get_ID(6) + f'_{failure_inputs[0]}'
+    agent.ID = get_ID(6) + f'_{env_eval.failure_input[0]}'
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{get_task_tr_fail()[4]}_{agent.ID}.csv')
     plot_weights(agent.ID, get_task_tr_fail()[4])

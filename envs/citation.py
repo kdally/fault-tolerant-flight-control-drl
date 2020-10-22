@@ -26,8 +26,8 @@ class Citation(gym.Env, ABC):
     def __init__(self, evaluation=False, FDD=False):
         super(Citation, self).__init__()
 
-        self.failure_input, self.C_MODEL = self.get_plant()
-        self.task_fun, self.failure_input, self.evaluation, self.FDD = choose_task(evaluation, self.failure_input, FDD)
+        self.C_MODEL, self.failure_input = self.get_plant()
+        self.task_fun, self.evaluation, self.FDD = choose_task(evaluation, self.failure_input, FDD)
 
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
@@ -138,9 +138,18 @@ class Citation(gym.Env, ABC):
     def get_plant(self):
         pass
 
-    @abstractmethod
     def adapt_to_failure(self):
-        pass
+        
+        pitch_factor = np.ones(self.time.shape[0])
+        roll_factor = np.ones(self.time.shape[0])
+        if self.evaluation:
+            sideslip_factor = 4.0 * np.ones(self.time.shape[0])
+            if self.task_fun()[4] == 'altitude_2attitude':
+                roll_factor = 2 * np.ones(self.time.shape[0])
+        else:
+            sideslip_factor = 10.0 * np.ones(self.time.shape[0])
+            
+        return sideslip_factor, pitch_factor, roll_factor
 
     def render(self, agent=None, during_training=False, verbose=1):
 
@@ -157,6 +166,7 @@ class Citation(gym.Env, ABC):
         if self.FDD:
             agent_robust = agent[0]
             agent_adaptive = agent[1]
+            agent = agent[1]
         else:
             agent_robust = agent
 
@@ -213,11 +223,7 @@ class CitationRudderStuck(Citation):
 
     def adapt_to_failure(self):
 
-        pitch_factor = np.ones(self.time.shape[0])
-        roll_factor = np.ones(self.time.shape[0])
-        if self.task_fun()[4] == 'altitude_2attitude' and self.evaluation:
-            roll_factor = 2 * np.ones(self.time.shape[0])
-
+        _, pitch_factor, roll_factor = super(CitationRudderStuck, self).adapt_to_failure()
         sideslip_factor = np.zeros(self.time.shape[0])
         if self.FDD:
             sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
@@ -225,32 +231,75 @@ class CitationRudderStuck(Citation):
         return sideslip_factor, pitch_factor, roll_factor
 
 
+class CitationAileronEff(Citation):
+
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.da._citation', package=None)
+        return plant, ['da', 1.0, 0.3]
+
+    def adapt_to_failure(self):
+
+        sideslip_factor, _, roll_factor = super(CitationAileronEff, self).adapt_to_failure()
+        pitch_factor = 1.5 * np.ones(self.time.shape[0])
+        if self.FDD:
+            pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
+
+        return sideslip_factor, pitch_factor, roll_factor
+
+
+class CitationElevRange(Citation):
+
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.de._citation', package=None)
+        return plant, ['de', 20.05, 3.0]
+
+
+class CitationCgShift(Citation):
+
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.cg._citation', package=None)
+        return plant, ['cg', 1.0, 1.04]
+
+
 class CitationIcing(Citation):
 
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.ice._citation', package=None)
-        return plant, ['ice', 1.0, 0.7]
+        return plant, ['ice', 1.0, 0.6]  # https://doi.org/10.1016/S0376-0421(01)00018-5
 
     def reset(self):
 
-        self.reset_soft()
+        super(CitationIcing, self).reset()
         self.ref_signal = self.task_fun(theta_angle=25)[0]
         return np.zeros(self.observation_space.shape)
 
     def adapt_to_failure(self):
 
-        pitch_factor = np.ones(self.time.shape[0])
-        roll_factor = np.ones(self.time.shape[0])
-        if self.evaluation:
-            sideslip_factor = 4.0 * np.ones(self.time.shape[0])
-            if self.task_fun()[4] == 'altitude_2attitude':
-                roll_factor = 2 * np.ones(self.time.shape[0])
-        else:
-            sideslip_factor = 10.0 * np.ones(self.time.shape[0])
+        sideslip_factor, pitch_factor, roll_factor = super(CitationIcing, self).adapt_to_failure()
         self.ref_signal = self.task_fun(theta_angle=25)[0]
 
         return sideslip_factor, pitch_factor, roll_factor
+
+
+class CitationHorzTail(Citation):
+
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.ht._citation', package=None)
+        return plant, ['ht', 1.0, 0.5]
+
+
+class CitationVertTail(Citation):
+
+    def get_plant(self):
+
+        plant = importlib.import_module(f'envs.vt._citation', package=None)
+        return plant, ['vt', 1.0, 0.0]
+
 
 # from stable_baselines.common.env_checker import check_env
 #

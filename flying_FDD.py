@@ -1,44 +1,28 @@
+import importlib
 import warnings
-import signal
-
-import pandas as pd
 from agent.sac import SAC
-from agent.policy import LnMlpPolicy
-from agent.callback import SaveOnBestReturn
-from envs.citation import Citation
 
-from tools.schedule import schedule_kink
-from tools.identifier import get_ID
-from tools.plot_training import plot_training
-from tools.plot_response import get_response
+from envs.citation import Citation
 from tools.get_task import get_task_tr_fail
+from tools.identifier import get_ID
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-
-# failure_inputs = ['de', 20.05, 3.0]
-# failure_inputs = ['da', 1.0, 0.3]
-# failure_inputs = ['dr', 0.0, -15.0]
-# failure_inputs = ['cg', 1.0, 1.04]
-# failure_inputs = ['ice', 1.0, 0.7]
-failure_inputs = ['ht', 1.0, 0.3]
-# failure_inputs = ['vt', 1.0, 0.0]
-
-
-# failure_inputs = ['vt', 1.0, 0.0]
+from envs.citation import CitationIcing as Citation
 
 
 def run_preexisting(ID1: str, ID2: str):
-    env_eval = Citation(evaluation=True, failure=failure_inputs, FDD=True)
+    env_eval = Citation(evaluation=True, FDD=True)
 
     agents = (SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_{ID1}.zip", env=env_eval),
               SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_{ID2}.zip", env=env_eval))
-    get_response(env_eval, agent=agents, ID='FDD_' + ID2, failure=True)
+    agents[1].ID = ID2
+    env_eval.render(agent=agents)
 
 
 # learn()
-run_preexisting('9VZ5VE', 'R0EV0U_ht')
+run_preexisting('9VZ5VE', '9MUWUB_ice')
 # run_preexisting('9VZ5VE', '9VZ5VE')  # general, robust
 
 # os.system('say "your program has finished"')
