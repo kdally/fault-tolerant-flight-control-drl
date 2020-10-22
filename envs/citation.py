@@ -200,19 +200,6 @@ class CitationNormal(Citation):
         plant = importlib.import_module(f'envs.ice._citation', package=None)
         return plant, ['normal', 1.0, 1.0]
 
-    def adapt_to_failure(self):
-
-        pitch_factor = np.ones(self.time.shape[0])
-        roll_factor = np.ones(self.time.shape[0])
-        if self.evaluation:
-            sideslip_factor = 4.0 * np.ones(self.time.shape[0])
-            if self.task_fun()[4] == 'altitude_2attitude':
-                roll_factor = 2 * np.ones(self.time.shape[0])
-        else:
-            sideslip_factor = 10.0 * np.ones(self.time.shape[0])
-
-        return sideslip_factor, pitch_factor, roll_factor
-
 
 class CitationRudderStuck(Citation):
 
