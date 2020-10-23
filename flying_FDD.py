@@ -9,7 +9,13 @@ from tools.identifier import get_ID
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-from envs.citation import CitationIcing as Citation
+# from envs.citation import CitationElevRange as Citation
+# from envs.citation import CitationAileronEff as Citation
+# from envs.citation import CitationRudderStuck as Citation
+# from envs.citation import CitationHorzTail as Citation
+# from envs.citation import CitationVertTail as Citation
+# from envs.citation import CitationIcing as Citation
+# from envs.citation import CitationCgShift as Citation
 
 
 def run_preexisting(ID1: str, ID2: str):

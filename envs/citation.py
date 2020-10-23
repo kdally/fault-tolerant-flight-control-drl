@@ -197,7 +197,7 @@ class CitationNormal(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.ice._citation', package=None)
+        plant = importlib.import_module(f'envs.normal._citation', package=None)
         return plant, ['normal', 1.0, 1.0]
 
 

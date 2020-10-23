@@ -101,14 +101,21 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
     ))
 
     end_time = env.time[-1] + env.dt * 2
+
+    if 9 in task[1]:
+        tick_interval = 40
+    else:
+        tick_interval = 10
+
     fig.update_xaxes(title_text="Time [s]", range=[0, end_time], tickmode='array',
-                     tickvals=np.arange(0, end_time, 10), row=6, col=1)
+                     tickvals=np.arange(0, end_time, tick_interval), row=6, col=1)
     fig.update_xaxes(title_text="Time [s]", range=[0, end_time], tickmode='array',
-                     tickvals=np.arange(0, end_time, 10), row=6, col=2)
+                     tickvals=np.arange(0, end_time, tick_interval), row=6, col=2)
 
     for row in range(6):
         for col in range(3):
-            fig.update_xaxes(showticklabels=False, nticks=7, row=row, col=col)
+            fig.update_xaxes(showticklabels=False, tickmode='array',
+                             tickvals=np.arange(0, end_time, tick_interval), row=row, col=col)
 
     fig.update_traces(mode='lines')
     if during_training:
