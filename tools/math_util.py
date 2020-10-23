@@ -3,15 +3,13 @@ import tensorflow as tf
 import gym
 import random
 
-def safe_mean(arr):
-    """
-    Compute the mean of an array if there is at least one element.
-    For empty array, return nan. It is used for logging only.
 
-    :param arr: (np.ndarray)
-    :return: (float)
-    """
-    return np.nan if len(arr) == 0 else np.mean(arr)
+def d2r(num):
+    return num * np.pi / 180.0
+
+
+def r2d(num):
+    return num * 180 / np.pi
 
 
 def scale_action(action_space, action):
@@ -33,7 +31,7 @@ def unscale_action(action_space, scaled_action):
     (no need for symmetric action space)
 
     :param action_space: (gym.spaces.box.Box)
-    :param action: (np.ndarray)
+    :param scaled_action: (np.ndarray)
     :return: (np.ndarray)
     """
     low, high = action_space.low, action_space.high

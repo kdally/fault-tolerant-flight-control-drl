@@ -5,19 +5,7 @@ from agent.sac import SAC
 from tools.get_task import choose_task
 from tools.plot_response import plot_response
 import importlib
-
-
-def d2r(num):
-    return num * np.pi / 180.0
-
-
-def r2d(num):
-    return num * 180 / np.pi
-
-
-def map_to(num: np.ndarray, a, b):
-    """ Map linearly num on the [-1, 1] range to the [a, b] range"""
-    return ((num + 1.0) / 2.0) * (b - a) + a
+from tools.math_util import unscale_action, d2r, r2d
 
 
 class Citation(gym.Env, ABC):
@@ -40,6 +28,9 @@ class Citation(gym.Env, ABC):
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
+
+        self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
+        self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
 
         self.state = None
         self.state_deg = None
@@ -118,21 +109,14 @@ class Citation(gym.Env, ABC):
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
         return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
 
-    @staticmethod
-    def scale_a(action_unscaled: np.ndarray) -> np.ndarray:
+    def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
 
-        max_bound = np.array([15, 40, 20])
-        action_scaled = map_to(action_unscaled, -max_bound, max_bound)
+        return unscale_action(self.rate_limits, action_unscaled)
 
-        return action_scaled
+    def bound_a(self, action):
 
-    @staticmethod
-    def bound_a(action):
-
-        min_bounds = np.array([-20.05, -37.24, -21.77])
-        max_bounds = np.array([14.9, 37.24, 21.77])
-        return np.minimum(np.maximum(action, min_bounds), max_bounds)
+        return np.minimum(np.maximum(action, self.deflection_limits.low), self.deflection_limits.high)
 
     @abstractmethod
     def get_plant(self):
@@ -191,6 +175,11 @@ class Citation(gym.Env, ABC):
     def close(self):
         self.C_MODEL.terminate()
         return
+
+    class ActionLimits:
+
+        def __init__(self, limits):
+            self.low, self.high = limits[0, :], limits[1, :]
 
 
 class CitationNormal(Citation):

@@ -21,6 +21,3 @@ class NormalActionNoise:
 
     def __call__(self) -> np.ndarray:
         return np.random.normal(self._mu, self._sigma)
-
-    def __repr__(self) -> str:
-        return 'NormalActionNoise(mu={}, sigma={})'.format(self._mu, self._sigma)

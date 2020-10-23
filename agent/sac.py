@@ -2,21 +2,19 @@ import time
 import warnings
 import os
 import json
-import random
 import zipfile
 from abc import ABC
 from collections import OrderedDict, deque
 from typing import Union, Optional
-
+import multiprocessing
 import numpy as np
 import tensorflow as tf
 import gym
 from agent.buffer import ReplayBuffer
 from agent.callback import SaveOnBestReturn
 
-from tools import tf_util, logger
 from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params
-from tools.math_util import safe_mean, unscale_action, scale_action, set_global_seeds
+from tools.math_util import unscale_action, scale_action, set_global_seeds
 
 
 class SAC(ABC):
@@ -135,7 +133,13 @@ class SAC(ABC):
             self.graph = tf.Graph()
             with self.graph.as_default():
                 self.set_random_seed(self.seed)
-                self.sess = tf_util.make_session(graph=self.graph)
+
+                num_cpu = int(os.getenv('RCALL_NUM_CPU', multiprocessing.cpu_count()))
+                tf_config = tf.ConfigProto(
+                    allow_soft_placement=True,
+                    inter_op_parallelism_threads=num_cpu,
+                    intra_op_parallelism_threads=num_cpu)
+                self.sess = tf.Session(config=tf_config, graph=self.graph)
 
                 self.replay_buffer = ReplayBuffer(self.buffer_size)
 
@@ -253,14 +257,14 @@ class SAC(ABC):
                     # (has to be separate from value train op, because min_qf_pi appears in policy_loss)
                     policy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
                     policy_train_op = policy_optimizer.minimize(policy_loss,
-                                                                var_list=tf_util.get_trainable_vars('model/pi'))
+                                                                var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='model/pi'))
 
                     # Value train op
                     value_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
-                    values_params = tf_util.get_trainable_vars('model/values_fn')
+                    values_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='model/values_fn')
 
-                    source_params = tf_util.get_trainable_vars("model/values_fn")
-                    target_params = tf_util.get_trainable_vars("target/values_fn")
+                    source_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model/values_fn")
+                    target_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="target/values_fn")
 
                     # Polyak averaging for target variables
                     self.target_update_op = [
@@ -303,8 +307,8 @@ class SAC(ABC):
                     tf.summary.scalar('learning_rate', tf.reduce_mean(self.learning_rate_ph))
 
                 # Retrieve parameters that must be saved
-                self.params = tf_util.get_trainable_vars("model")
-                self.target_params = tf_util.get_trainable_vars("target/values_fn")
+                self.params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
+                self.target_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="target/values_fn")
 
                 # Initialize Variables and target network
                 with self.sess.as_default():
@@ -433,13 +437,6 @@ class SAC(ABC):
                 if maybe_ep_info is not None:
                     self.ep_info_buf.extend([maybe_ep_info])
 
-                if writer is not None:
-                    # Write reward per episode to tensorboard
-                    ep_reward = np.array([reward_]).reshape((1, -1))
-                    ep_done = np.array([done]).reshape((1, -1))
-                    tf_util.total_episode_reward_logger(self.episode_reward, ep_reward,
-                                                        ep_done, writer, self.num_timesteps)
-
                 if self.num_timesteps % self.train_freq == 0:
 
                     mb_infos_vals = []
@@ -477,29 +474,6 @@ class SAC(ABC):
                     if maybe_is_success is not None:
                         episode_successes.append(float(maybe_is_success))
 
-                num_episodes = len(episode_rewards)
-
-                # Display training infos
-                if self.verbose >= 1 and done and log_interval is not None and len(episode_rewards) % log_interval == 0\
-                        and bool(episode_successes[-1]):
-                    fps = int(step / (time.time() - start_time))
-                    logger.logkv("episodes", num_episodes)
-                    if len(self.ep_info_buf) > 0 and len(self.ep_info_buf[0]) > 0:
-                        logger.logkv('ep_rewmean', safe_mean([ep_info['r'] for ep_info in self.ep_info_buf]))
-                        logger.logkv('eplenmean', safe_mean([ep_info['l'] for ep_info in self.ep_info_buf]))
-                    logger.logkv("n_updates", n_updates)
-                    logger.logkv("current_lr", current_lr)
-                    logger.logkv("fps", fps)
-                    logger.logkv('time_elapsed', int(time.time() - start_time))
-                    if len(episode_successes) > 0:
-                        logger.logkv("success rate", np.mean(episode_successes[-100:]))
-                    if len(infos_values) > 0:
-                        for (name, val) in zip(self.infos_names, infos_values):
-                            logger.logkv(name, val)
-                    logger.logkv("total timesteps", self.num_timesteps)
-                    logger.dumpkvs()
-                    # Reset infos:
-                    infos_values = []
             return self
 
     def learn_online(self, total_timesteps, initial_state, callback=None,
@@ -574,13 +548,6 @@ class SAC(ABC):
                 if maybe_ep_info is not None:
                     self.ep_info_buf.extend([maybe_ep_info])
 
-                if writer is not None:
-                    # Write reward per episode to tensorboard
-                    ep_reward = np.array([reward_]).reshape((1, -1))
-                    ep_done = np.array([done]).reshape((1, -1))
-                    tf_util.total_episode_reward_logger(self.episode_reward, ep_reward,
-                                                        ep_done, writer, self.num_timesteps)
-
                 if self.num_timesteps % self.train_freq == 0:
 
                     mb_infos_vals = []
@@ -617,28 +584,6 @@ class SAC(ABC):
                     if maybe_is_success is not None:
                         episode_successes.append(float(maybe_is_success))
 
-                num_episodes = len(episode_rewards)
-
-                # Display training infos
-                if self.verbose >= 1 and n_updates == total_timesteps:
-                    fps = int(step / (time.time() - start_time))
-                    logger.logkv("episodes", num_episodes)
-                    if len(self.ep_info_buf) > 0 and len(self.ep_info_buf[0]) > 0:
-                        logger.logkv('ep_rewmean', safe_mean([ep_info['r'] for ep_info in self.ep_info_buf]))
-                        logger.logkv('eplenmean', safe_mean([ep_info['l'] for ep_info in self.ep_info_buf]))
-                    logger.logkv("n_updates", n_updates)
-                    logger.logkv("current_lr", current_lr)
-                    logger.logkv("fps", fps)
-                    logger.logkv('time_elapsed', int(time.time() - start_time))
-                    if len(episode_successes) > 0:
-                        logger.logkv("success rate", np.mean(episode_successes[-100:]))
-                    if len(infos_values) > 0:
-                        for (name, val) in zip(self.infos_names, infos_values):
-                            logger.logkv(name, val)
-                    logger.logkv("total timesteps", self.num_timesteps)
-                    logger.dumpkvs()
-                    # Reset infos:
-                    infos_values = []
             return self
 
     def predict(self, observation, state=None, mask=None, deterministic=True):
@@ -1007,14 +952,12 @@ class SetVerbosity:
 
     def __enter__(self):
         self.tf_level = os.environ.get('TF_CPP_MIN_LOG_LEVEL', '0')
-        self.log_level = logger.get_level()
         self.gym_level = gym.logger.MIN_LEVEL
 
         if self.verbose <= 1:
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
         if self.verbose <= 0:
-            logger.set_level(logger.DISABLED)
             gym.logger.set_level(gym.logger.DISABLED)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -1022,5 +965,4 @@ class SetVerbosity:
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = self.tf_level
 
         if self.verbose <= 0:
-            logger.set_level(self.log_level)
             gym.logger.set_level(self.gym_level)
