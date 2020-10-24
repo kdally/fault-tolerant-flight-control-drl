@@ -1,37 +1,36 @@
-import importlib
 import warnings
 import signal
-
 import pandas as pd
 import numpy as np
+
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
-
+from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask
 from tools.schedule import schedule_kink, constant
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_weights import plot_weights
-from tools.get_task import get_task_tr_fail
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
+
+task = AttitudeTask
+# task = AltitudeTask
 
 # from envs.citation import CitationElevRange as Citation
 # from envs.citation import CitationAileronEff as Citation
 # from envs.citation import CitationRudderStuck as Citation
 # from envs.citation import CitationHorzTail as Citation
 # from envs.citation import CitationVertTail as Citation
-# from envs.citation import CitationIcing as Citation
+from envs.citation import CitationIcing as Citation
 # from envs.citation import CitationCgShift as Citation
-
-Citation = importlib.import_module(f'envs.ice._citation', package=None)
 
 
 def learn():
 
-    env_train = Citation()
-    env_eval = Citation()
+    env_train = Citation(task=task)
+    env_eval = env_train.get_cousin()
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
@@ -46,11 +45,11 @@ def learn():
     agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
     agent.ID = get_ID(6) + f'_{env_eval.failure_input[0]}'
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
-    training_log.to_csv(f'agent/trained/{get_task_tr_fail()[4]}_{agent.ID}.csv')
-    plot_weights(agent.ID, get_task_tr_fail()[4])
-    plot_training(agent.ID, get_task_tr_fail()[4])
+    training_log.to_csv(f'agent/trained/{env_eval.task_fun()()[4]}_{agent.ID}.csv')
+    plot_weights(agent.ID, env_eval.task_fun()()[4])
+    plot_training(agent.ID, env_eval.task_fun()()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip", env=env_eval)
-    agent.save(f'agent/trained/{get_task_tr_fail()[4]}_{agent.ID}.zip')
+    agent.save(f'agent/trained/{env_eval.task_fun()()[4]}_{agent.ID}.zip')
     env_eval = Citation(evaluation=True)
     env_eval.render(agent=agent)
 
@@ -59,12 +58,12 @@ def learn():
 
 def run_preexisting(ID=None):
 
-    env_eval = Citation(evaluation=True)
+    env_eval = Citation(evaluation=True, task=task)
 
     if ID is None:
         env_eval.render()
     else:
-        agent = SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_{ID}.zip", env=env_eval)
+        agent = SAC.load(f"agent/trained/{env_eval.task_fun()()[4]}_{ID}.zip", env=env_eval)
         agent.ID = ID
         env_eval.render(agent=agent)
 
@@ -77,7 +76,7 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
+# learn()
 # run_preexisting('9VZ5VE') # general, robust
 # run_preexisting('R0EV0V_ht')
 

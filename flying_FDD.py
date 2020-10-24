@@ -1,28 +1,30 @@
-import importlib
 import warnings
 from agent.sac import SAC
 
-from envs.citation import Citation
-from tools.get_task import get_task_tr_fail
-from tools.identifier import get_ID
+from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
+
+
+task = AttitudeTask
+# task = AltitudeTask
+
 
 # from envs.citation import CitationElevRange as Citation
 # from envs.citation import CitationAileronEff as Citation
 # from envs.citation import CitationRudderStuck as Citation
 # from envs.citation import CitationHorzTail as Citation
 # from envs.citation import CitationVertTail as Citation
-# from envs.citation import CitationIcing as Citation
+from envs.citation import CitationIcing as Citation
 # from envs.citation import CitationCgShift as Citation
 
 
 def run_preexisting(ID1: str, ID2: str):
-    env_eval = Citation(evaluation=True, FDD=True)
+    env_eval = Citation(evaluation=True, FDD=True, task=task)
 
-    agents = (SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_{ID1}.zip", env=env_eval),
-              SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_{ID2}.zip", env=env_eval))
+    agents = (SAC.load(f"agent/trained/{env_eval.task_fun()[4]}_{ID1}.zip", env=env_eval),
+              SAC.load(f"agent/trained/{env_eval.task_fun()[4]}_{ID2}.zip", env=env_eval))
     agents[1].ID = ID2
     env_eval.render(agent=agents)
 

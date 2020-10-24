@@ -66,10 +66,12 @@ class Task:
 
     @abstractmethod
     def get_task_eval_fail(self):
+        self.time_v: np.ndarray = np.arange(0, 70, 0.01)
         pass
 
     @abstractmethod
     def get_task_eval_FDD(self):
+        self.time_v: np.ndarray = np.arange(0, 120, 0.01)
         pass
 
     @abstractmethod
@@ -247,7 +249,8 @@ class AttitudeTask(Task):
         return self.return_signals()
 
     def get_task_eval_fail(self, theta_angle=15):
-        time_v: np.ndarray = np.arange(0, 70, 0.01)
+        super(AttitudeTask, self).get_task_eval_fail()
+        time_v = self.time_v
 
         self.signals['theta'] = np.hstack([np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
                                            theta_angle * np.sin(
@@ -278,7 +281,9 @@ class AttitudeTask(Task):
         return self.return_signals()
 
     def get_task_eval_FDD(self, theta_angle=15):
-        time_v = np.arange(0, 120, 0.01)
+        super(AttitudeTask, self).get_task_eval_FDD()
+        time_v = self.time_v
+
         self.signals['theta'] = np.hstack([np.zeros(int(10 * time_v.shape[0] / time_v[-1].round())),
                                            theta_angle * np.sin(
                                                time_v[:np.argwhere(time_v == 4.0)[0, 0]] * 0.06 * np.pi * 2),
