@@ -1,25 +1,26 @@
 import warnings
 import signal
-
 import pandas as pd
+
 from agent.sac import SAC
 from agent.policy import LnMlpPolicy
 from agent.callback import SaveOnBestReturn
 from envs.citation import CitationNormal as Citation
-
+from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask
 from tools.schedule import schedule_kink, constant, schedule_exp
 from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_weights import plot_weights
-from tools.get_task import get_task_tr
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
+task = AltitudeTask
+
 
 def learn():
-    env_train = Citation()
-    env_eval = Citation()
+    env_train = Citation(task=task)
+    env_eval = env_train.get_cousin()
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
@@ -33,23 +34,23 @@ def learn():
     agent.learn(total_timesteps=int(2.5e6), log_interval=50, callback=callback)
     agent.ID = get_ID(6)
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
-    training_log.to_csv(f'agent/trained/{get_task_tr()[4]}_{agent.ID}.csv')
-    plot_weights(agent.ID, get_task_tr()[4])
-    plot_training(agent.ID, get_task_tr()[4])
+    training_log.to_csv(f'agent/trained/{env_eval.task_fun()[4]}_{agent.ID}.csv')
+    plot_weights(agent.ID, env_eval.task_fun()[4])
+    plot_training(agent.ID, env_eval.task_fun()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip", env=env_eval)
-    agent.save(f'agent/trained/{get_task_tr()[4]}_{agent.ID}.zip')
+    agent.save(f'agent/trained/{env_eval.task_fun()[4]}_{agent.ID}.zip')
     env_eval.render(agent=agent)
 
     return
 
 
 def run_preexisting(ID=None):
-    env_eval = Citation(evaluation=True)
+    env_eval = Citation(evaluation=True, task=task)
 
     if ID is None:
         env_eval.render()
     else:
-        agent = SAC.load(f"agent/trained/{get_task_tr()[4]}_{ID}.zip", env=env_eval)
+        agent = SAC.load(f"agent/trained/{env_eval.task_fun()[4]}_{ID}.zip", env=env_eval)
         agent.ID = ID
         env_eval.render(agent=agent)
 

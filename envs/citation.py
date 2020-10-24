@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from abc import ABC, abstractmethod
 from agent.sac import SAC
-from tools.get_task import choose_task
+from tools.get_task import AltitudeTask, AttitudeTask,BodyRateTask
 from tools.plot_response import plot_response
 import importlib
 from tools.math_util import unscale_action, d2r, r2d
@@ -11,11 +11,12 @@ from tools.math_util import unscale_action, d2r, r2d
 class Citation(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, evaluation=False, FDD=False):
+    def __init__(self, evaluation=False, FDD=False, task=AttitudeTask):
         super(Citation, self).__init__()
 
         self.C_MODEL, self.failure_input = self.get_plant()
-        self.task_fun, self.evaluation, self.FDD = choose_task(evaluation, self.failure_input, FDD)
+        self.task = task
+        self.task_fun, self.evaluation, self.FDD = self.task().choose_task(evaluation, self.failure_input, FDD)
 
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
@@ -117,6 +118,9 @@ class Citation(gym.Env, ABC):
     def bound_a(self, action):
 
         return np.minimum(np.maximum(action, self.deflection_limits.low), self.deflection_limits.high)
+
+    def get_cousin(self):
+        return Citation(evaluation=self.evaluation, FDD=self.FDD, task=self.task)
 
     @abstractmethod
     def get_plant(self):
