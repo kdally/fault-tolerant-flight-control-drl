@@ -32,13 +32,15 @@ def learn():
                 policy_kwargs=dict(layers=[32, 32]),
                 )
     agent.learn(total_timesteps=int(2.5e6), log_interval=50, callback=callback)
-    agent.ID = get_ID(6)
+    ID = get_ID(6)
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
-    training_log.to_csv(f'agent/trained/{env_eval.task_fun()[4]}_{agent.ID}.csv')
-    plot_weights(agent.ID, env_eval.task_fun()[4])
-    plot_training(agent.ID, env_eval.task_fun()[4])
+    training_log.to_csv(f'agent/trained/{env_eval.task_fun()[4]}_{ID}.csv')
+    plot_weights(ID, env_eval.task_fun()[4])
+    plot_training(ID, env_eval.task_fun()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip", env=env_eval)
+    agent.ID = ID
     agent.save(f'agent/trained/{env_eval.task_fun()[4]}_{agent.ID}.zip')
+    env_eval = Citation(evaluation=True, task=task)
     env_eval.render(agent=agent)
 
     return

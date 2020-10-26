@@ -120,7 +120,7 @@ class Citation(gym.Env, ABC):
         return np.minimum(np.maximum(action, self.deflection_limits.low), self.deflection_limits.high)
 
     def get_cousin(self):
-        return Citation(evaluation=self.evaluation, FDD=self.FDD, task=self.task)
+        return self.__init__(evaluation=self.evaluation, FDD=self.FDD, task=self.task)
 
     @abstractmethod
     def get_plant(self):

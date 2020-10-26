@@ -22,10 +22,10 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
     if FDD:
         fig.add_shape(
             dict(type="line", xref="x1", yref="paper",
-                 x0=60, y0=0, x1=60, y1=1, line=dict(color="Grey", width=1, dash='dash')))
+                 x0=env.time[-1] / 2 , y0=0, x1=env.time[-1] / 2, y1=1, line=dict(color="Grey", width=1, dash='dash')))
         fig.add_shape(
             dict(type="line", xref="x2", yref="paper",
-                 x0=60, y0=0, x1=60, y1=1, line=dict(color="Grey", width=1, dash='dash')),
+                 x0=env.time[-1] / 2, y0=0, x1=env.time[-1] / 2, y1=1, line=dict(color="Grey", width=1, dash='dash')),
         )
 
     for sig_index, state_index in enumerate(task[1]):
