@@ -145,7 +145,7 @@ class Citation(gym.Env, ABC):
             agent = SAC.load(f"agent/trained/tmp/best_model.zip", env=self)
             agent.save(f'agent/trained/{self.task_fun()[4]}_last.zip')
             agent.ID = 'last'
-            assert not self.FDD
+            assert not self.FDD, 'Pre-trained agent needs to be passed for Fault Detection and Diagnosis simualtion.'
 
         if during_training:
             agent.ID = 'during_training'
@@ -199,14 +199,16 @@ class CitationRudderStuck(Citation):
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.dr._citation', package=None)
-        return plant, ['dr', 0.0, -15.0]
+        return plant, ['dr', 0.0, -14.0]
 
     def adapt_to_failure(self):
 
         _, pitch_factor, roll_factor = super(CitationRudderStuck, self).adapt_to_failure()
         sideslip_factor = np.zeros(self.time.shape[0])
+        roll_factor = 0.5 * np.ones(self.time.shape[0])
         if self.FDD:
             sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
+            roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
 
         return sideslip_factor, pitch_factor, roll_factor
 

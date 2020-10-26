@@ -490,6 +490,7 @@ class AltitudeTask(Task):
                                          0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
                                          ])
 
+        # self.signals['phi'] =np.zeros(int(self.time_v.shape[0]))
         return self.return_signals()
 
     def get_task_eval_FDD(self, theta_angle=None):

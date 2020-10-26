@@ -48,9 +48,9 @@ def schedule_kink(initial_value, second_value):
         :return: (float)
         """
         if progress < 0.5:
-            return progress * initial_value
+            return progress * initial_value + 0
         else:
-            return progress * second_value
+            return progress * second_value + 1e-4
 
     return func
 

@@ -65,14 +65,14 @@ def mlp(input_tensor, layers, activ_fn=tf.nn.relu, layer_norm=False):
     """
     output = input_tensor
     for i, layer_size in enumerate(layers):
-        output = tf.layers.dense(output, layer_size, name='fc' + str(i))
+        output = tf.layers.dense(output, layer_size, name=f'fc{i}')
         if layer_norm:
             output = tf.contrib.layers.layer_norm(output, center=True, scale=True)
         output = activ_fn(output)
     return output
 
 
-def observation_input(ob_space, batch_size=None, name='Ob', scale=False):
+def observation_input(ob_space, batch_size=None, name='Ob'):
     """
     Build observation input with encoding depending on the observation space type
 
@@ -82,24 +82,13 @@ def observation_input(ob_space, batch_size=None, name='Ob', scale=False):
     :param batch_size: (int) batch size for input
                        (default is None, so that resulting input placeholder can take tensors with any batch size)
     :param name: (str) tensorflow variable name for input placeholder
-    :param scale: (bool) whether or not to scale the input
     :return: (TensorFlow Tensor, TensorFlow Tensor) input_placeholder, processed_input_tensor
     """
-    if isinstance(ob_space, Box):
-        observation_ph = tf.placeholder(shape=(batch_size,) + ob_space.shape, dtype=ob_space.dtype, name=name)
-        processed_observations = tf.cast(observation_ph, tf.float32)
-        # rescale to [1, 0] if the bounds are defined
-        if (scale and
-           not np.any(np.isinf(ob_space.low)) and not np.any(np.isinf(ob_space.high)) and
-           np.any((ob_space.high - ob_space.low) != 0)):
-
-            # equivalent to processed_observations / 255.0 when bounds are set to [255, 0]
-            processed_observations = ((processed_observations - ob_space.low) / (ob_space.high - ob_space.low))
-        return observation_ph, processed_observations
-
-    else:
-        raise NotImplementedError("Error: the model does not support input space of type {}".format(
-            type(ob_space).__name__))
+    assert isinstance(ob_space, Box), f"Error: the model does not support input space of type {type(ob_space)}"
+    observation_ph = tf.placeholder(shape=(batch_size,) + ob_space.shape, dtype=ob_space.dtype, name=name)
+    processed_observations = tf.cast(observation_ph, tf.float32)
+    # rescale to [1, 0] if the bounds are defined
+    return observation_ph, processed_observations
 
 
 class LnMlpPolicy(ABC):
@@ -109,7 +98,6 @@ class LnMlpPolicy(ABC):
     :param sess: (TensorFlow session) The current TensorFlow session
     :param ob_space: (Gym Space) The observation space of the environment
     :param ac_space: (Gym Space) The action space of the environment
-    :param n_env: (int) The number of environments to run
     :param n_steps: (int) The number of steps to run for each environment
     :param n_batch: (int) The number of batch to run (n_steps)
     :param reuse: (bool) If the policy is reusable or not
@@ -118,24 +106,18 @@ class LnMlpPolicy(ABC):
 
     recurrent = False
 
-    def __init__(self, sess, ob_space, ac_space, n_env=1, n_steps=1, n_batch=None, reuse=False, scale=False,
-                 obs_phs=None, add_action_ph=False, layers=None, reg_weight=0.0, act_fun=tf.nn.relu, **kwargs):
+    def __init__(self, sess, ob_space, ac_space, n_steps=1, n_batch=None, reuse=False,
+                 layers=None, act_fun=tf.nn.relu):
 
         assert isinstance(ac_space, Box), "Error: the action space must be of type gym.spaces.Box"
 
-        self.n_env = n_env
         self.n_steps = n_steps
         self.n_batch = n_batch
         with tf.variable_scope("input", reuse=False):
-            if obs_phs is None:
-                self._obs_ph, self._processed_obs = observation_input(ob_space, n_batch, scale=scale)
-            else:
-                self._obs_ph, self._processed_obs = obs_phs
 
-            self._action_ph = None
-            if add_action_ph:
-                self._action_ph = tf.placeholder(dtype=ac_space.dtype, shape=(n_batch,) + ac_space.shape,
-                                                 name="action_ph")
+            self.obs_ph, self.processed_obs = observation_input(ob_space, n_batch)
+            self.action_ph = None
+
         self.sess = sess
         self.reuse = reuse
         self.ob_space = ob_space
@@ -148,65 +130,13 @@ class LnMlpPolicy(ABC):
         self.deterministic_policy = None
         self.act_mu = None
         self.std = None
-        self._kwargs_check("mlp", kwargs)
         self.layer_norm = True
         self.feature_extraction = "mlp"
-        self.reuse = reuse
         if layers is None:
             layers = [64, 64]
         self.layers = layers
-        self.reg_loss = None
-        self.reg_weight = reg_weight
         self.entropy = None
-
-        assert len(layers) >= 1, "Error: must have at least one hidden layer for the policy."
-
         self.activ_fn = act_fun
-
-    @property
-    def initial_state(self):
-        """
-        The initial state of the policy. For feedforward policies, None. For a recurrent policy,
-        a NumPy array of shape (self.n_env, ) + state_shape.
-        """
-        assert not self.recurrent, "When using recurrent policies, you must overwrite `initial_state()` method"
-        return None
-
-    @property
-    def obs_ph(self):
-        """tf.Tensor: placeholder for observations, shape (self.n_batch, ) + self.ob_space.shape."""
-        return self._obs_ph
-
-    @property
-    def processed_obs(self):
-        """tf.Tensor: processed observations, shape (self.n_batch, ) + self.ob_space.shape.
-
-        The form of processing depends on the type of the observation space, and the parameters
-        whether scale is passed to the constructor; see observation_input for more information."""
-        return self._processed_obs
-
-    @property
-    def action_ph(self):
-        """tf.Tensor: placeholder for actions, shape (self.n_batch, ) + self.ac_space.shape."""
-        return self._action_ph
-
-    @staticmethod
-    def _kwargs_check(feature_extraction, kwargs):
-        """
-        Ensure that the user is not passing wrong keywords
-        when using policy_kwargs.
-
-        :param feature_extraction: (str)
-        :param kwargs: (dict)
-        """
-        # When using policy_kwargs parameter on model creation,
-        # all keywords arguments must be consumed by the policy constructor except
-        # the ones for the cnn_extractor network (cf nature_cnn()), where the keywords arguments
-        # are not passed explicitly (using **kwargs to forward the arguments)
-        # that's why there should be not kwargs left when using the mlp_extractor
-        # (in that case the keywords arguments are passed explicitly)
-        if feature_extraction == 'mlp' and len(kwargs) > 0:
-            raise ValueError("Unknown keywords for policy: {}".format(kwargs))
 
     def make_actor(self, obs=None, reuse=False, scope="pi"):
         if obs is None:
@@ -217,8 +147,7 @@ class LnMlpPolicy(ABC):
             pi_h = mlp(pi_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
 
             self.act_mu = mu_ = tf.layers.dense(pi_h, self.ac_space.shape[0], activation=None)
-            # Important difference with SAC and other algo such as PPO:
-            # the std depends on the state, so we cannot use stable_baselines.common.distribution
+            # With SAC, the std depends on the state
             log_std = tf.layers.dense(pi_h, self.ac_space.shape[0], activation=None)
 
         log_std = tf.clip_by_value(log_std, LOG_STD_MIN, LOG_STD_MAX)
@@ -228,7 +157,6 @@ class LnMlpPolicy(ABC):
         pi_ = mu_ + tf.random_normal(tf.shape(mu_)) * std
         logp_pi = gaussian_likelihood(pi_, mu_, log_std)
         self.entropy = gaussian_entropy(log_std)
-        # MISSING: reg params for log and mu
         # Apply squashing and account for it in the probability
         deterministic_policy, policy, logp_pi = apply_squashing_func(mu_, pi_, logp_pi)
         self.policy = policy
@@ -269,11 +197,7 @@ class LnMlpPolicy(ABC):
 
         return self.qf1, self.qf2, self.value_fn
 
-    def step(self, obs, state=None, mask=None, deterministic=False):
+    def step(self, obs, deterministic=False):
         if deterministic:
             return self.sess.run(self.deterministic_policy, {self.obs_ph: obs})
         return self.sess.run(self.policy, {self.obs_ph: obs})
-
-    def proba_step(self, obs, state=None, mask=None):
-        return self.sess.run([self.act_mu, self.std], {self.obs_ph: obs})
-

@@ -10,10 +10,10 @@ import multiprocessing
 import numpy as np
 import tensorflow as tf
 import gym
+
 from agent.buffer import ReplayBuffer
 from agent.callback import SaveOnBestReturn
-
-from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params
+from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params # todo: check saving tools
 from tools.math_util import unscale_action, scale_action, set_global_seeds
 
 
@@ -25,7 +25,6 @@ class SAC(ABC):
     from OpenAI Spinning Up (https://github.com/openai/spinningup) and from the Softlearning repo
     (https://github.com/rail-berkeley/softlearning/)
     Paper: https://arxiv.org/abs/1801.01290
-    Introduction to SAC: https://spinningup.openai.com/en/latest/algorithms/sac.html
 
     :param policy: The LnMlpPolicy policy model
     :param env: (Gym environment or str) The environment to learn from (if registered in Gym, can be str)
@@ -81,7 +80,6 @@ class SAC(ABC):
         self.observation_space = env.observation_space
         self.action_space = env.action_space
 
-        self._vec_normalize_env = None
         self.n_envs = 1
 
         self.buffer_size = buffer_size
@@ -319,7 +317,7 @@ class SAC(ABC):
 
     def _train_step(self, step, writer, learning_rate):
         # Sample a batch from the replay buffer
-        batch = self.replay_buffer.sample(self.batch_size, env=self._vec_normalize_env)
+        batch = self.replay_buffer.sample(self.batch_size)
         batch_obs, batch_actions, batch_rewards, batch_next_obs, batch_dones = batch
 
         feed_dict = {
@@ -378,12 +376,7 @@ class SAC(ABC):
             if self.action_noise is not None:
                 self.action_noise.reset()
             obs = self.env.reset()
-            # Retrieve unnormalized observation for saving into the buffer
-            if self._vec_normalize_env is not None:
-                obs_ = self._vec_normalize_env.get_original_obs().squeeze()
-
             n_updates = 0
-            infos_values = []
 
             for step in range(total_timesteps):
                 # Before training starts, randomly sample actions
@@ -417,25 +410,13 @@ class SAC(ABC):
                 if callback.on_step() is False:
                     break
 
-                # Store only the unnormalized version
-                if self._vec_normalize_env is not None:
-                    new_obs_ = self._vec_normalize_env.get_original_obs().squeeze()
-                    reward_ = self._vec_normalize_env.get_original_reward().squeeze()
-                else:
-                    # Avoid changing the original ones
-                    obs_, new_obs_, reward_ = obs, new_obs, reward
+                # Avoid changing the original ones
+                obs_, new_obs_, reward_ = obs, new_obs, reward
 
                 # Store transition in the replay buffer.
                 self.replay_buffer_add(obs_, action, reward_, new_obs_, done, info)
                 obs = new_obs
                 # Save the unnormalized observation
-                if self._vec_normalize_env is not None:
-                    obs_ = new_obs_
-
-                # Retrieve reward and episode length if using Monitor wrapper
-                maybe_ep_info = info.get('episode')
-                if maybe_ep_info is not None:
-                    self.ep_info_buf.extend([maybe_ep_info])
 
                 if self.num_timesteps % self.train_freq == 0:
 
@@ -499,12 +480,8 @@ class SAC(ABC):
             if self.action_noise is not None:
                 self.action_noise.reset()
             obs = initial_state
-            # Retrieve unnormalized observation for saving into the buffer
-            if self._vec_normalize_env is not None:
-                obs_ = self._vec_normalize_env.get_original_obs().squeeze()
 
             n_updates = 0
-            infos_values = []
 
             for step in range(total_timesteps):
 
@@ -528,25 +505,12 @@ class SAC(ABC):
                 if callback.on_step() is False:
                     break
 
-                # Store only the unnormalized version
-                if self._vec_normalize_env is not None:
-                    new_obs_ = self._vec_normalize_env.get_original_obs().squeeze()
-                    reward_ = self._vec_normalize_env.get_original_reward().squeeze()
-                else:
-                    # Avoid changing the original ones
-                    obs_, new_obs_, reward_ = obs, new_obs, reward
+                # Avoid changing the original ones
+                obs_, new_obs_, reward_ = obs, new_obs, reward
 
                 # Store transition in the replay buffer.
                 self.replay_buffer_add(obs_, action, reward_, new_obs_, done, info)
                 obs = new_obs
-                # Save the unnormalized observation
-                if self._vec_normalize_env is not None:
-                    obs_ = new_obs_
-
-                # Retrieve reward and episode length if using Monitor wrapper
-                maybe_ep_info = info.get('episode')
-                if maybe_ep_info is not None:
-                    self.ep_info_buf.extend([maybe_ep_info])
 
                 if self.num_timesteps % self.train_freq == 0:
 
@@ -662,7 +626,6 @@ class SAC(ABC):
         self._vectorize_action = False
 
         self.env = env
-        self._vec_normalize_env = None
 
         # Invalidated by environment change.
         self.episode_reward = None

@@ -38,12 +38,13 @@ def learn():
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=512,
-                learning_rate=constant(0.0003),
+                # learning_rate=constant(0.0003),
+                learning_rate=schedule_kink(5e-4, 4e-4),
                 train_freq=100,
                 policy_kwargs=dict(layers=[32, 32]),
                 )
     # agent = SAC.load(f"agent/trained/{get_task_tr_fail()[4]}_9VZ5VE.zip", env=env_train)
-    agent.learn(total_timesteps=int(2e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(1.5e6), log_interval=50, callback=callback)
     ID = get_ID(6) + f'_{env_eval.failure_input[0]}'
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{env_eval.task_fun()[4]}_{ID}.csv')
@@ -78,10 +79,10 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-# learn()
+learn()
 # run_preexisting('9VZ5VE') # general, robust
 # run_preexisting('P7V00G')  # general, robust
-run_preexisting('NVNSFO')
+# run_preexisting('NVNSFO')
 
 # run_preexisting('last')
 

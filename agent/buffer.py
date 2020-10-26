@@ -7,7 +7,7 @@ import numpy as np
 class ReplayBuffer(object):
     def __init__(self, size: int):
         """
-        Implements a ring buffer (FIFO).
+        Implements a buffer.
 
         :param size: (int)  Max number of transitions to store in the buffer. When the buffer overflows the old
             memories are dropped.
@@ -39,14 +39,6 @@ class ReplayBuffer(object):
         """
         return len(self) >= n_samples
 
-    def is_full(self) -> int:
-        """
-        Check whether the replay buffer is full or not.
-
-        :return: (bool)
-        """
-        return len(self) == self.buffer_size
-
     def add(self, obs_t, action, reward, obs_tp1, done):
         """
         add a new transition to the buffer
@@ -64,26 +56,6 @@ class ReplayBuffer(object):
         else:
             self._storage[self._next_idx] = data
         self._next_idx = (self._next_idx + 1) % self._maxsize
-
-    def extend(self, obs_t, action, reward, obs_tp1, done):
-        """
-        add a new batch of transitions to the buffer
-
-        :param obs_t: (Union[Tuple[Union[np.ndarray, int]], np.ndarray]) the last batch of observations
-        :param action: (Union[Tuple[Union[np.ndarray, int]]], np.ndarray]) the batch of actions
-        :param reward: (Union[Tuple[float], np.ndarray]) the batch of the rewards of the transition
-        :param obs_tp1: (Union[Tuple[Union[np.ndarray, int]], np.ndarray]) the current batch of observations
-        :param done: (Union[Tuple[bool], np.ndarray]) terminal status of the batch
-
-        Note: uses the same names as .add to keep compatibility with named argument passing
-                but expects iterables and arrays with more than 1 dimensions
-        """
-        for data in zip(obs_t, action, reward, obs_tp1, done):
-            if self._next_idx >= len(self._storage):
-                self._storage.append(data)
-            else:
-                self._storage[self._next_idx] = data
-            self._next_idx = (self._next_idx + 1) % self._maxsize
 
     def _encode_sample(self, idxes: Union[List[int], np.ndarray]):
         obses_t, actions, rewards, obses_tp1, dones = [], [], [], [], []
