@@ -66,7 +66,7 @@ class SaveOnBestReturn(ABC):
         RL model and the training environment for convenience.
         """
         self.model = model
-        self.training_env = model.get_env()
+        self.training_env = model.env
 
     def _on_step(self) -> bool:
 
@@ -77,7 +77,7 @@ class SaveOnBestReturn(ABC):
             episode_reward = 0.0
             episode_length = 0
             while not done:
-                action, state = self.model.predict(obs, state=state, deterministic=self.deterministic)
+                action, state = self.model.predict(obs, deterministic=self.deterministic)
                 obs, reward, done, _info = self.eval_env.step(action)
                 episode_reward += reward
                 episode_length += 1

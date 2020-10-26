@@ -68,7 +68,6 @@ class SAC(ABC):
         self.env = env
         self.verbose = verbose
         self.policy_kwargs = {} if policy_kwargs is None else policy_kwargs
-        self._vectorize_action = False
         self.num_timesteps = 0
         self.sess = None
         self.params = None
@@ -79,8 +78,6 @@ class SAC(ABC):
 
         self.observation_space = env.observation_space
         self.action_space = env.action_space
-
-        self.n_envs = 1
 
         self.buffer_size = buffer_size
         self.learning_rate = learning_rate
@@ -354,9 +351,8 @@ class SAC(ABC):
         return policy_loss, qf1_loss, qf2_loss, value_loss, entropy
 
     def learn(self, total_timesteps, callback=None,
-              log_interval=4, tb_log_name="SAC", reset_num_timesteps=True, replay_wrapper=None):
+              reset_num_timesteps=True, replay_wrapper=None):
 
-        new_tb_log = self._init_num_timesteps(reset_num_timesteps)
         callback = self._init_callback(callback)
 
         if replay_wrapper is not None:
@@ -458,7 +454,7 @@ class SAC(ABC):
             return self
 
     def learn_online(self, total_timesteps, initial_state, callback=None,
-                     log_interval=4, tb_log_name="SAC", reset_num_timesteps=True, replay_wrapper=None):
+                     replay_wrapper=None):
 
         callback = self._init_callback(callback)
 
@@ -550,7 +546,7 @@ class SAC(ABC):
 
             return self
 
-    def predict(self, observation, state=None, mask=None, deterministic=True):
+    def predict(self, observation, deterministic=True):
         observation = np.array(observation)
 
         observation = observation.reshape((-1,) + self.observation_space.shape)
@@ -597,13 +593,6 @@ class SAC(ABC):
                 # param.name is unique (tensorflow variables have unique names)
                 self._param_load_ops[param.name] = (placeholder, param.assign(placeholder))
 
-    def get_env(self):
-        """
-        returns the current environment (can be None if not defined)
-        :return: (Gym Environment) The current environment
-        """
-        return self.env
-
     def set_env(self, env):
         """
         Checks the validity of the environment, and if it is coherent, set it as the current environment.
@@ -623,27 +612,11 @@ class SAC(ABC):
         assert self.action_space == env.action_space, \
             "Error: the environment passed must have at least the same action space as the model was trained on."
 
-        self._vectorize_action = False
-
         self.env = env
 
         # Invalidated by environment change.
         self.episode_reward = None
         self.ep_info_buf = None
-
-    def _init_num_timesteps(self, reset_num_timesteps=True):
-        """
-        Initialize and resets num_timesteps (total timesteps since beginning of training)
-        if needed. Mainly used logging and plotting (tensorboard).
-        :param reset_num_timesteps: (bool) Set it to false when continuing training
-            to not create new plotting curves in tensorboard.
-        :return: (bool) Whether a new tensorboard log needs to be created
-        """
-        if reset_num_timesteps:
-            self.num_timesteps = 0
-
-        new_tb_log = self.num_timesteps == 0
-        return new_tb_log
 
     def replay_buffer_add(self, obs_t, action, reward, obs_tp1, done, info):
         """
@@ -694,11 +667,11 @@ class SAC(ABC):
                 "Error: cannot train the model without a valid environment, please set an environment with"
                 "set_env(self, env) method.")
         if self.episode_reward is None:
-            self.episode_reward = np.zeros((self.n_envs,))
+            self.episode_reward = np.zeros((1,))
         if self.ep_info_buf is None:
             self.ep_info_buf = deque(maxlen=100)
 
-    def load_parameters(self, load_path_or_dict, exact_match=True):
+    def load_parameters(self, params, exact_match=True):
         """
         Load model parameters from a file or a dictionary
         Dictionary keys should be tensorflow variable names, which can be obtained
@@ -718,28 +691,6 @@ class SAC(ABC):
         # Make sure we have assign ops
         if self._param_load_ops is None:
             self._setup_load_operations()
-
-        if isinstance(load_path_or_dict, dict):
-            # Assume `load_path_or_dict` is dict of variable.name -> ndarrays we want to load
-            params = load_path_or_dict
-        elif isinstance(load_path_or_dict, list):
-            warnings.warn("Loading model parameters from a list. This has been replaced " +
-                          "with parameter dictionaries with variable names and parameters. " +
-                          "If you are loading from a file, consider re-saving the file.",
-                          DeprecationWarning)
-            # Assume `load_path_or_dict` is list of ndarrays.
-            # Create param dictionary assuming the parameters are in same order
-            # as `get_parameter_list` returns them.
-            params = dict()
-            for i, param_name in enumerate(self._param_load_ops.keys()):
-                params[param_name] = load_path_or_dict[i]
-        else:
-            # Assume a filepath or file-like.
-            # Use existing deserializer to load the parameters.
-            # We only need the parameters part of the file, so
-            # only load that part.
-            _, params = self._load_from_file(load_path_or_dict, load_data=False)
-            params = dict(params)
 
         feed_dict = {}
         param_update_ops = []
@@ -802,9 +753,6 @@ class SAC(ABC):
             "tau": self.tau,
             "ent_coef": self.ent_coef if isinstance(self.ent_coef, float) else 'auto',
             "target_entropy": self.target_entropy,
-            # Should we also store the replay buffer?
-            # this may lead to high memory usage
-            # with all transition inside
             # "replay_buffer": self.replay_buffer
             "gamma": self.gamma,
             "verbose": self.verbose,
@@ -814,7 +762,6 @@ class SAC(ABC):
             "seed": self.seed,
             "action_noise": self.action_noise,
             "random_exploration": self.random_exploration,
-            "_vectorize_action": self._vectorize_action,
             "policy_kwargs": self.policy_kwargs
         }
 

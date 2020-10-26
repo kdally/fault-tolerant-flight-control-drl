@@ -72,25 +72,6 @@ def mlp(input_tensor, layers, activ_fn=tf.nn.relu, layer_norm=False):
     return output
 
 
-def observation_input(ob_space, batch_size=None, name='Ob'):
-    """
-    Build observation input with encoding depending on the observation space type
-
-    The input will be normalized between [1, 0] on the bounds ob_space.low and ob_space.high.
-
-    :param ob_space: (Gym Space) The observation space
-    :param batch_size: (int) batch size for input
-                       (default is None, so that resulting input placeholder can take tensors with any batch size)
-    :param name: (str) tensorflow variable name for input placeholder
-    :return: (TensorFlow Tensor, TensorFlow Tensor) input_placeholder, processed_input_tensor
-    """
-    assert isinstance(ob_space, Box), f"Error: the model does not support input space of type {type(ob_space)}"
-    observation_ph = tf.placeholder(shape=(batch_size,) + ob_space.shape, dtype=ob_space.dtype, name=name)
-    processed_observations = tf.cast(observation_ph, tf.float32)
-    # rescale to [1, 0] if the bounds are defined
-    return observation_ph, processed_observations
-
-
 class LnMlpPolicy(ABC):
     """
     Policy object that implements a SAC-like actor critic
@@ -115,7 +96,8 @@ class LnMlpPolicy(ABC):
         self.n_batch = n_batch
         with tf.variable_scope("input", reuse=False):
 
-            self.obs_ph, self.processed_obs = observation_input(ob_space, n_batch)
+            self.obs_ph = tf.placeholder(shape=(n_batch,) + ob_space.shape, dtype=ob_space.dtype, name='Ob')
+            self.processed_obs = tf.cast(self.obs_ph, tf.float32)
             self.action_ph = None
 
         self.sess = sess
@@ -139,8 +121,6 @@ class LnMlpPolicy(ABC):
         self.activ_fn = act_fun
 
     def make_actor(self, obs=None, reuse=False, scope="pi"):
-        if obs is None:
-            obs = self.processed_obs
 
         with tf.variable_scope(scope, reuse=reuse):
             pi_h = tf.layers.flatten(obs)
@@ -166,8 +146,6 @@ class LnMlpPolicy(ABC):
 
     def make_critics(self, obs=None, action=None, reuse=False, scope="values_fn",
                      create_vf=True, create_qf=True):
-        if obs is None:
-            obs = self.processed_obs
 
         with tf.variable_scope(scope, reuse=reuse):
             critics_h = tf.layers.flatten(obs)

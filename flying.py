@@ -31,7 +31,7 @@ def learn():
                 learning_rate=constant(0.0004),
                 policy_kwargs=dict(layers=[32, 32]),
                 )
-    agent.learn(total_timesteps=int(2.5e6), log_interval=50, callback=callback)
+    agent.learn(total_timesteps=int(2.5e6), callback=callback)
     ID = get_ID(6)
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{env_eval.task_fun()[4]}_{ID}.csv')
