@@ -14,6 +14,8 @@ class Citation(gym.Env, ABC):
     def __init__(self, evaluation=False, FDD=False, task=AttitudeTask):
         super(Citation, self).__init__()
 
+        self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
+        self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
         self.task = task
         self.task_fun, self.evaluation, self.FDD = self.task().choose_task(evaluation, self.failure_input, FDD)
@@ -29,9 +31,6 @@ class Citation(gym.Env, ABC):
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
-
-        self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
-        self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
 
         self.state = None
         self.state_deg = None
@@ -69,8 +68,11 @@ class Citation(gym.Env, ABC):
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
             print(self.state_history[:, self.step_count - 2], self.time[self.step_count - 1])
+            plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
+                          failure=self.failure_input[0], FDD=self.FDD, broken=True)
             exit()
-        if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any():
+        if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any() \
+                or np.greater(np.abs(r2d(self.state[6:9])), 1e3).any():
             return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
@@ -139,6 +141,9 @@ class Citation(gym.Env, ABC):
             
         return sideslip_factor, pitch_factor, roll_factor
 
+    def FFD_change(self):
+        pass
+
     def render(self, agent=None, during_training=False, verbose=1):
 
         if agent is None:
@@ -165,6 +170,7 @@ class Citation(gym.Env, ABC):
             if current_time < self.time[-1] / 2 or not self.FDD:
                 action, _ = agent_robust.predict(obs, deterministic=True)
             else:
+                self.FFD_change()
                 action, _ = agent_adaptive.predict(obs, deterministic=True)
             obs, reward, done, info = self.step(action)
             return_a += reward
@@ -199,18 +205,18 @@ class CitationRudderStuck(Citation):
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.dr._citation', package=None)
-        return plant, ['dr', 0.0, -14.0]
+        return plant, ['dr', 0.0, -13.0]
 
-    def adapt_to_failure(self):
-
-        _, pitch_factor, roll_factor = super(CitationRudderStuck, self).adapt_to_failure()
-        sideslip_factor = np.zeros(self.time.shape[0])
-        roll_factor = 0.5 * np.ones(self.time.shape[0])
-        if self.FDD:
-            sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
-            roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
-
-        return sideslip_factor, pitch_factor, roll_factor
+    # def adapt_to_failure(self):
+    #
+    #     sideslip_factor, pitch_factor, roll_factor = super(CitationRudderStuck, self).adapt_to_failure()
+    #     sideslip_factor = np.zeros(self.time.shape[0])
+    #     roll_factor = 0.5 * np.ones(self.time.shape[0])
+    #     if self.FDD:
+    #         sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
+    #         roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
+    #
+    #     return sideslip_factor, pitch_factor, roll_factor
 
 
 class CitationAileronEff(Citation):
@@ -235,7 +241,14 @@ class CitationElevRange(Citation):
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.de._citation', package=None)
+        # self.deflection_limits = self.ActionLimits(np.array([[-3.0, -37.24, -21.77], [3.0, 37.24, 21.77]]))
+        # self.rate_limits = self.ActionLimits(np.array([[-7, -40, -20], [7, 40, 20]]))
         return plant, ['de', 20.05, 3.0]
+
+    def FFD_change(self):
+
+        self.deflection_limits = self.ActionLimits(np.array([[-3.0, -37.24, -21.77], [3.0, 37.24, 21.77]]))
+        self.rate_limits = self.ActionLimits(np.array([[-7, -40, -20], [7, 40, 20]]))
 
 
 class CitationCgShift(Citation):
@@ -281,6 +294,54 @@ class CitationVertTail(Citation):
 
         plant = importlib.import_module(f'envs.vt._citation', package=None)
         return plant, ['vt', 1.0, 0.0]
+
+    def adapt_to_failure(self):
+
+        _, pitch_factor, roll_factor = super(CitationVertTail, self).adapt_to_failure()
+        sideslip_factor = 1 * np.ones(self.time.shape[0])
+        # if self.FDD:
+        #     pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
+
+        return sideslip_factor, pitch_factor, roll_factor
+
+
+class CitationVerif(CitationNormal):
+
+    def step(self, actions: np.ndarray):
+        self.current_deflection = actions
+        if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
+
+        if self.time[self.step_count] < 5.0 and self.evaluation:
+            self.state = self.C_MODEL.step(
+                np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
+        else:
+            self.state = self.C_MODEL.step(
+                np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
+        self.state_deg = self.state * self.scale_s
+
+        self.error = d2r(self.ref_signal[:, self.step_count] - self.state_deg[self.track_indices])
+        self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
+        self.error[self.track_indices.index(6)] *= self.roll_factor[self.step_count]
+        if 7 in self.track_indices:
+            self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
+        if 9 in self.track_indices:
+            self.error[self.track_indices.index(9)] *= 1.0
+
+        self.state_history[:, self.step_count] = self.state_deg
+        self.action_history[:, self.step_count] = self.current_deflection
+
+        self.step_count += 1
+        done = bool(self.step_count >= self.time.shape[0])
+        if np.isnan(self.state).sum() > 0:
+            print(self.state_history[:, self.step_count - 2], self.time[self.step_count - 1])
+            plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
+                          failure=self.failure_input[0], FDD=self.FDD, broken=True)
+            exit()
+        if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any() \
+                or np.greater(np.abs(r2d(self.state[6:9])), 1e3).any():
+            return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
+
+        return self.get_obs(), self.get_reward(), done, {'is_success': True}
 
 
 # from stable_baselines.common.env_checker import check_env

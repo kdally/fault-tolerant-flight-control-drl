@@ -773,8 +773,6 @@ class SAC(ABC):
             serialized_params = params_to_bytes(params)
             # We also have to store list of the parameters
             # to store the ordering for OrderedDict.
-            # We can trust these to be strings as they
-            # are taken from the Tensorflow graph.
             serialized_param_list = json.dumps(
                 list(params.keys()),
                 indent=4
@@ -825,9 +823,6 @@ class SAC(ABC):
         try:
             with zipfile.ZipFile(load_path, "r") as file_:
                 namelist = file_.namelist()
-                # If data or parameters is not in the
-                # zip archive, assume they were stored
-                # as None (_save_to_file allows this).
                 data = None
                 params = None
                 if "data" in namelist and load_data:

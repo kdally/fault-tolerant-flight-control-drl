@@ -21,7 +21,7 @@ task = AltitudeTask
 
 # from envs.citation import CitationElevRange as Citation
 # from envs.citation import CitationAileronEff as Citation
-from envs.citation import CitationRudderStuck as Citation
+# from envs.citation import CitationRudderStuck as Citation
 # from envs.citation import CitationHorzTail as Citation
 # from envs.citation import CitationVertTail as Citation
 # from envs.citation import CitationIcing as Citation
@@ -38,8 +38,8 @@ def learn():
 
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
                 ent_coef='auto', batch_size=512,
-                # learning_rate=constant(0.0003),
-                learning_rate=schedule_kink(5e-4, 4e-4),
+                learning_rate=constant(0.0003),
+                # learning_rate=schedule_kink(5e-4, 4e-4),
                 train_freq=100,
                 policy_kwargs=dict(layers=[32, 32]),
                 )
@@ -79,10 +79,10 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-# learn()
+learn()
 # run_preexisting('9VZ5VE') # general, robust
-run_preexisting('P7V00G')  # general, robust
-# run_preexisting('NVNSFO')
+# run_preexisting('P7V00G')  # general, robust
+# run_preexisting('7AJEAE_vt')
 
 # run_preexisting('last')
 

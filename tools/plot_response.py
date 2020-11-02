@@ -3,12 +3,16 @@ from plotly.subplots import make_subplots
 import numpy as np
 
 
-def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False):
+def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
     subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
     fig = make_subplots(rows=6, cols=2)
+
+    if broken:
+        env.time = env.time[:env.step_count-2]
+        env.state_history = env.state_history[:env.step_count-2]
 
     if failure != 'normal' and not during_training:
         fig.add_shape(
