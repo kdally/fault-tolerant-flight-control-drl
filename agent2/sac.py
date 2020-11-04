@@ -401,7 +401,8 @@ class SAC(ABC):
 
                 self.num_timesteps += 1
 
-                # Only stop training if return value is False
+                # Only stop training if return value is False, not when it is None. This is for backwards
+                # compatibility with callbacks that have no return statement.
                 if callback.on_step() is False:
                     break
 

@@ -32,6 +32,11 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
                  x0=env.time[-1] / 2, y0=0, x1=env.time[-1] / 2, y1=1, line=dict(color="Grey", width=1, dash='dash')),
         )
 
+    if env.external_ref_signal is not None:
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.external_ref_signal.T, name=r'$h [m]$',
+            line=dict(color='#EF553B')), row=5, col=1)
+
     for sig_index, state_index in enumerate(task[1]):
         fig.append_trace(go.Scatter(
             x=env.time, y=env.ref_signal[sig_index, :],

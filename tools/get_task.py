@@ -496,38 +496,46 @@ class AltitudeTask(Task):
     def get_task_eval_FDD(self, theta_angle=None):
         self.time_v = time_v = np.arange(0, 200, 0.01)
         self.signals['h'] = np.hstack([2000 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
-                          np.linspace(2000, 2350, int(60 * time_v.shape[0] / time_v[-1].round())),
-                          2350 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-                          np.linspace(2350, 2250, int(15 * time_v.shape[0] / time_v[-1].round())),
-                          2250 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(2000, 2350, int(60 * time_v.shape[0] / time_v[-1].round())),
+                                       2350 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(2350, 2250, int(15 * time_v.shape[0] / time_v[-1].round())),
+                                       2250 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
 
-                          2250 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-                          np.linspace(2250, 2600, int(60 * time_v.shape[0] / time_v[-1].round())),
-                          2600 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-                          np.linspace(2600, 2500, int(15 * time_v.shape[0] / time_v[-1].round())),
-                          2500 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-                          ])
+                                       2250 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(2250, 2600, int(60 * time_v.shape[0] / time_v[-1].round())),
+                                       2600 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(2600, 2500, int(15 * time_v.shape[0] / time_v[-1].round())),
+                                       2500 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                       ])
         sign = 1
         angle1 = 20
         angle2 = 15
         self.signals['phi'] = np.hstack([0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
-                          sign * angle2 * np.sin(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
-                          sign * angle2 * np.ones(int(24 * time_v.shape[0] / time_v[-1].round())),
-                          sign * angle2 * np.cos(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
-                          0 * np.ones(int(17 * time_v.shape[0] / time_v[-1].round())),
-                          -sign * angle1 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
-                          -sign * angle1 * np.ones(int(25 * time_v.shape[0] / time_v[-1].round())),
-                          -sign * angle1 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
-                          0 * np.ones(int(20 * time_v.shape[0] / time_v[-1].round())),
-                          sign * angle2 * np.sin(time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.05 * np.pi * 2),
-                          sign * angle2 * np.ones(int(20 * time_v.shape[0] / time_v[-1].round())),
-                          sign * angle2 * np.cos(time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.045 * np.pi * 2),
-                          0 * np.ones(int(23 * time_v.shape[0] / time_v[-1].round())),
-                          -sign * angle2 * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-                          -sign * angle1 * np.ones(int(19 * time_v.shape[0] / time_v[-1].round())),
-                          -sign * angle1 * np.cos(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-                          0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
-                          ])
+                                         sign * angle2 * np.sin(
+                                             time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
+                                         sign * angle2 * np.ones(int(24 * time_v.shape[0] / time_v[-1].round())),
+                                         sign * angle2 * np.cos(
+                                             time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
+                                         0 * np.ones(int(17 * time_v.shape[0] / time_v[-1].round())),
+                                         -sign * angle1 * np.sin(
+                                             time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
+                                         -sign * angle1 * np.ones(int(25 * time_v.shape[0] / time_v[-1].round())),
+                                         -sign * angle1 * np.cos(
+                                             time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
+                                         0 * np.ones(int(20 * time_v.shape[0] / time_v[-1].round())),
+                                         sign * angle2 * np.sin(
+                                             time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.05 * np.pi * 2),
+                                         sign * angle2 * np.ones(int(20 * time_v.shape[0] / time_v[-1].round())),
+                                         sign * angle2 * np.cos(
+                                             time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.045 * np.pi * 2),
+                                         0 * np.ones(int(23 * time_v.shape[0] / time_v[-1].round())),
+                                         -sign * angle2 * np.sin(
+                                             time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                                         -sign * angle1 * np.ones(int(19 * time_v.shape[0] / time_v[-1].round())),
+                                         -sign * angle1 * np.cos(
+                                             time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                                         0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
+                                         ])
 
         return self.return_signals()
 
@@ -540,6 +548,22 @@ class AltitudeTask(Task):
 
         return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'altitude_2attitude'
 
+
+class CascadedAltTask(AltitudeTask):
+
+    def return_signals(self):
+        self.signals['beta'] = np.zeros(int(self.time_v.shape[0]))
+        self.signals['theta'] = np.zeros(int(self.time_v.shape[0]))
+        signal_outer_controller = self.signals['h']
+        track_indices_outer_controller = self.state_indices['h']
+        del self.signals['h']
+
+        self.obs_indices = [self.state_indices['p'], self.state_indices['q'], self.state_indices['r']]
+        self.track_signals, self.track_indices, self.obs_indices = self.organize_indices(self.signals, self.obs_indices)
+        obs_indices_outer_controller = self.obs_indices + [self.state_indices['h']]
+
+        return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'altitude_2pitch',\
+            signal_outer_controller, obs_indices_outer_controller, track_indices_outer_controller
 #
 # import matplotlib.pyplot as plt
 #

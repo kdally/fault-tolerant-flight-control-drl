@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from abc import ABC, abstractmethod
 from agent.sac import SAC
-from tools.get_task import AltitudeTask, AttitudeTask,BodyRateTask
+from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask
 from tools.plot_response import plot_response
 import importlib
 from tools.math_util import unscale_action, d2r, r2d
@@ -39,6 +39,7 @@ class Citation(gym.Env, ABC):
         self.action_history = None
         self.error = None
         self.step_count = None
+        self.external_ref_signal = None
 
     def step(self, action_rates: np.ndarray):
 
@@ -59,7 +60,7 @@ class Citation(gym.Env, ABC):
         if 7 in self.track_indices:
             self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
         if 9 in self.track_indices:
-            self.error[self.track_indices.index(9)] *= 1.0
+            self.error[self.track_indices.index(9)] *= 0.25
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
@@ -103,9 +104,16 @@ class Citation(gym.Env, ABC):
     def get_reward(self):
 
         max_bound = np.ones(self.error.shape)
-        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        reward_vec = np.abs(r2d(self.error / 30))
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
+
+    def get_reward_comp(self):
+        max_bound = np.ones(self.error.shape)
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        reward_vec = np.abs(r2d(self.error / 30))
+        return reward_vec
 
     def get_obs(self):
 
@@ -205,18 +213,18 @@ class CitationRudderStuck(Citation):
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.dr._citation', package=None)
-        return plant, ['dr', 0.0, -13.0]
+        return plant, ['dr', 0.0, -9.0]
 
-    # def adapt_to_failure(self):
-    #
-    #     sideslip_factor, pitch_factor, roll_factor = super(CitationRudderStuck, self).adapt_to_failure()
-    #     sideslip_factor = np.zeros(self.time.shape[0])
-    #     roll_factor = 0.5 * np.ones(self.time.shape[0])
-    #     if self.FDD:
-    #         sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
-    #         roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
-    #
-    #     return sideslip_factor, pitch_factor, roll_factor
+    def adapt_to_failure(self):
+
+        sideslip_factor, pitch_factor, roll_factor = super(CitationRudderStuck, self).adapt_to_failure()
+        sideslip_factor = np.zeros(self.time.shape[0])
+        roll_factor = 0.5 * np.ones(self.time.shape[0])
+        if self.FDD:
+            sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
+            roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
+
+        return sideslip_factor, pitch_factor, roll_factor
 
 
 class CitationAileronEff(Citation):
@@ -285,7 +293,7 @@ class CitationHorzTail(Citation):
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.ht._citation', package=None)
-        return plant, ['ht', 1.0, 0.5]
+        return plant, ['ht', 1.0, 0.3]
 
 
 class CitationVertTail(Citation):
@@ -297,10 +305,10 @@ class CitationVertTail(Citation):
 
     def adapt_to_failure(self):
 
-        _, pitch_factor, roll_factor = super(CitationVertTail, self).adapt_to_failure()
+        sideslip_factor, pitch_factor, roll_factor = super(CitationVertTail, self).adapt_to_failure()
         sideslip_factor = 1 * np.ones(self.time.shape[0])
-        # if self.FDD:
-        #     pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
+        if self.FDD:
+            sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
 
         return sideslip_factor, pitch_factor, roll_factor
 
