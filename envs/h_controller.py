@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from abc import ABC, abstractmethod
-from agent2.sac import SAC as SAC2
+from agent.sac import SAC
 from tools.get_task import CascadedAltTask
 from tools.plot_response import plot_response
 import importlib
@@ -16,7 +16,7 @@ class AltController(gym.Env, ABC):
         super(AltController, self).__init__()
 
         self.InnerController = CitationNormal(evaluation=evaluation, task=CascadedAltTask)
-        self.InnerAgent = SAC2.load(f"agent/trained/3attitude_step_{InnerAgent}.zip", env=self.InnerController)
+        self.InnerAgent = SAC.load(f"agent/trained/3attitude_step_{InnerAgent}.zip", env=self.InnerController)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.time = self.InnerController.time
         self.dt = self.InnerController.dt
@@ -37,7 +37,7 @@ class AltController(gym.Env, ABC):
     def step(self, pitch_ref: np.ndarray):
 
         self.step_count = self.InnerController.step_count
-        self.InnerController.ref_signal[2, self.step_count] = self.scale_a(self.bound_a(pitch_ref))
+        self.InnerController.ref_signal[0, self.step_count] = self.scale_a(self.bound_a(pitch_ref))
         action, _ = self.InnerAgent.predict(self.obs_inner_controller, deterministic=True)
         self.obs_inner_controller, _, done, info = self.InnerController.step(action)
         self.error = self.ref_signal[self.step_count] - self.InnerController.state[self.track_index]
@@ -52,10 +52,8 @@ class AltController(gym.Env, ABC):
         return np.hstack([self.obs_inner_controller, 0.0])
 
     def get_reward(self):
-
         max_bound = np.ones(self.error.shape)
-        reward = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        return reward
+        return -np.abs(np.maximum(np.minimum(self.error / 100, max_bound), -max_bound))
 
     def get_obs(self):
         return np.hstack([self.error, self.InnerController.get_obs()])
@@ -70,7 +68,7 @@ class AltController(gym.Env, ABC):
         return np.minimum(np.maximum(action, -1), 1)
 
     def render(self, agent=None, during_training=False, verbose=1):
-        self.InnerController.render(agent, during_training, verbose)
+        self.InnerController.render(agent=self.InnerAgent, during_training=during_training, verbose=verbose)
 
     def close(self):
         self.InnerController.close()

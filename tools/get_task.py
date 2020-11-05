@@ -351,6 +351,7 @@ class AttitudeTask(Task):
 
         self.track_signals, self.track_indices, self.obs_indices = self.organize_indices(self.signals, self.obs_indices)
 
+        print(self.track_indices)
         return self.track_signals, self.track_indices, self.obs_indices, self.time_v, '3attitude_step'
 
 
@@ -552,11 +553,14 @@ class AltitudeTask(Task):
 class CascadedAltTask(AltitudeTask):
 
     def return_signals(self):
-        self.signals['beta'] = np.zeros(int(self.time_v.shape[0]))
+        temp_placeholder = self.signals
+        self.signals = {}
         self.signals['theta'] = np.zeros(int(self.time_v.shape[0]))
-        signal_outer_controller = self.signals['h']
+        self.signals['phi'] = temp_placeholder['phi']
+        self.signals['beta'] = np.zeros(int(self.time_v.shape[0]))
+
+        signal_outer_controller = temp_placeholder['h']
         track_indices_outer_controller = self.state_indices['h']
-        del self.signals['h']
 
         self.obs_indices = [self.state_indices['p'], self.state_indices['q'], self.state_indices['r']]
         self.track_signals, self.track_indices, self.obs_indices = self.organize_indices(self.signals, self.obs_indices)

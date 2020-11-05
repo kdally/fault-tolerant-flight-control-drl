@@ -436,8 +436,8 @@ class SAC(ABC):
                             self.sess.run(self.target_update_op)
 
                     # Log losses and entropy, useful for monitor training
-                if self.num_timesteps % int(2e3) == 0:
-                    print(f'The reward is {self.env.get_reward_comp()}')
+                # if self.num_timesteps % int(2e3) == 0:
+                #     print(f'The reward is {self.env.get_reward_comp()}')
 
                 episode_rewards[-1] += reward_
                 if done:

@@ -104,15 +104,15 @@ class Citation(gym.Env, ABC):
     def get_reward(self):
 
         max_bound = np.ones(self.error.shape)
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        reward_vec = np.abs(r2d(self.error / 30))
+        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        # reward_vec = np.abs(r2d(self.error / 30))
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
 
     def get_reward_comp(self):
         max_bound = np.ones(self.error.shape)
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        reward_vec = np.abs(r2d(self.error / 30))
+        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        # reward_vec = np.abs(r2d(self.error / 30))
         return reward_vec
 
     def get_obs(self):
@@ -176,7 +176,9 @@ class Citation(gym.Env, ABC):
 
         for i, current_time in enumerate(self.time):
             if current_time < self.time[-1] / 2 or not self.FDD:
+
                 action, _ = agent_robust.predict(obs, deterministic=True)
+                # print(obs, action)
             else:
                 self.FFD_change()
                 action, _ = agent_adaptive.predict(obs, deterministic=True)

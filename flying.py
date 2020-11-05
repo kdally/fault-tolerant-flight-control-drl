@@ -15,7 +15,8 @@ from tools.plot_weights import plot_weights
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
-task = AltitudeTask
+# task = AltitudeTask
+task = AttitudeTask
 
 
 def learn():
@@ -65,9 +66,9 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
+# learn()
 # run_preexisting('P7V00G')  # batch size 512, LR 0.0003 ct, buffer 5e4, size 64, train_freq=1
-# run_preexisting('9VZ5VE')
+run_preexisting('9VZ5VE')
 # run_preexisting('EN0KMW')
 
 # os.system('say "your program has finished"')
