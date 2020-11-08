@@ -63,8 +63,8 @@ def keyboardInterruptHandler(signal, frame):
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 learn()
-# run_preexisting('P7V00G')  # batch size 512, LR 0.0003 ct, buffer 5e4, size 64, train_freq=1
+# run_preexisting('FU8N1B')  # batch size 512, LR 0.0003 ct, buffer 5e4, size 64, train_freq=1
 # run_preexisting('9VZ5VE')
 # run_preexisting('EN0KMW')
-
+6
 # os.system('say "your program has finished"')

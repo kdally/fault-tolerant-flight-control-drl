@@ -35,13 +35,29 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
             x=env.time, y=env.external_ref_signal.T, name=r'$h [m]$',
-            line=dict(color='#EF553B')), row=5, col=1)
+            line=dict(color='#EF553B', dash='dashdot')), row=5, col=1)
 
-    for sig_index, state_index in enumerate(task[1]):
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.ref_signal[sig_index, :],
+            x=env.time, y=env.ref_signal[0, :],
+            line=dict(color='#EF553B')),
+            row=3, col=1)
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.ref_signal[1, :],
             line=dict(color='#EF553B', dash='dashdot')),
-            row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
+            row=3, col=2)
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.ref_signal[2, :],
+            line=dict(color='#EF553B', dash='dashdot')),
+            row=4, col=2)
+
+    else:
+        for sig_index, state_index in enumerate(task[1]):
+            fig.append_trace(go.Scatter(
+                x=env.time, y=env.ref_signal[sig_index, :],
+                line=dict(color='#EF553B', dash='dashdot')),
+                row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [^\circ/s]$',

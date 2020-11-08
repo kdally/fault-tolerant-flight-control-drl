@@ -28,6 +28,7 @@ class Citation(gym.Env, ABC):
 
         self.sideslip_factor, self.pitch_factor, self.roll_factor = self.adapt_to_failure()
 
+        # todo: change obs space to beyond 100
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
