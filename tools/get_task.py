@@ -351,7 +351,6 @@ class AttitudeTask(Task):
 
         self.track_signals, self.track_indices, self.obs_indices = self.organize_indices(self.signals, self.obs_indices)
 
-        print(self.track_indices)
         return self.track_signals, self.track_indices, self.obs_indices, self.time_v, '3attitude_step'
 
 
@@ -362,10 +361,10 @@ class AltitudeTask(Task):
 
         time_v = self.time_v
 
-        self.signals['h'] = np.hstack([np.linspace(2000, 2050, int(7.5 * time_v.shape[0] / time_v[-1].round())),
-                                       2050 * np.ones(int(2.5 * time_v.shape[0] / time_v[-1].round())),
-                                       np.linspace(2050, 2025, int(3.75 * time_v.shape[0] / time_v[-1].round())),
-                                       2025 * np.ones(int(6.25 * time_v.shape[0] / time_v[-1].round())),
+        self.signals['h'] = np.hstack([np.linspace(2000, 2044, int(7.5 * time_v.shape[0] / time_v[-1].round())),
+                                       2044 * np.ones(int(3.5 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(2044, 2025, int(3.75 * time_v.shape[0] / time_v[-1].round())),
+                                       2025 * np.ones(int(5.25 * time_v.shape[0] / time_v[-1].round())),
                                        ])
 
         angle_phi = random.choice([45, 35, -45, -35])
@@ -554,10 +553,8 @@ class CascadedAltTask(AltitudeTask):
 
     def return_signals(self):
         temp_placeholder = self.signals
-        self.signals = {}
-        self.signals['theta'] = np.zeros(int(self.time_v.shape[0]))
-        self.signals['phi'] = temp_placeholder['phi']
-        self.signals['beta'] = np.zeros(int(self.time_v.shape[0]))
+        self.signals = {'theta': np.zeros(int(self.time_v.shape[0])), 'phi': temp_placeholder['phi'],
+                        'beta': np.zeros(int(self.time_v.shape[0]))}
 
         signal_outer_controller = temp_placeholder['h']
         track_indices_outer_controller = self.state_indices['h']

@@ -15,8 +15,8 @@ task = AttitudeTask
 # from envs.citation import CitationAileronEff as Citation # done
 # from envs.citation import CitationRudderStuck as Citation
 # from envs.citation import CitationHorzTail as Citation
-from envs.citation import CitationVertTail as Citation
-# from envs.citation import CitationIcing as Citation
+# from envs.citation import CitationVertTail as Citation
+from envs.citation import CitationIcing as Citation
 # from envs.citation import CitationCgShift as Citation
 
 
@@ -31,6 +31,6 @@ def run_preexisting(ID1: str, ID2: str):
 
 # learn()
 # run_preexisting('P7V00G', '2DPKKS_de')
-run_preexisting('9VZ5VE', '2KGDYQ_vt')  # general, robust
+run_preexisting('9VZ5VE', '9MUWUB_ice')  # general, robust
 
 # os.system('say "your program has finished"')

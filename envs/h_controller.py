@@ -9,13 +9,16 @@ from tools.math_util import unscale_action, d2r, r2d
 from envs.citation import CitationNormal
 
 
+# TODO: change error and reward scaling
+
+
 class AltController(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, evaluation=False, InnerAgent='9VZ5VE'):
+    def __init__(self, inner_controller=CitationNormal, evaluation=False, InnerAgent='9VZ5VE'):
         super(AltController, self).__init__()
 
-        self.InnerController = CitationNormal(evaluation=evaluation, task=CascadedAltTask)
+        self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask)
         self.InnerAgent = SAC.load(f"agent/trained/3attitude_step_{InnerAgent}.zip", env=self.InnerController)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.rate_limits = self.ActionLimits(np.array([[-10], [10]]))
@@ -26,7 +29,7 @@ class AltController(gym.Env, ABC):
         self.obs_indices = self.task_fun()[6]
         self.track_index = self.task_fun()[7]
 
-        #check obs space
+        # check obs space
         self.observation_space = gym.spaces.Box(-500, 500, shape=(4,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(1,), dtype=np.float64)
 
@@ -40,7 +43,6 @@ class AltController(gym.Env, ABC):
     def step(self, pitch_ref: np.ndarray):
 
         self.step_count = self.InnerController.step_count
-
         self.current_pitch_ref = self.bound_a(self.current_pitch_ref + self.scale_a(pitch_ref) * self.dt)
         self.InnerController.ref_signal[0, self.step_count] = self.current_pitch_ref[0]
         action, _ = self.InnerAgent.predict(self.obs_inner_controller, deterministic=True)
@@ -55,14 +57,16 @@ class AltController(gym.Env, ABC):
         self.error = np.zeros(1)
         self.current_pitch_ref = 0.0
         self.obs_inner_controller = self.InnerController.reset()
+        self.step_count = self.InnerController.step_count
         return np.hstack([self.error, self.obs_inner_controller[[0, 3]], self.current_pitch_ref])
 
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
         reward = -np.abs(np.maximum(np.minimum(self.error / 50, max_bound), -max_bound))
-        avg_pitch_dif = self.current_pitch_ref - self.InnerController.ref_signal[0, max(0, self.step_count-500):self.step_count].mean()
-        if abs(avg_pitch_dif) > 5.0:
-            reward -= abs(avg_pitch_dif[0])/150
+        avg_pitch_dif = self.current_pitch_ref - self.InnerController.ref_signal[0,
+                                                 max(0, self.step_count - 800):self.step_count].mean()
+        if abs(avg_pitch_dif) > 0.01:
+            reward -= abs(avg_pitch_dif[0]) / 130
         return reward
 
     def get_obs(self):
@@ -97,6 +101,9 @@ class AltController(gym.Env, ABC):
             obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
             return_a += reward_outer_loop
 
+            # if 70.0 < current_time < 80.0:
+            #     print(self.current_pitch_ref)
+
             if current_time == self.time[-1]:
                 plot_response(agent.ID, self.InnerController, self.task_fun(), return_a, during_training,
                               self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
@@ -113,7 +120,6 @@ class AltController(gym.Env, ABC):
 
         def __init__(self, limits):
             self.low, self.high = limits[0, :], limits[1, :]
-
 
 # from stable_baselines.common.env_checker import check_env
 #
