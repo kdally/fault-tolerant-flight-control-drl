@@ -26,7 +26,7 @@ class Citation(gym.Env, ABC):
         self.track_indices = self.task_fun()[1]
         self.obs_indices = self.task_fun()[2]
 
-        self.sideslip_factor, self.pitch_factor, self.roll_factor = self.adapt_to_failure()
+        self.sideslip_factor, self.pitch_factor, self.roll_factor, self.alt_factor = self.adapt_to_failure()
 
         # todo: change obs space to beyond 100
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
@@ -59,10 +59,9 @@ class Citation(gym.Env, ABC):
         self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
         self.error[self.track_indices.index(6)] *= self.roll_factor[self.step_count]
         if 7 in self.track_indices:
-            # self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
-            self.error[self.track_indices.index(7)] *= 1
+            self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
         if 9 in self.track_indices:
-            self.error[self.track_indices.index(9)] *= 0.25
+            self.error[self.track_indices.index(9)] *= self.alt_factor[self.step_count]
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
@@ -142,6 +141,7 @@ class Citation(gym.Env, ABC):
         
         pitch_factor = np.ones(self.time.shape[0])
         roll_factor = np.ones(self.time.shape[0])
+        alt_factor = 0.25 * np.ones(self.time.shape[0])
         if self.evaluation:
             sideslip_factor = 4.0 * np.ones(self.time.shape[0])
             if self.task_fun()[4] == 'altitude_2attitude':
@@ -149,7 +149,7 @@ class Citation(gym.Env, ABC):
         else:
             sideslip_factor = 10.0 * np.ones(self.time.shape[0])
             
-        return sideslip_factor, pitch_factor, roll_factor
+        return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
     def FFD_change(self):
         pass
@@ -220,16 +220,16 @@ class CitationRudderStuck(Citation):
         plant = importlib.import_module(f'envs.dr._citation', package=None)
         return plant, ['dr', 0.0, -15.0]
 
-    # def adapt_to_failure(self):
-    #
-    #     sideslip_factor, pitch_factor, roll_factor = super(CitationRudderStuck, self).adapt_to_failure()
-    #     sideslip_factor = np.zeros(self.time.shape[0])
-    #     roll_factor = 0.5 * np.ones(self.time.shape[0])
-    #     if self.FDD:
-    #         sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
-    #         roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
-    #
-    #     return sideslip_factor, pitch_factor, roll_factor
+    def adapt_to_failure(self):
+
+        sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationRudderStuck, self).adapt_to_failure()
+        sideslip_factor = np.zeros(self.time.shape[0])
+        roll_factor = 0.5 * np.ones(self.time.shape[0])
+        # if self.FDD:
+        #     sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
+        #     roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
+
+        return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
 class CitationAileronEff(Citation):
@@ -241,12 +241,12 @@ class CitationAileronEff(Citation):
 
     # def adapt_to_failure(self):
     #
-    #     sideslip_factor, _, roll_factor = super(CitationAileronEff, self).adapt_to_failure()
+    #     sideslip_factor, _, roll_factor, alt_factor = super(CitationAileronEff, self).adapt_to_failure()
     #     pitch_factor = 1.5 * np.ones(self.time.shape[0])
     #     if self.FDD:
     #         pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
     #
-    #     return sideslip_factor, pitch_factor, roll_factor
+    #     return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
 class CitationElevRange(Citation):
@@ -271,22 +271,39 @@ class CitationCgShift(Citation):
         plant = importlib.import_module(f'envs.cg._citation', package=None)
         return plant, ['cg', 1.0, 1.04]
 
+    def adapt_to_failure(self):
+
+        sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationCgShift, self).adapt_to_failure()
+        alt_factor *= 0.5
+
+        return sideslip_factor, pitch_factor, roll_factor, alt_factor
+
 
 class CitationIcing(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.ice._citation', package=None)
+        plant = importlib.import_module(f'envs.ice2000._citation', package=None)
         return plant, ['ice', 1.0, 0.7]  # https://doi.org/10.1016/S0376-0421(01)00018-5
 
     def reset(self):
         print('pass')
         super(CitationIcing, self).reset()
         self.ref_signal = self.task_fun(theta_angle=25)[0]
-        if 9 in self.track_indices:
-            self.ref_signal[0, :] += 2000.0
+        # if 9 in self.track_indices:
+        #     self.ref_signal[0, :] += 2000.0
 
         return np.zeros(self.observation_space.shape)
+
+    def adapt_to_failure(self):
+
+        sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationIcing, self).adapt_to_failure()
+        alt_factor *= 0.25
+
+        # if self.FDD:
+        #     pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
+
+        return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
 class CitationHorzTail(Citation):
@@ -295,6 +312,15 @@ class CitationHorzTail(Citation):
 
         plant = importlib.import_module(f'envs.ht._citation', package=None)
         return plant, ['ht', 1.0, 0.3]
+
+    def adapt_to_failure(self):
+
+        sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationHorzTail, self).adapt_to_failure()
+        alt_factor *= 0.01
+        # if self.FDD:
+        #     sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
+
+        return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
 class CitationVertTail(Citation):
@@ -306,12 +332,12 @@ class CitationVertTail(Citation):
 
     # def adapt_to_failure(self):
     #
-    #     sideslip_factor, pitch_factor, roll_factor = super(CitationVertTail, self).adapt_to_failure()
+    #     sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationVertTail, self).adapt_to_failure()
     #     sideslip_factor = 1 * np.ones(self.time.shape[0])
     #     if self.FDD:
     #         sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
     #
-    #     return sideslip_factor, pitch_factor, roll_factor
+    #     return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
 class CitationVerif(CitationNormal):
