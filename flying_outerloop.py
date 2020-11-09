@@ -20,7 +20,8 @@ warnings.filterwarnings("ignore", module='gym')
 # from envs.citation import CitationHorzTail as Citation
 # from envs.citation import CitationVertTail as Citation
 # from envs.citation import CitationIcing as Citation
-from envs.citation import CitationCgShift as Citation
+# from envs.citation import CitationCgShift as Citation
+from envs.citation import CitationNormal as Citation
 
 
 def learn():
@@ -70,8 +71,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-# learn()
-run_preexisting('A5FI4R')
-run_preexisting('PZ5QGL')
+learn()
+# run_preexisting('A5FI4R')
+# run_preexisting('PZ5QGL')
 
 # os.system('say "your program has finished"')

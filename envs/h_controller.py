@@ -48,6 +48,7 @@ class AltController(gym.Env, ABC):
         action, _ = self.InnerAgent.predict(self.obs_inner_controller, deterministic=True)
         self.obs_inner_controller, _, done, info = self.InnerController.step(action)
         self.error = self.ref_signal[self.step_count] - self.InnerController.state[self.track_index]
+        self.error *= 0.25
 
         return self.get_obs(), self.get_reward(), done, info
 
@@ -58,11 +59,11 @@ class AltController(gym.Env, ABC):
         self.current_pitch_ref = 0.0
         self.obs_inner_controller = self.InnerController.reset()
         self.step_count = self.InnerController.step_count
-        return np.hstack([self.error, self.obs_inner_controller[[0, 3]], self.current_pitch_ref])
+        return np.hstack([self.error, self.obs_inner_controller[[0, 3]], d2r(self.current_pitch_ref)])
 
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
-        reward = -np.abs(np.maximum(np.minimum(self.error / 50, max_bound), -max_bound))
+        reward = -np.abs(np.maximum(np.minimum(self.error / 80, max_bound), -max_bound))
         avg_pitch_dif = self.current_pitch_ref - self.InnerController.ref_signal[0,
                                                  max(0, self.step_count - 800):self.step_count].mean()
         if abs(avg_pitch_dif) > 0.01:

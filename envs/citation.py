@@ -17,6 +17,7 @@ class Citation(gym.Env, ABC):
         self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
+        self.FDD_switch_time = 2.0
         self.task = task
         self.task_fun, self.evaluation, self.FDD = self.task().choose_task(evaluation, self.failure_input, FDD)
 
@@ -28,7 +29,6 @@ class Citation(gym.Env, ABC):
 
         self.sideslip_factor, self.pitch_factor, self.roll_factor, self.alt_factor = self.adapt_to_failure()
 
-        # todo: change obs space to beyond 100
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
@@ -178,7 +178,7 @@ class Citation(gym.Env, ABC):
         return_a = 0
 
         for i, current_time in enumerate(self.time):
-            if current_time < self.time[-1] / 2 or not self.FDD:
+            if current_time < self.FDD_switch_time or not self.FDD:
 
                 action, _ = agent_robust.predict(obs, deterministic=True)
                 # print(obs, action)
@@ -223,11 +223,9 @@ class CitationRudderStuck(Citation):
     def adapt_to_failure(self):
 
         sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationRudderStuck, self).adapt_to_failure()
-        sideslip_factor = np.zeros(self.time.shape[0])
-        roll_factor = 0.5 * np.ones(self.time.shape[0])
-        # if self.FDD:
-        #     sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
-        #     roll_factor[:int(self.time.shape[0] / 2)] = 2.0 * np.ones(int(self.time.shape[0] / 2))
+        if self.FDD:
+            sideslip_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 0.0
+            roll_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 0.5
 
         return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
@@ -239,17 +237,16 @@ class CitationAileronEff(Citation):
         plant = importlib.import_module(f'envs.da._citation', package=None)
         return plant, ['da', 1.0, 0.3]
 
-    # def adapt_to_failure(self):
-    #
-    #     sideslip_factor, _, roll_factor, alt_factor = super(CitationAileronEff, self).adapt_to_failure()
-    #     pitch_factor = 1.5 * np.ones(self.time.shape[0])
-    #     if self.FDD:
-    #         pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
-    #
-    #     return sideslip_factor, pitch_factor, roll_factor, alt_factor
+    def adapt_to_failure(self):
+
+        sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationAileronEff, self).adapt_to_failure()
+        if self.FDD:
+            pitch_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 1.5
+
+        return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
-class CitationElevRange(Citation):
+class CitationElevRage(Citation):
 
     def get_plant(self):
 
@@ -274,7 +271,8 @@ class CitationCgShift(Citation):
     def adapt_to_failure(self):
 
         sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationCgShift, self).adapt_to_failure()
-        alt_factor *= 0.5
+        if self.FDD:
+            alt_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 0.5
 
         return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
@@ -298,10 +296,9 @@ class CitationIcing(Citation):
     def adapt_to_failure(self):
 
         sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationIcing, self).adapt_to_failure()
-        alt_factor *= 0.25
 
-        # if self.FDD:
-        #     pitch_factor[:int(self.time.shape[0] / 2)] = np.ones(int(self.time.shape[0] / 2))
+        if self.FDD:
+            alt_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 0.25
 
         return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
@@ -316,9 +313,8 @@ class CitationHorzTail(Citation):
     def adapt_to_failure(self):
 
         sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationHorzTail, self).adapt_to_failure()
-        alt_factor *= 0.01
-        # if self.FDD:
-        #     sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
+        if self.FDD:
+            alt_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 0.01
 
         return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
@@ -330,14 +326,13 @@ class CitationVertTail(Citation):
         plant = importlib.import_module(f'envs.vt._citation', package=None)
         return plant, ['vt', 1.0, 0.0]
 
-    # def adapt_to_failure(self):
-    #
-    #     sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationVertTail, self).adapt_to_failure()
-    #     sideslip_factor = 1 * np.ones(self.time.shape[0])
-    #     if self.FDD:
-    #         sideslip_factor[:int(self.time.shape[0] / 2)] = 4.0 * np.ones(int(self.time.shape[0] / 2))
-    #
-    #     return sideslip_factor, pitch_factor, roll_factor, alt_factor
+    def adapt_to_failure(self):
+
+        sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationVertTail, self).adapt_to_failure()
+        if self.FDD:
+            sideslip_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 0.25
+
+        return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
 class CitationVerif(CitationNormal):
