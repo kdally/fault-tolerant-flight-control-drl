@@ -24,6 +24,8 @@ warnings.filterwarnings("ignore", module='gym')
 from envs.citation import CitationNormal as Citation
 
 
+# todo give negative reward for fast oscillating elevator, aileron or rudder
+
 def learn():
     env_train = AltController(inner_controller=Citation)
     env_eval = AltController(inner_controller=Citation)
@@ -37,7 +39,7 @@ def learn():
                 learning_rate=constant(0.0003),
                 policy_kwargs=dict(layers=[32, 32]),
                 )
-    agent.learn(total_timesteps=int(1.5e6), callback=callback)
+    agent.learn(total_timesteps=int(2e6), callback=callback)
     ID = get_ID(6)
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{env_eval.task_fun()[4]}_{ID}.csv')

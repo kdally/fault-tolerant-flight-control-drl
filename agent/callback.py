@@ -42,8 +42,7 @@ class SaveOnBestReturn(ABC):
         self.verbose = verbose
 
         self.eval_freq = eval_freq
-        self.best_mean_reward = -np.inf
-        self.last_mean_reward = -np.inf
+        self.best_reward = -np.inf
         self.deterministic = deterministic
         self.weights_sample = None
 
@@ -73,34 +72,31 @@ class SaveOnBestReturn(ABC):
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
 
             obs = self.eval_env.reset()
-            done, state = False, None
+            done = False
             episode_reward = 0.0
-            episode_length = 0
             while not done:
-                action, state = self.model.predict(obs, deterministic=self.deterministic)
+                action, _ = self.model.predict(obs, deterministic=True)
                 obs, reward, done, _info = self.eval_env.step(action)
                 episode_reward += reward
-                episode_length += 1
 
-            self.weights_sample = self.model.get_parameter_list()[4][11, :10].eval(session=self.model.sess)
+            self.weights_sample = self.model.get_parameter_list()[4][5, :10].eval(session=self.model.sess)
 
-            self.last_mean_reward = episode_reward
             ep_info = {"r": round(episode_reward, 6), "l": self.num_timesteps,
                        "t": round(time.time() - self.t_start, 6)}
             ep_info = {**ep_info, **{f'w{i}': self.weights_sample[i] for i in range(10)}}
             self.logger.writerow(ep_info)
             self.file_handler.flush()
 
-            if episode_reward > self.best_mean_reward:
+            if episode_reward > self.best_reward:
                 if self.verbose > 0:
                     print("New best mean reward!")
                 self.model.save(os.path.join(self.best_model_save_path, 'best_model'))
-                self.best_mean_reward = episode_reward
+                self.best_reward = episode_reward
                 self.eval_env.render(agent=self.model, during_training=True)
 
             if self.verbose > 0:
                 print(f"Eval num_timesteps={self.num_timesteps}, "
-                      f"current return={episode_reward:.2f}, best return={self.best_mean_reward:.2f}")
+                      f"current return={episode_reward:.2f}, best return={self.best_reward:.2f}")
 
         return True
 

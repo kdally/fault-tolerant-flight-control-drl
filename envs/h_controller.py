@@ -9,16 +9,13 @@ from tools.math_util import unscale_action, d2r, r2d
 from envs.citation import CitationNormal
 
 
-# TODO: change error and reward scaling
-
-
 class AltController(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, inner_controller=CitationNormal, evaluation=False, InnerAgent='9VZ5VE'):
+    def __init__(self, inner_controller=CitationNormal, evaluation=False, InnerAgent='9VZ5VE', FDD=False):
         super(AltController, self).__init__()
 
-        self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask)
+        self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask, FDD=FDD)
         self.InnerAgent = SAC.load(f"agent/trained/3attitude_step_{InnerAgent}.zip", env=self.InnerController)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.rate_limits = self.ActionLimits(np.array([[-10], [10]]))
@@ -29,8 +26,8 @@ class AltController(gym.Env, ABC):
         self.obs_indices = self.task_fun()[6]
         self.track_index = self.task_fun()[7]
 
-        # check obs space
-        self.observation_space = gym.spaces.Box(-500, 500, shape=(4,), dtype=np.float64)
+        # check obs space #todo: change to 100
+        self.observation_space = gym.spaces.Box(500, 500, shape=(4,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(1,), dtype=np.float64)
 
         self.current_pitch_ref = None
@@ -48,7 +45,7 @@ class AltController(gym.Env, ABC):
         action, _ = self.InnerAgent.predict(self.obs_inner_controller, deterministic=True)
         self.obs_inner_controller, _, done, info = self.InnerController.step(action)
         self.error = self.ref_signal[self.step_count] - self.InnerController.state[self.track_index]
-        self.error *= 0.25
+        # self.error *= 0.25
 
         return self.get_obs(), self.get_reward(), done, info
 
@@ -56,23 +53,20 @@ class AltController(gym.Env, ABC):
 
         self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         self.error = np.zeros(1)
-        self.current_pitch_ref = 0.0
+        self.current_pitch_ref = np.zeros(1)
         self.obs_inner_controller = self.InnerController.reset()
         self.step_count = self.InnerController.step_count
-        return np.hstack([self.error, self.obs_inner_controller[[0, 3]], d2r(self.current_pitch_ref)])
+        return np.hstack([self.error, 0.0, 0.0, self.current_pitch_ref])
 
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
         reward = -np.abs(np.maximum(np.minimum(self.error / 80, max_bound), -max_bound))
-        avg_pitch_dif = self.current_pitch_ref - self.InnerController.ref_signal[0,
-                                                 max(0, self.step_count - 800):self.step_count].mean()
-        if abs(avg_pitch_dif) > 0.01:
-            reward -= abs(avg_pitch_dif[0]) / 130
+
         return reward
 
     def get_obs(self):
-        # obs_inner_controller => np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
-        return np.hstack([self.error, self.obs_inner_controller[[0, 3]], self.current_pitch_ref])
+        # return np.hstack([self.error, self.obs_inner_controller[[0, 3]], r2d(self.current_pitch_ref)])
+        return np.hstack([self.error, 0.0, 0.0, self.current_pitch_ref])
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
@@ -93,25 +87,32 @@ class AltController(gym.Env, ABC):
             agent.ID = 'during_training'
             verbose = 0
 
+        if self.InnerController.FDD:
+            self.reset()
+            agent_robust = agent[0]
+            agent_adaptive = agent[1]
+            agent = agent[1]
+        else:
+            agent_robust = agent
+
         obs_outer_loop = self.reset()
-        return_a = 0
+        episode_reward = 0
+        done = False
+        while not done:
 
-        for i, current_time in enumerate(self.time):
-
-            pitch_ref, _ = agent.predict(obs_outer_loop, deterministic=True)
+            if self.time[self.step_count] < self.InnerController.FDD_switch_time or not self.InnerController.FDD:
+                pitch_ref, _ = agent_robust.predict(obs_outer_loop, deterministic=True)
+            else:
+                self.InnerController.FFD_change()
+                pitch_ref, _ = agent_adaptive.predict(obs_outer_loop, deterministic=True)
             obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
-            return_a += reward_outer_loop
+            episode_reward += reward_outer_loop
 
-            # if 70.0 < current_time < 80.0:
-            #     print(self.current_pitch_ref)
-
-            if current_time == self.time[-1]:
-                plot_response(agent.ID, self.InnerController, self.task_fun(), return_a, during_training,
-                              self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
-                if verbose > 0:
-                    print(f"Goal reached! Return = {return_a:.2f}")
-                    print('')
-                break
+        plot_response(agent.ID, self.InnerController, self.task_fun(), episode_reward, during_training,
+                      self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
+        if verbose > 0:
+            print(f"Goal reached! Return = {episode_reward:.2f}")
+            print('')
 
     def close(self):
         self.InnerController.close()

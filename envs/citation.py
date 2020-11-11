@@ -17,7 +17,7 @@ class Citation(gym.Env, ABC):
         self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
-        self.FDD_switch_time = 2.0
+        self.FDD_switch_time = 100 #6.0
         self.task = task
         self.task_fun, self.evaluation, self.FDD = self.task().choose_task(evaluation, self.failure_input, FDD)
 
@@ -111,6 +111,7 @@ class Citation(gym.Env, ABC):
         return reward
 
     def get_reward_comp(self):
+
         max_bound = np.ones(self.error.shape)
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = np.abs(r2d(self.error / 30))
@@ -176,24 +177,21 @@ class Citation(gym.Env, ABC):
 
         obs = self.reset_soft()
         return_a = 0
-
-        for i, current_time in enumerate(self.time):
-            if current_time < self.FDD_switch_time or not self.FDD:
-
+        done = False
+        while not done:
+            if self.time[self.step_count] < self.FDD_switch_time or not self.FDD:
                 action, _ = agent_robust.predict(obs, deterministic=True)
-                # print(obs, action)
             else:
                 self.FFD_change()
                 action, _ = agent_adaptive.predict(obs, deterministic=True)
             obs, reward, done, info = self.step(action)
             return_a += reward
-            if current_time == self.time[-1]:
-                plot_response(agent.ID, self, self.task_fun(), return_a, during_training,
-                              self.failure_input[0], FDD=self.FDD)
-                if verbose > 0:
-                    print(f"Goal reached! Return = {return_a:.2f}")
-                    print('')
-                break
+
+        plot_response(agent.ID, self, self.task_fun(), return_a, during_training,
+                      self.failure_input[0], FDD=self.FDD)
+        if verbose > 0:
+            print(f"Goal reached! Return = {return_a:.2f}")
+            print('')
 
     def close(self):
         self.C_MODEL.terminate()
@@ -246,7 +244,7 @@ class CitationAileronEff(Citation):
         return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
-class CitationElevRage(Citation):
+class CitationElevRange(Citation):
 
     def get_plant(self):
 
