@@ -14,6 +14,7 @@ class Task:
         self.track_signals = None
         self.track_indices = []
         self.signals = {}
+        self.agent_catalog = self.get_agent_catalog()
 
         return
 
@@ -51,6 +52,12 @@ class Task:
         return task_fun, evaluation, FDD
 
     @abstractmethod
+    def get_agent_catalog(self):
+        catalog = {'normal': None, 'elev_range': None, 'aileron_eff': None, 'rudder_stuck': None,
+                   'horz_tail': None, 'vert_tail': None, 'icing': None, 'cg_shift': None}
+        return catalog
+
+    @abstractmethod
     def get_task_tr(self):
         self.time_v: np.ndarray = np.arange(0, 20, 0.01)
         pass
@@ -80,6 +87,12 @@ class Task:
 
 
 class BodyRateTask(Task):
+
+    def get_agent_catalog(self):
+        catalog = super(BodyRateTask, self).get_agent_catalog()
+        catalog['normal'] = 'RG2SG4'
+
+        return catalog
 
     def get_task_tr(self):
         super(BodyRateTask, self).get_task_tr()
@@ -138,6 +151,20 @@ class BodyRateTask(Task):
 
 
 class AttitudeTask(Task):
+
+    def get_agent_catalog(self):
+
+        catalog = super(AttitudeTask, self).get_agent_catalog()
+        catalog['normal'] = '9VZ5VE'
+        catalog['elev_range'] = 'Q4N8GV_de'
+        catalog['aileron_eff'] = 'E919SW_da'
+        catalog['rudder_stuck'] = 'HNAKCC_dr'
+        catalog['horz_tail'] = 'R0EV0U_ht'
+        catalog['vert_tail'] = '2KGDYQ_vt'
+        catalog['icing'] = '9MUWUB_ice'
+        catalog['cg_shift'] = '5K6QFG_cg'
+
+        return catalog
 
     def get_task_tr(self):
         super(AttitudeTask, self).get_task_tr()
@@ -356,6 +383,14 @@ class AttitudeTask(Task):
 
 class AltitudeTask(Task):
 
+    def get_agent_catalog(self):
+        catalog = super(AltitudeTask, self).get_agent_catalog()
+        catalog['normal'] = 'P7V00G_vt'
+        catalog['elev_range'] = '2DPKKS_de'
+        catalog['aileron_eff'] = 'GGFC9G_da'
+
+        return catalog
+
     def get_task_tr(self):
         super(AltitudeTask, self).get_task_tr()
 
@@ -551,6 +586,12 @@ class AltitudeTask(Task):
 
 class CascadedAltTask(AltitudeTask):
 
+    def get_agent_catalog(self):
+        catalog = super(AltitudeTask, self).get_agent_catalog()
+        catalog['normal'] = 'XQ2G4Q'
+
+        return catalog
+
     def return_signals(self):
         temp_placeholder = self.signals
         self.signals = {'theta': np.zeros(int(self.time_v.shape[0])), 'phi': temp_placeholder['phi'],
@@ -563,46 +604,5 @@ class CascadedAltTask(AltitudeTask):
         self.track_signals, self.track_indices, self.obs_indices = self.organize_indices(self.signals, self.obs_indices)
         obs_indices_outer_controller = self.obs_indices + [self.state_indices['h']]
 
-        return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'altitude_2pitch',\
-            signal_outer_controller, obs_indices_outer_controller, track_indices_outer_controller
-#
-# import matplotlib.pyplot as plt
-#
-# time_v: np.ndarray = np.arange(0, 200, 0.01)
-# sig1 = np.hstack([2000 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
-#                   np.linspace(2000, 2350, int(60 * time_v.shape[0] / time_v[-1].round())),
-#                   2350 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-#                   np.linspace(2350, 2250, int(15 * time_v.shape[0] / time_v[-1].round())),
-#                   2250 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
-#
-#                   2250 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-#                   np.linspace(2250, 2600, int(60 * time_v.shape[0] / time_v[-1].round())),
-#                   2600 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-#                   np.linspace(2600, 2500, int(15 * time_v.shape[0] / time_v[-1].round())),
-#                   2500 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
-#                   ])
-# sign = 1
-# angle1 = 20
-# angle2 = 15
-# sig2 = np.hstack([0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
-#                   sign * angle2 * np.sin(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
-#                   sign * angle2 * np.ones(int(24 * time_v.shape[0] / time_v[-1].round())),
-#                   sign * angle2 * np.cos(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
-#                   0 * np.ones(int(17 * time_v.shape[0] / time_v[-1].round())),
-#                   -sign * angle1 * np.sin(time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.13 * np.pi * 2),
-#                   -sign * angle1 * np.ones(int(25 * time_v.shape[0] / time_v[-1].round())),
-#                   -sign * angle1 * np.cos(time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
-#                   0 * np.ones(int(20 * time_v.shape[0] / time_v[-1].round())),
-#                   sign * angle2 * np.sin(time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.05 * np.pi * 2),
-#                   sign * angle2 * np.ones(int(20 * time_v.shape[0] / time_v[-1].round())),
-#                   sign * angle2 * np.cos(time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.045 * np.pi * 2),
-#                   0 * np.ones(int(23 * time_v.shape[0] / time_v[-1].round())),
-#                   -sign * angle2 * np.sin(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-#                   -sign * angle1 * np.ones(int(19 * time_v.shape[0] / time_v[-1].round())),
-#                   -sign * angle1 * np.cos(time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-#                   0 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
-#                   ])
-#
-# plt.plot(time_v, sig1 / 50)
-# plt.plot(time_v, sig2)
-# plt.show()
+        return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'altitude_2pitch', \
+               signal_outer_controller, obs_indices_outer_controller, track_indices_outer_controller
