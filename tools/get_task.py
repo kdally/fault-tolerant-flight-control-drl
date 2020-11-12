@@ -1,9 +1,9 @@
 import numpy as np
 import random
-from abc import ABC, abstractmethod
+from abc import abstractmethod, ABC
 
 
-class Task:
+class Task(ABC):
 
     def __init__(self):
         self.time_v = None
@@ -90,7 +90,7 @@ class BodyRateTask(Task):
 
     def get_agent_catalog(self):
         catalog = super(BodyRateTask, self).get_agent_catalog()
-        catalog['normal'] = 'RG2SG4'
+        catalog['normal'] = 'body_rates_RG2SG4'
 
         return catalog
 
@@ -147,7 +147,7 @@ class BodyRateTask(Task):
 
         self.track_signals, self.track_indices, self.obs_indices = self.organize_indices(self.signals, self.obs_indices)
 
-        return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'body'
+        return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'body_rates'
 
 
 class AttitudeTask(Task):
@@ -155,14 +155,14 @@ class AttitudeTask(Task):
     def get_agent_catalog(self):
 
         catalog = super(AttitudeTask, self).get_agent_catalog()
-        catalog['normal'] = '9VZ5VE'
-        catalog['elev_range'] = 'Q4N8GV_de'
-        catalog['aileron_eff'] = 'E919SW_da'
-        catalog['rudder_stuck'] = 'HNAKCC_dr'
-        catalog['horz_tail'] = 'R0EV0U_ht'
-        catalog['vert_tail'] = '2KGDYQ_vt'
-        catalog['icing'] = '9MUWUB_ice'
-        catalog['cg_shift'] = '5K6QFG_cg'
+        catalog['normal'] = '3attitude_step_9VZ5VE'
+        catalog['elev_range'] = '3attitude_step_Q4N8GV_de'
+        catalog['aileron_eff'] = '3attitude_step_E919SW_da'
+        catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
+        catalog['horz_tail'] = '3attitude_step_R0EV0U_ht'
+        catalog['vert_tail'] = '3attitude_step_2KGDYQ_vt'
+        catalog['icing'] = '3attitude_step_9MUWUB_ice'
+        catalog['cg_shift'] = '3attitude_step_5K6QFG_cg'
 
         return catalog
 
@@ -385,9 +385,9 @@ class AltitudeTask(Task):
 
     def get_agent_catalog(self):
         catalog = super(AltitudeTask, self).get_agent_catalog()
-        catalog['normal'] = 'P7V00G_vt'
-        catalog['elev_range'] = '2DPKKS_de'
-        catalog['aileron_eff'] = 'GGFC9G_da'
+        catalog['normal'] = 'altitude_2attitude_P7V00G'
+        catalog['elev_range'] = 'altitude_2attitude_2DPKKS_de'
+        catalog['aileron_eff'] = 'altitude_2attitude_GGFC9G_da'
 
         return catalog
 
@@ -587,8 +587,8 @@ class AltitudeTask(Task):
 class CascadedAltTask(AltitudeTask):
 
     def get_agent_catalog(self):
-        catalog = super(AltitudeTask, self).get_agent_catalog()
-        catalog['normal'] = 'XQ2G4Q'
+        catalog = AttitudeTask().get_agent_catalog()
+        catalog['normal_outer_loop'] = 'altitude_2pitch_XQ2G4Q'
 
         return catalog
 

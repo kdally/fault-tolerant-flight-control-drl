@@ -1,16 +1,11 @@
 import warnings
 from agent.sac import SAC
 
-from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask
+from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, Task, CascadedAltTask
 from envs.h_controller import AltController
 
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
-
-
-# task = AttitudeTask
-task = AltitudeTask
-
 
 from envs.citation import CitationElevRange
 from envs.citation import CitationAileronEff
@@ -21,25 +16,41 @@ from envs.citation import CitationIcing
 from envs.citation import CitationCgShift
 
 
-def run_preexisting(ID1: str, ID2: str, env):
-    # env_eval = Citation(evaluation=True, FDD=True, task=task)
-    env_eval = AltController(evaluation=True, FDD=True, inner_controller=env)
+def run_preexisting(task: Task, env_type):
 
-    agents = (SAC.load(f"agent/trained/{env_eval.task_fun()[4]}_{ID1}.zip", env=env_eval),
-              SAC.load(f"agent/trained/{env_eval.task_fun()[4]}_{ID2}.zip", env=env_eval))
-    agents[1].ID = ID2 + f'_{env_eval.InnerController.failure_input[0]}'
-    env_eval.render(agent=agents)
+    if task == CascadedAltTask:
+        env_eval = AltController(evaluation=True, FDD=True, inner_controller=env_type)
+    else:
+        env_eval = env_type(evaluation=True, FDD=True, task=task)
+
+    env_eval.render()
 
 
-# run_preexisting('P7V00G', 'P7V00G')
-# run_preexisting('P7V00G', 'GGFC9G_da')
-# run_preexisting('P7V00G', '2DPKKS_de')
-run_preexisting('XQ2G4Q_normal', 'XQ2G4Q_normal', CitationElevRange)
-run_preexisting('XQ2G4Q_normal', 'XQ2G4Q_normal', CitationAileronEff)
-run_preexisting('XQ2G4Q_normal', 'XQ2G4Q_normal', CitationRudderStuck)
-run_preexisting('XQ2G4Q_normal', 'XQ2G4Q_normal', CitationHorzTail)
-run_preexisting('XQ2G4Q_normal', 'XQ2G4Q_normal', CitationVertTail)
-run_preexisting('XQ2G4Q_normal', 'XQ2G4Q_normal', CitationIcing)
-run_preexisting('XQ2G4Q_normal', 'XQ2G4Q_normal', CitationCgShift)
+########################################################################################################################
+# ***** CHOOSE FLIGHT SETTINGS ****** #
+
+env = CitationElevRange
+# env = CitationAileronEff
+# env = CitationRudderStuck
+# env = CitationHorzTail
+# env = CitationVertTail
+# env = CitationIcing
+# env = CitationCgShift
+
+current_task = CascadedAltTask
+# current_task = AltitudeTask
+# current_task = AttitudeTask
+
+# run_preexisting(current_task, env)
+
+run_preexisting(current_task, CitationElevRange)
+run_preexisting(current_task, CitationAileronEff)
+run_preexisting(current_task, CitationRudderStuck)
+run_preexisting(current_task, CitationHorzTail)
+run_preexisting(current_task, CitationVertTail)
+run_preexisting(current_task, CitationIcing)
+run_preexisting(current_task, CitationCgShift)
+
+
 
 # os.system('say "your program has finished"')

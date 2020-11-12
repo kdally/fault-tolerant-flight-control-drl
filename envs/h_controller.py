@@ -12,11 +12,10 @@ from envs.citation import CitationNormal
 class AltController(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, inner_controller=CitationNormal, evaluation=False, InnerAgent='9VZ5VE', FDD=False):
+    def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False):
         super(AltController, self).__init__()
 
         self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask, FDD=FDD)
-        self.InnerAgent = SAC.load(f"agent/trained/3attitude_step_{InnerAgent}.zip", env=self.InnerController)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.rate_limits = self.ActionLimits(np.array([[-10], [10]]))
         self.time = self.InnerController.time
@@ -28,6 +27,8 @@ class AltController(gym.Env, ABC):
 
         self.observation_space = gym.spaces.Box(-100, 100, shape=(2,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(1,), dtype=np.float64)
+
+        self.agent, self.agent.ID = self.load_agent()
 
         self.current_pitch_ref = None
         self.obs_inner_controller = None
@@ -41,7 +42,12 @@ class AltController(gym.Env, ABC):
         self.step_count = self.InnerController.step_count
         self.current_pitch_ref = self.bound_a(self.current_pitch_ref + self.scale_a(pitch_ref) * self.dt)
         self.InnerController.ref_signal[0, self.step_count] = self.current_pitch_ref[0]
-        action, _ = self.InnerAgent.predict(self.obs_inner_controller, deterministic=True)
+
+        if self.time[self.step_count] < self.InnerController.FDD_switch_time or not self.InnerController.FDD:
+            action, _ = self.InnerController.agents[0].predict(self.obs_inner_controller, deterministic=True)
+        else:
+            self.InnerController.FFD_change()
+            action, _ = self.InnerController.agents[1].predict(self.obs_inner_controller, deterministic=True)
         self.obs_inner_controller, _, done, info = self.InnerController.step(action)
         self.error = self.ref_signal[self.step_count] - self.InnerController.state[self.track_index]
         self.error *= 0.25
@@ -74,39 +80,27 @@ class AltController(gym.Env, ABC):
     def bound_a(self, action):
         return np.minimum(np.maximum(action, self.pitch_limits.low), self.pitch_limits.high)
 
-    def render(self, agent=None, during_training=False, verbose=1):
+    def render(self, ext_agent=None, verbose=1):
 
-        if agent is None:
-            agent = SAC.load(f"agent/trained/tmp/best_model.zip", env=self)
-            agent.save(f'agent/trained/{self.task_fun()[4]}_last.zip')
-            agent.ID = 'last'
-
-        if during_training:
-            agent.ID = 'during_training'
+        during_training = False
+        if ext_agent is not None:
+            self.agent = ext_agent
+            # self.agent.save(f'agent/trained/{self.task_fun()[4]}_last.zip')
+            self.agent.ID = 'last'
             verbose = 0
-
-        if self.InnerController.FDD:
-            self.reset()
-            agent_robust = agent[0]
-            agent_adaptive = agent[1]
-            agent = agent[1]
-        else:
-            agent_robust = agent
+            during_training = True
 
         obs_outer_loop = self.reset()
         episode_reward = 0
         done = False
         while not done:
 
-            if self.time[self.step_count] < self.InnerController.FDD_switch_time or not self.InnerController.FDD:
-                pitch_ref, _ = agent_robust.predict(obs_outer_loop, deterministic=True)
-            else:
-                self.InnerController.FFD_change()
-                pitch_ref, _ = agent_adaptive.predict(obs_outer_loop, deterministic=True)
+            pitch_ref, _ = self.agent.predict(obs_outer_loop, deterministic=True)
             obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
             episode_reward += reward_outer_loop
 
-        plot_response(agent.ID, self.InnerController, self.task_fun(), episode_reward, during_training,
+        plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
+                      self.task_fun(), episode_reward, during_training,
                       self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
         if verbose > 0:
             print(f"Goal reached! Return = {episode_reward:.2f}")
@@ -115,6 +109,10 @@ class AltController(gym.Env, ABC):
     def close(self):
         self.InnerController.close()
         return
+
+    def load_agent(self):
+        return SAC.load(f"agent/trained/{self.InnerController.task.agent_catalog['normal_outer_loop']}.zip", env=self), \
+               self.InnerController.task.agent_catalog['normal_outer_loop']
 
     class ActionLimits:
 

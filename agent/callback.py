@@ -92,7 +92,7 @@ class SaveOnBestReturn(ABC):
                     print("New best mean reward!")
                 self.model.save(os.path.join(self.best_model_save_path, 'best_model'))
                 self.best_reward = episode_reward
-                self.eval_env.render(agent=self.model, during_training=True)
+                self.eval_env.render(ext_agent=self.model)
 
             if self.verbose > 0:
                 print(f"Eval num_timesteps={self.num_timesteps}, "

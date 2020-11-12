@@ -2,6 +2,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 
+# todo: reorganize plotting function
+
 
 def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -157,6 +159,8 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+    elif failure != 'normal':
+        fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
-        fig.write_image(f"figures/{env.task_fun()[4]}_{name}_r{abs(int(perf))}.pdf")
+        fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 

@@ -8,7 +8,7 @@ import importlib
 from tools.math_util import unscale_action, d2r, r2d
 
 
-class Citation(gym.Env, ABC):
+class Citation(gym.Env):
     """Custom Environment that follows gym interface"""
 
     def __init__(self, evaluation=False, FDD=False, task=AttitudeTask):
@@ -18,8 +18,8 @@ class Citation(gym.Env, ABC):
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
         self.FDD_switch_time = 100
-        self.task = task
-        self.task_fun, self.evaluation, self.FDD = self.task().choose_task(evaluation, self.failure_input, FDD)
+        self.task = task()
+        self.task_fun, self.evaluation, self.FDD = self.task.choose_task(evaluation, self.failure_input, FDD)
 
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
@@ -32,6 +32,8 @@ class Citation(gym.Env, ABC):
         self.observation_space = gym.spaces.Box(-100, 100, shape=(len(self.obs_indices) + 3,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
+
+        self.agents, self.agentID = self.load_agent(FDD)
 
         self.state = None
         self.state_deg = None
@@ -131,15 +133,16 @@ class Citation(gym.Env, ABC):
 
         return np.minimum(np.maximum(action, self.deflection_limits.low), self.deflection_limits.high)
 
-    def get_cousin(self):
-        return self.__init__(evaluation=self.evaluation, FDD=self.FDD, task=self.task)
-
     @abstractmethod
     def get_plant(self):
         pass
 
+    @abstractmethod
+    def load_agent(self, FDD):
+        pass
+
     def adapt_to_failure(self):
-        
+
         pitch_factor = np.ones(self.time.shape[0])
         roll_factor = np.ones(self.time.shape[0])
         alt_factor = 0.25 * np.ones(self.time.shape[0])
@@ -149,31 +152,29 @@ class Citation(gym.Env, ABC):
                 roll_factor = 2 * np.ones(self.time.shape[0])
         else:
             sideslip_factor = 10.0 * np.ones(self.time.shape[0])
-            
+
         return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
     def FFD_change(self):
         pass
 
-    def render(self, agent=None, during_training=False, verbose=1):
+    def render(self, ext_agent=None, verbose=1):
 
-        if agent is None:
-            agent = SAC.load(f"agent/trained/tmp/best_model.zip", env=self)
-            agent.save(f'agent/trained/{self.task_fun()[4]}_last.zip')
-            agent.ID = 'last'
-            assert not self.FDD, 'Pre-trained agent needs to be passed for Fault Detection and Diagnosis simualtion.'
-
-        if during_training:
-            agent.ID = 'during_training'
+        during_training = False
+        if ext_agent is not None:
+            self.agents = (ext_agent)
+            # self.agents.save(f'agent/trained/{self.task_fun()[4]}_last.zip')
+            self.agentID = 'last'
             verbose = 0
+            during_training = True
 
         if self.FDD:
             self.reset()
-            agent_robust = agent[0]
-            agent_adaptive = agent[1]
-            agent = agent[1]
+            agent_robust = self.agents[0]
+            agent_adaptive = self.agents[1]
         else:
-            agent_robust = agent
+            agent_robust = self.agents[0]
+            agent_adaptive = None
 
         obs = self.reset_soft()
         return_a = 0
@@ -187,10 +188,10 @@ class Citation(gym.Env, ABC):
             obs, reward, done, info = self.step(action)
             return_a += reward
 
-        plot_response(agent.ID, self, self.task_fun(), return_a, during_training,
+        plot_response(self.agentID, self, self.task_fun(), return_a, during_training,
                       self.failure_input[0], FDD=self.FDD)
         if verbose > 0:
-            print(f"Goal reached! Return = {return_a:.2f}")
+            print(f'Goal reached! Return = {return_a:.2f}')
             print('')
 
     def close(self):
@@ -206,9 +207,14 @@ class Citation(gym.Env, ABC):
 class CitationNormal(Citation):
 
     def get_plant(self):
-
         plant = importlib.import_module(f'envs.normal._citation', package=None)
         return plant, ['normal', 1.0, 1.0]
+
+    def load_agent(self, FDD=False):
+        if FDD:
+            raise NotImplementedError('No fault detection and diagnosis on the non-failed system.')
+        return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip",
+                         env=self)], self.task.agent_catalog['normal']
 
 
 class CitationRudderStuck(Citation):
@@ -217,6 +223,15 @@ class CitationRudderStuck(Citation):
 
         plant = importlib.import_module(f'envs.dr._citation', package=None)
         return plant, ['dr', 0.0, -15.0]
+
+    def load_agent(self, FDD):
+        if FDD:
+            return [CitationNormal().load_agent()[0][0],
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['rudder_stuck']}.zip", env=self)], \
+                   self.task.agent_catalog['rudder_stuck']
+        return CitationNormal().load_agent()
+        # return SAC.load(f"agent/trained/{self.task.agent_catalog['rudder_stuck']}.zip", env=self),
+        # self.task.agent_catalog['rudder_stuck']
 
     def adapt_to_failure(self):
 
@@ -235,6 +250,15 @@ class CitationAileronEff(Citation):
         plant = importlib.import_module(f'envs.da._citation', package=None)
         return plant, ['da', 1.0, 0.3]
 
+    def load_agent(self, FDD):
+        if FDD:
+            return [CitationNormal().load_agent()[0][0],
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['aileron_eff']}.zip", env=self)], \
+                   self.task.agent_catalog['aileron_eff']
+        return CitationNormal().load_agent()
+        # return SAC.load(f"agent/trained/{self.task.agent_catalog['rudder_stuck']}.zip", env=self),
+        # self.task.agent_catalog['rudder_stuck']
+
     def adapt_to_failure(self):
 
         sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationAileronEff, self).adapt_to_failure()
@@ -247,14 +271,21 @@ class CitationAileronEff(Citation):
 class CitationElevRange(Citation):
 
     def get_plant(self):
-
         plant = importlib.import_module(f'envs.de._citation', package=None)
         # self.deflection_limits = self.ActionLimits(np.array([[-3.0, -37.24, -21.77], [3.0, 37.24, 21.77]]))
         # self.rate_limits = self.ActionLimits(np.array([[-7, -40, -20], [7, 40, 20]]))
         return plant, ['de', 20.05, 3.0]
 
-    def FFD_change(self):
+    def load_agent(self, FDD):
+        if FDD:
+            return [CitationNormal().load_agent()[0][0],
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['elev_range']}.zip", env=self)], \
+                   self.task.agent_catalog['elev_range']
+        return CitationNormal().load_agent()
+        # return SAC.load(f"agent/trained/{self.task.agent_catalog['elev_range']}.zip", env=self),
+        # self.task.agent_catalog['elev_range']
 
+    def FFD_change(self):
         self.deflection_limits = self.ActionLimits(np.array([[-3.0, -37.24, -21.77], [3.0, 37.24, 21.77]]))
         self.rate_limits = self.ActionLimits(np.array([[-7, -40, -20], [7, 40, 20]]))
 
@@ -266,8 +297,16 @@ class CitationCgShift(Citation):
         plant = importlib.import_module(f'envs.cg._citation', package=None)
         return plant, ['cg', 1.0, 1.04]
 
-    def adapt_to_failure(self):
+    def load_agent(self, FDD):
+        if FDD:
+            return [CitationNormal().load_agent()[0][0],
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['cg_shift']}.zip", env=self)], \
+                   self.task.agent_catalog['cg_shift']
+        return CitationNormal().load_agent()
+        # return SAC.load(f"agent/trained/{self.task.agent_catalog['cg_shift']}.zip", env=self),
+        # self.task.agent_catalog[ 'cg_shift']
 
+    def adapt_to_failure(self):
         sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationCgShift, self).adapt_to_failure()
         if self.FDD:
             alt_factor[np.argwhere(self.time == self.FDD_switch_time)[0, 0]:] *= 0.5
@@ -281,6 +320,14 @@ class CitationIcing(Citation):
 
         plant = importlib.import_module(f'envs.ice2000._citation', package=None)
         return plant, ['ice', 1.0, 0.7]  # https://doi.org/10.1016/S0376-0421(01)00018-5
+
+    def load_agent(self, FDD):
+        if FDD:
+            return [CitationNormal().load_agent()[0][0],
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['icing']}.zip", env=self)], \
+                   self.task.agent_catalog['icing']
+        return CitationNormal().load_agent()
+    # return SAC.load(f"agent/trained/{self.task.agent_catalog['icing']}.zip", env=self), self.task.agent_catalog['icing']
 
     def reset(self):
         super(CitationIcing, self).reset()
@@ -307,6 +354,15 @@ class CitationHorzTail(Citation):
         plant = importlib.import_module(f'envs.ht._citation', package=None)
         return plant, ['ht', 1.0, 0.3]
 
+    def load_agent(self, FDD):
+        if FDD:
+            return [CitationNormal().load_agent()[0][0],
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['horz_tail']}.zip", env=self)], \
+                   self.task.agent_catalog['horz_tail']
+        return CitationNormal().load_agent()
+        # return SAC.load(f"agent/trained/{self.task.agent_catalog['horz_tail']}.zip", env=self),
+        # self.task.agent_catalog['horz_tail']
+
     def adapt_to_failure(self):
 
         sideslip_factor, pitch_factor, roll_factor, alt_factor = super(CitationHorzTail, self).adapt_to_failure()
@@ -322,6 +378,15 @@ class CitationVertTail(Citation):
 
         plant = importlib.import_module(f'envs.vt._citation', package=None)
         return plant, ['vt', 1.0, 0.3]
+
+    def load_agent(self, FDD):
+        if FDD:
+            return [CitationNormal().load_agent()[0][0],
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self)], \
+                   self.task.agent_catalog['vert_tail']
+        return CitationNormal().load_agent()
+        # return SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self),
+        # self.task.agent_catalog['vert_tail']
 
     def adapt_to_failure(self):
 
@@ -369,7 +434,6 @@ class CitationVerif(CitationNormal):
             return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
-
 
 # from stable_baselines.common.env_checker import check_env
 #

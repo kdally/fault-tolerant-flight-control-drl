@@ -39,12 +39,14 @@ def learn():
                 )
     agent.learn(total_timesteps=int(2e6), callback=callback)
     ID = get_ID(6)
+    if env_eval.InnerController.failure_input[0] != 'normal':
+        ID += f'_{env_eval.InnerController.failure_input[0]}'
     training_log = pd.read_csv('agent/trained/tmp/monitor.csv')
     training_log.to_csv(f'agent/trained/{env_eval.task_fun()[4]}_{ID}.csv')
     plot_weights(ID, env_eval.task_fun()[4])
     plot_training(ID, env_eval.task_fun()[4])
     agent = SAC.load("agent/trained/tmp/best_model.zip", env=env_eval)
-    agent.ID = ID + f'_{env_eval.InnerController.failure_input[0]}'
+    agent.ID = ID
     agent.save(f'agent/trained/{env_eval.task_fun()[4]}_{agent.ID}.zip')
     env_eval = AltController(evaluation=True, inner_controller=Citation)
     env_eval.render(agent=agent)
@@ -52,15 +54,14 @@ def learn():
     return
 
 
-def run_preexisting(ID=None):
+def run_preexisting(during_training=False):
     env_eval = AltController(evaluation=True, inner_controller=Citation)
 
-    if ID is None:
-        env_eval.render()
+    if during_training:
+        agent = SAC.load(f"agent/trained/tmp/best_model.zip", env=env_eval)
+        env_eval.render(ext_agent=agent)
     else:
-        agent = SAC.load(f"agent/trained/{env_eval.task_fun()[4]}_{ID}.zip", env=env_eval)
-        agent.ID = ID + f'_{env_eval.InnerController.failure_input[0]}'
-        env_eval.render(agent=agent)
+        env_eval.render()
 
 
 def keyboardInterruptHandler(signal, frame):
@@ -71,9 +72,9 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-# learn()
 
-run_preexisting('XQ2G4Q_normal')
+# learn()
+run_preexisting()
 
 
 # os.system('say "your program has finished"')
