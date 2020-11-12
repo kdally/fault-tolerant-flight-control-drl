@@ -17,7 +17,7 @@ class Citation(gym.Env, ABC):
         self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
-        self.FDD_switch_time = 100 #6.0
+        self.FDD_switch_time = 100
         self.task = task
         self.task_fun, self.evaluation, self.FDD = self.task().choose_task(evaluation, self.failure_input, FDD)
 
@@ -283,7 +283,6 @@ class CitationIcing(Citation):
         return plant, ['ice', 1.0, 0.7]  # https://doi.org/10.1016/S0376-0421(01)00018-5
 
     def reset(self):
-        print('pass')
         super(CitationIcing, self).reset()
         self.ref_signal = self.task_fun(theta_angle=25)[0]
         # if 9 in self.track_indices:
@@ -322,7 +321,7 @@ class CitationVertTail(Citation):
     def get_plant(self):
 
         plant = importlib.import_module(f'envs.vt._citation', package=None)
-        return plant, ['vt', 1.0, 0.0]
+        return plant, ['vt', 1.0, 0.3]
 
     def adapt_to_failure(self):
 

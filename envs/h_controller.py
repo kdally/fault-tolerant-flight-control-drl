@@ -63,7 +63,7 @@ class AltController(gym.Env, ABC):
         return reward
 
     def get_obs(self):
-        # return np.hstack([self.error, self.obs_inner_controller[[0, 3]], r2d(self.current_pitch_ref)])
+        # return np.hstack([self.error, r2d(self.current_pitch_ref)])
         return np.hstack([self.error, self.current_pitch_ref])
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
