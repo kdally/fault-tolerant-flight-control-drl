@@ -361,10 +361,10 @@ class AltitudeTask(Task):
 
         time_v = self.time_v
 
-        self.signals['h'] = np.hstack([np.linspace(2000, 2044, int(7.5 * time_v.shape[0] / time_v[-1].round())),
-                                       2044 * np.ones(int(2.75 * time_v.shape[0] / time_v[-1].round())),
-                                       np.linspace(2044, 2025, int(3.75 * time_v.shape[0] / time_v[-1].round())),
-                                       2025 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
+        self.signals['h'] = np.hstack([np.linspace(2000, 2055, int(10 * time_v.shape[0] / time_v[-1].round())),
+                                       2055 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+                                       # np.linspace(2044, 2025, int(3.75 * time_v.shape[0] / time_v[-1].round())),
+                                       # 2025 * np.ones(int(6.75 * time_v.shape[0] / time_v[-1].round())),
                                        ])
 
         angle_phi = random.choice([45, 35, -45, -35])

@@ -26,8 +26,7 @@ class AltController(gym.Env, ABC):
         self.obs_indices = self.task_fun()[6]
         self.track_index = self.task_fun()[7]
 
-        # check obs space #todo: change to 100
-        self.observation_space = gym.spaces.Box(500, 500, shape=(4,), dtype=np.float64)
+        self.observation_space = gym.spaces.Box(-100, 100, shape=(2,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(1,), dtype=np.float64)
 
         self.current_pitch_ref = None
@@ -45,7 +44,7 @@ class AltController(gym.Env, ABC):
         action, _ = self.InnerAgent.predict(self.obs_inner_controller, deterministic=True)
         self.obs_inner_controller, _, done, info = self.InnerController.step(action)
         self.error = self.ref_signal[self.step_count] - self.InnerController.state[self.track_index]
-        # self.error *= 0.25
+        self.error *= 0.25
 
         return self.get_obs(), self.get_reward(), done, info
 
@@ -56,17 +55,16 @@ class AltController(gym.Env, ABC):
         self.current_pitch_ref = np.zeros(1)
         self.obs_inner_controller = self.InnerController.reset()
         self.step_count = self.InnerController.step_count
-        return np.hstack([self.error, 0.0, 0.0, self.current_pitch_ref])
+        return np.hstack([self.error, self.current_pitch_ref])
 
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
-        reward = -np.abs(np.maximum(np.minimum(self.error / 80, max_bound), -max_bound))
-
+        reward = -np.abs(np.maximum(np.minimum(self.error / 60, max_bound), -max_bound))
         return reward
 
     def get_obs(self):
         # return np.hstack([self.error, self.obs_inner_controller[[0, 3]], r2d(self.current_pitch_ref)])
-        return np.hstack([self.error, 0.0, 0.0, self.current_pitch_ref])
+        return np.hstack([self.error, self.current_pitch_ref])
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""

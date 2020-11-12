@@ -24,8 +24,6 @@ warnings.filterwarnings("ignore", module='gym')
 from envs.citation import CitationNormal as Citation
 
 
-# todo give negative reward for fast oscillating elevator, aileron or rudder
-
 def learn():
     env_train = AltController(inner_controller=Citation)
     env_eval = AltController(inner_controller=Citation)
@@ -73,7 +71,8 @@ def keyboardInterruptHandler(signal, frame):
 
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
-learn()
+# learn()
+run_preexisting('notbad2obs')
 # run_preexisting('A5FI4R')
 # run_preexisting('PZ5QGL')
 

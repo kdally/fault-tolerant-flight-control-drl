@@ -5,7 +5,7 @@ import numpy as np
 
 def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
-    subplot_indices = {0: [1, 2], 1: [1, 1], 2: [2, 2], 3: [4, 1], 4: [2, 1], 5: [4, 2],
+    subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
     fig = make_subplots(rows=6, cols=2)
@@ -52,12 +52,24 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
             line=dict(color='#EF553B', dash='dashdot')),
             row=4, col=2)
 
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            line=dict(color='#636EFA')), row=4, col=1)
+        fig.update_yaxes(title_text='&#916;h [m]', row=4, col=1, title_standoff=8)
+
     else:
         for sig_index, state_index in enumerate(task[1]):
             fig.append_trace(go.Scatter(
                 x=env.time, y=env.ref_signal[sig_index, :],
                 line=dict(color='#EF553B', dash='dashdot')),
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
+
+    if env.task_fun()[4] == 'altitude_2attitude':
+
+        fig.append_trace(go.Scatter(
+            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            line=dict(color='#636EFA')), row=4, col=1)
+        fig.update_yaxes(title_text='&#916;h [m]', row=4, col=1, title_standoff=8)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [^\circ/s]$',
@@ -69,15 +81,15 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         line=dict(color='#636EFA')), row=1, col=1)
     fig.update_yaxes(title_text='q [&deg;/s]', row=1, col=1)
 
-    fig.append_trace(go.Scatter(
-        x=env.time, y=env.state_history[2, :].T, name=r'$r [^\circ/s]$',
-        line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text='r [&deg;/s]', row=2, col=2, title_standoff=6)
+    # fig.append_trace(go.Scatter(
+    #     x=env.time, y=env.state_history[2, :].T, name=r'$r [^\circ/s]$',
+    #     line=dict(color='#636EFA')), row=2, col=2)
+    # fig.update_yaxes(title_text='r [&deg;/s]', row=2, col=2, title_standoff=6)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
-        line=dict(color='#636EFA')), row=4, col=1)
-    fig.update_yaxes(title_text='V [m/s]', row=4, col=1, title_standoff=23)
+        line=dict(color='#636EFA')), row=2, col=2)
+    fig.update_yaxes(title_text='V [m/s]', row=2, col=2, title_standoff=23)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[4, :].T, name=r'$\alpha [^\circ]$',
