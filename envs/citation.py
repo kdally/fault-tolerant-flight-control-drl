@@ -162,7 +162,7 @@ class Citation(gym.Env):
 
         during_training = False
         if ext_agent is not None:
-            self.agents = (ext_agent)
+            self.agents = [ext_agent]
             # self.agents.save(f'agent/trained/{self.task_fun()[4]}_last.zip')
             self.agentID = 'last'
             verbose = 0
@@ -327,6 +327,7 @@ class CitationIcing(Citation):
                     SAC.load(f"agent/trained/{self.task.agent_catalog['icing']}.zip", env=self)], \
                    self.task.agent_catalog['icing']
         return CitationNormal().load_agent()
+
     # return SAC.load(f"agent/trained/{self.task.agent_catalog['icing']}.zip", env=self), self.task.agent_catalog['icing']
 
     def reset(self):
@@ -360,8 +361,8 @@ class CitationHorzTail(Citation):
                     SAC.load(f"agent/trained/{self.task.agent_catalog['horz_tail']}.zip", env=self)], \
                    self.task.agent_catalog['horz_tail']
         return CitationNormal().load_agent()
-        # return SAC.load(f"agent/trained/{self.task.agent_catalog['horz_tail']}.zip", env=self),
-        # self.task.agent_catalog['horz_tail']
+        # return [SAC.load(f"agent/trained/{self.task.agent_catalog['horz_tail']}.zip", env=self)], \
+        #        self.task.agent_catalog['horz_tail']
 
     def adapt_to_failure(self):
 
@@ -384,9 +385,9 @@ class CitationVertTail(Citation):
             return [CitationNormal().load_agent()[0][0],
                     SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self)], \
                    self.task.agent_catalog['vert_tail']
-        return CitationNormal().load_agent()
-        # return SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self),
-        # self.task.agent_catalog['vert_tail']
+        # return CitationNormal().load_agent()
+        return [SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self)],\
+               self.task.agent_catalog['vert_tail']
 
     def adapt_to_failure(self):
 

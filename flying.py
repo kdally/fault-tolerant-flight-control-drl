@@ -75,19 +75,19 @@ signal.signal(signal.SIGINT, keyboardInterruptHandler)
 ########################################################################################################################
 # ***** CHOOSE FLIGHT SETTINGS ****** #
 
-current_task = AltitudeTask
-# current_task = AttitudeTask
+# current_task = AltitudeTask
+current_task = AttitudeTask
 
-env = CitationNormal
+# env = CitationNormal
 # env = CitationElevRange
 # env = CitationAileronEff
 # env = CitationRudderStuck
 # env = CitationHorzTail
-# env = CitationVertTail
+env = CitationVertTail
 # env = CitationIcing
 # env = CitationCgShift
 
-# learn(current_task, env)
-run_preexisting(current_task, env)
+learn(current_task, env)
+# run_preexisting(current_task, env)
 
 # os.system('say "your program has finished"')
