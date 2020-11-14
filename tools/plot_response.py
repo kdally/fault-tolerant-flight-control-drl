@@ -2,8 +2,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 
-# todo: reorganize plotting function
-
 
 def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -118,6 +116,11 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         x=env.time, y=env.state_history[9, :].T, name=r'$h [m]$',
         line=dict(color='#636EFA')), row=5, col=1)
     fig.update_yaxes(title_text='h [m]', row=5, col=1, title_standoff=8)
+
+    # w_0 = 1  # Hz
+    # for i in range(1, env.time.shape[0]):
+    #     env.action_history[0, i] = env.action_history[0, i-1] / (
+    #                 1 + w_0 * env.dt) + env.action_history[0, i] * (w_0 * env.dt) / (1 + w_0 * env.dt)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.action_history[0, :].T,

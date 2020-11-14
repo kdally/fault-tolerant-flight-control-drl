@@ -59,13 +59,14 @@ class SaveOnBestReturn(ABC):
         self.file_handler.flush()
         self.t_start = time.time()
 
-    def init_callback(self, model) -> None:
+    def init_callback(self, model):
         """
         Initialize the callback by saving references to the
         RL model and the training environment for convenience.
         """
         self.model = model
         self.training_env = model.env
+        return self
 
     def _on_step(self) -> bool:
 

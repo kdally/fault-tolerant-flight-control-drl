@@ -17,7 +17,7 @@ class Citation(gym.Env):
         self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
-        self.FDD_switch_time = 100
+        self.FDD_switch_time = 60
         self.task = task()
         self.task_fun, self.evaluation, self.FDD = self.task.choose_task(evaluation, self.failure_input, FDD)
 
@@ -47,6 +47,11 @@ class Citation(gym.Env):
     def step(self, action_rates: np.ndarray):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt)
+
+        w_0 = 1 # rad/s
+        if self.step_count > 1:
+            self.current_deflection = self.action_history[:, self.step_count-1]/(1+w_0*self.dt) + self.current_deflection * (w_0*self.dt)/(1+w_0*self.dt)
+
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
         if self.time[self.step_count] < 5.0 and self.evaluation:
@@ -111,13 +116,6 @@ class Citation(gym.Env):
         # reward_vec = np.abs(r2d(self.error / 30))
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
-
-    def get_reward_comp(self):
-
-        max_bound = np.ones(self.error.shape)
-        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        # reward_vec = np.abs(r2d(self.error / 30))
-        return reward_vec
 
     def get_obs(self):
 
@@ -383,11 +381,11 @@ class CitationVertTail(Citation):
     def load_agent(self, FDD):
         if FDD:
             return [CitationNormal().load_agent()[0][0],
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self)], \
+                    SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self)], \
                    self.task.agent_catalog['vert_tail']
-        # return CitationNormal().load_agent()
-        return [SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self)],\
-               self.task.agent_catalog['vert_tail']
+        return CitationNormal().load_agent()
+        # return [SAC.load(f"agent/trained/{self.task.agent_catalog['vert_tail']}.zip", env=self)],\
+        #        self.task.agent_catalog['vert_tail']
 
     def adapt_to_failure(self):
 

@@ -74,7 +74,6 @@ class SAC(ABC):
         self.seed = seed
         self._param_load_ops = None
         self.episode_reward = None
-        self.ep_info_buf = None
 
         self.observation_space = env.observation_space
         self.action_space = env.action_space
@@ -131,7 +130,6 @@ class SAC(ABC):
 
                 num_cpu = int(os.getenv('RCALL_NUM_CPU', multiprocessing.cpu_count()))
                 tf_config = tf.ConfigProto(
-                    allow_soft_placement=True,
                     inter_op_parallelism_threads=num_cpu,
                     intra_op_parallelism_threads=num_cpu)
                 self.sess = tf.Session(config=tf_config, graph=self.graph)
@@ -175,38 +173,22 @@ class SAC(ABC):
                                                                     reuse=True)
 
                     # Target entropy is used when learning the entropy coefficient
-                    if self.target_entropy == 'auto':
-                        # automatically set target entropy if needed
-                        self.target_entropy = -np.prod(self.action_space.shape).astype(np.float32)
-                    else:
-                        # Force conversion
-                        # this will also throw an error for unexpected string
-                        self.target_entropy = float(self.target_entropy)
+                    self.target_entropy = -np.prod(self.action_space.shape).astype(np.float32)
 
-                    # The entropy coefficient or entropy can be learned automatically
+                    # The entropy coefficient is learned automatically
                     # see Automating Entropy Adjustment for Maximum Entropy RL section
                     # of https://arxiv.org/abs/1812.05905
-                    if isinstance(self.ent_coef, str) and self.ent_coef.startswith('auto'):
-                        # Default initial value of ent_coef when learned
-                        init_value = 1.0
-                        if '_' in self.ent_coef:
-                            init_value = float(self.ent_coef.split('_')[1])
-                            assert init_value > 0., "The initial value of ent_coef must be greater than 0"
+                    # Default initial value of ent_coef when learned
+                    init_value = 1.0
 
-                        self.log_ent_coef = tf.get_variable('log_ent_coef', dtype=tf.float32,
-                                                            initializer=np.log(init_value).astype(np.float32))
-                        self.ent_coef = tf.exp(self.log_ent_coef)
-                    else:
-                        # Force conversion to float
-                        # this will throw an error if a malformed string (different from 'auto')
-                        # is passed
-                        self.ent_coef = float(self.ent_coef)
+                    self.log_ent_coef = tf.get_variable('log_ent_coef', dtype=tf.float32,
+                                                        initializer=np.log(init_value).astype(np.float32))
+                    self.ent_coef = tf.exp(self.log_ent_coef)
 
                 with tf.variable_scope("target", reuse=False):
                     # Create the value network
-                    _, _, value_target = self.target_policy.make_critics(self.processed_next_obs_ph,
+                    _, _, self.value_target = self.target_policy.make_critics(self.processed_next_obs_ph,
                                                                          create_qf=False, create_vf=True)
-                    self.value_target = value_target
 
                 with tf.variable_scope("loss", reuse=False):
                     # Take the min of the two Q-Values (Double-Q Learning)
@@ -223,22 +205,12 @@ class SAC(ABC):
                     qf2_loss = 0.5 * tf.reduce_mean((q_backup - qf2) ** 2)
 
                     # Compute the entropy temperature loss
-                    # it is used when the entropy coefficient is learned
-                    ent_coef_loss, entropy_optimizer = None, None
-                    if not isinstance(self.ent_coef, float):
-                        ent_coef_loss = -tf.reduce_mean(
-                            self.log_ent_coef * tf.stop_gradient(logp_pi + self.target_entropy))
-                        entropy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
+                    ent_coef_loss = -tf.reduce_mean(
+                        self.log_ent_coef * tf.stop_gradient(logp_pi + self.target_entropy))
+                    entropy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
 
                     # Compute the policy loss
-                    # Alternative: policy_kl_loss = tf.reduce_mean(logp_pi - min_qf_pi)
-                    policy_kl_loss = tf.reduce_mean(self.ent_coef * logp_pi - qf1_pi)
-
-                    # NOTE: in the original implementation, they have an additional
-                    # regularization loss for the Gaussian parameters
-                    # this is not used for now
-                    # policy_loss = (policy_kl_loss + policy_regularization_loss)
-                    policy_loss = policy_kl_loss
+                    policy_loss = tf.reduce_mean(self.ent_coef * logp_pi - qf1_pi)
 
                     # Target for value fn regression
                     # We update the vf towards the min of two Q-functions in order to
@@ -283,12 +255,11 @@ class SAC(ABC):
                                          value_loss, qf1, qf2, value_fn, logp_pi,
                                          self.entropy, policy_train_op, train_values_op]
 
-                        # Add entropy coefficient optimization operation if needed
-                        if ent_coef_loss is not None:
-                            with tf.control_dependencies([train_values_op]):
-                                ent_coef_op = entropy_optimizer.minimize(ent_coef_loss, var_list=self.log_ent_coef)
-                                self.infos_names += ['ent_coef_loss', 'ent_coef']
-                                self.step_ops += [ent_coef_op, ent_coef_loss, self.ent_coef]
+                        # Add entropy coefficient optimization operation
+                        with tf.control_dependencies([train_values_op]):
+                            ent_coef_op = entropy_optimizer.minimize(ent_coef_loss, var_list=self.log_ent_coef)
+                            self.infos_names += ['ent_coef_loss', 'ent_coef']
+                            self.step_ops += [ent_coef_op, ent_coef_loss, self.ent_coef]
 
                     # Monitor losses and entropy in tensorboard
                     tf.summary.scalar('policy_loss', policy_loss)
@@ -326,12 +297,7 @@ class SAC(ABC):
             self.learning_rate_ph: learning_rate
         }
 
-        # out  = [policy_loss, qf1_loss, qf2_loss,
-        #         value_loss, qf1, qf2, value_fn, logp_pi,
-        #         self.entropy, policy_train_op, train_values_op]
-
         # Do one gradient step
-        # and optionally compute log for tensorboard
         if writer is not None:
             out = self.sess.run([self.summary] + self.step_ops, feed_dict)
             summary = out.pop(0)
@@ -341,32 +307,19 @@ class SAC(ABC):
 
         # Unpack to monitor losses and entropy
         policy_loss, qf1_loss, qf2_loss, value_loss, *values = out
-        # qf1, qf2, value_fn, logp_pi, entropy, *_ = values
         entropy = values[4]
 
-        if self.log_ent_coef is not None:
-            ent_coef_loss, ent_coef = values[-2:]
-            return policy_loss, qf1_loss, qf2_loss, value_loss, entropy, ent_coef_loss, ent_coef
+        ent_coef_loss, ent_coef = values[-2:]
+        return policy_loss, qf1_loss, qf2_loss, value_loss, entropy, ent_coef_loss, ent_coef
 
-        return policy_loss, qf1_loss, qf2_loss, value_loss, entropy
+    def learn(self, total_timesteps, callback=None):
 
-    def learn(self, total_timesteps, callback=None,
-              replay_wrapper=None):
-
-        callback = self._init_callback(callback)
-
-        if replay_wrapper is not None:
-            self.replay_buffer = replay_wrapper(self.replay_buffer)
+        callback.init_callback(self)
 
         with SetVerbosity(self.verbose) as writer:
 
             self._setup_learn()
 
-            self.learning_rate = self.learning_rate
-            # Initial learning rate
-            current_lr = self.learning_rate(1)
-
-            start_time = time.time()
             episode_rewards = [0.0]
             episode_successes = []
             if self.action_noise is not None:
@@ -436,8 +389,6 @@ class SAC(ABC):
                             self.sess.run(self.target_update_op)
 
                     # Log losses and entropy, useful for monitor training
-                # if self.num_timesteps % int(2e3) == 0:
-                #     print(f'The reward is {self.env.get_reward_comp()}')
 
                 episode_rewards[-1] += reward_
                 if done:
@@ -453,13 +404,9 @@ class SAC(ABC):
 
             return self
 
-    def learn_online(self, total_timesteps, initial_state, callback=None,
-                     replay_wrapper=None):
+    def learn_online(self, total_timesteps, initial_state, callback=None):
 
-        callback = self._init_callback(callback)
-
-        if replay_wrapper is not None:
-            self.replay_buffer = replay_wrapper(self.replay_buffer)
+        callback.init_callback(self)
 
         with SetVerbosity(self.verbose) as writer:
 
@@ -599,24 +546,20 @@ class SAC(ABC):
         :param env: (Gym Environment) The environment for learning a policy
         """
         if env is None and self.env is None:
-            # if self.verbose >= 1:
-            #     print("Loading a model without an environment, "
-            #           "this model cannot be trained until it has a valid environment.")
             return
         elif env is None:
             raise ValueError("Error: trying to replace the current environment with None")
 
         # sanity checking the environment
         assert self.observation_space == env.observation_space, \
-            "Error: the environment passed must have at least the same observation space as the model was trained on."
+            f"Error: the environment ({env.observation_space}) passed must have at least the same observation space as " \
+            f"the model was trained on ({self.observation_space})."
         assert self.action_space == env.action_space, \
-            "Error: the environment passed must have at least the same action space as the model was trained on."
+            f"Error: the environment ({env.action_space}) passed must have at least the same action space as the model" \
+            f" was trained on ({self.action_space})."
 
         self.env = env
-
-        # Invalidated by environment change.
         self.episode_reward = None
-        self.ep_info_buf = None
 
     def replay_buffer_add(self, obs_t, action, reward, obs_tp1, done, info):
         """
@@ -631,15 +574,6 @@ class SAC(ABC):
         # Pass info dict when using HER, as it can be used to compute the reward
         kwargs = {}
         self.replay_buffer.add(obs_t, action, reward, obs_tp1, float(done), **kwargs)
-
-    def _init_callback(self,
-                      callback: Union[None, SaveOnBestReturn]) -> SaveOnBestReturn:
-        """
-        :param callback: (Union[None, SaveOnBestReturn])
-        :return: (SaveOnBestReturn)
-        """
-        callback.init_callback(self)
-        return callback
 
     def set_random_seed(self, seed: Optional[int]) -> None:
         """
@@ -668,8 +602,6 @@ class SAC(ABC):
                 "set_env(self, env) method.")
         if self.episode_reward is None:
             self.episode_reward = np.zeros((1,))
-        if self.ep_info_buf is None:
-            self.ep_info_buf = deque(maxlen=100)
 
     def load_parameters(self, params, exact_match=True):
         """

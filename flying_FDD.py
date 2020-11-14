@@ -29,9 +29,9 @@ def run_preexisting(task: Task, env_type):
 ########################################################################################################################
 # ***** CHOOSE FLIGHT SETTINGS ****** #
 
-env = CitationElevRange
+# env = CitationElevRange
 # env = CitationAileronEff
-# env = CitationRudderStuck
+env = CitationRudderStuck
 # env = CitationHorzTail
 # env = CitationVertTail
 # env = CitationIcing
@@ -43,13 +43,13 @@ current_task = CascadedAltTask
 
 # run_preexisting(current_task, env)
 
-# run_preexisting(current_task, CitationElevRange)
-# run_preexisting(current_task, CitationAileronEff)
-# run_preexisting(current_task, CitationRudderStuck)
-# run_preexisting(current_task, CitationHorzTail)
+run_preexisting(current_task, CitationElevRange)
+run_preexisting(current_task, CitationAileronEff)
+run_preexisting(current_task, CitationRudderStuck)
+run_preexisting(current_task, CitationHorzTail)
 run_preexisting(current_task, CitationVertTail)
-# run_preexisting(current_task, CitationIcing)
-# run_preexisting(current_task, CitationCgShift)
+run_preexisting(current_task, CitationIcing)
+run_preexisting(current_task, CitationCgShift)
 
 
 
