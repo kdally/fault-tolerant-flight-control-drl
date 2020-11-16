@@ -113,7 +113,7 @@ time_v = np.arange(0, 10.01, 0.01)
 # ---------------------------------
 eng = matlab.engine.start_matlab()
 try:
-    eng.cd('/Users/kdally/OneDrive - Delft University of Technology/TU/MSc Thesis/Simulink/citast_python_normal')
+    eng.cd('/Users/kdally/OneDrive - Delft University of Technology/TU/MSc Thesis/Simulink/citast_python_verif')
 except matlab.engine.MatlabExecutionError:
     pass
 eng.verification(nargout=0)

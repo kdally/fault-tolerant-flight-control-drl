@@ -40,6 +40,7 @@ class Citation(gym.Env):
         self.scale_s = None
         self.state_history = None
         self.action_history = None
+        # self.action_history_filtered = None
         self.error = None
         self.step_count = None
         self.external_ref_signal = None
@@ -48,9 +49,11 @@ class Citation(gym.Env):
 
         self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt)
 
-        w_0 = 1 # rad/s
-        if self.step_count > 1:
-            self.current_deflection = self.action_history[:, self.step_count-1]/(1+w_0*self.dt) + self.current_deflection * (w_0*self.dt)/(1+w_0*self.dt)
+        # self.w_0 = 0.1*2*np.pi  # rad/s
+        # filtered_deflection = self.current_deflection.copy()
+        # if self.step_count > 1:
+        #     filtered_deflection = self.action_history_filtered[:, self.step_count-1]/(1+self.w_0*self.dt) + \
+        #                           self.current_deflection * (self.w_0*self.dt)/(1+self.w_0*self.dt)
 
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
@@ -72,6 +75,7 @@ class Citation(gym.Env):
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
+        # self.action_history_filtered[:, self.step_count] = filtered_deflection
 
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
@@ -104,6 +108,7 @@ class Citation(gym.Env):
         self.state_deg = self.state * self.scale_s
         self.state_history = np.zeros((self.state.shape[0], self.time.shape[0]))
         self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
+        # self.action_history_filtered = self.action_history.copy()
         self.error = np.zeros(len(self.track_indices))
         self.step_count = 0
         self.current_deflection = np.zeros(3)

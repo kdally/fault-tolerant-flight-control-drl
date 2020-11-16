@@ -24,6 +24,9 @@ from envs.citation import CitationCgShift
 from envs.citation import CitationNormal
 
 
+# todo: different flight conditions
+
+
 def learn(task: Task, env_type=CitationNormal):
     env_train = env_type(task=task)
     env_eval = env_type(task=task)
@@ -31,10 +34,10 @@ def learn(task: Task, env_type=CitationNormal):
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
     agent = SAC(LnMlpPolicy, env_train, verbose=1,
-                ent_coef='auto', batch_size=512,
-                # learning_rate=schedule_kink(0.0005, 0.0004),
+                ent_coef='auto', #batch_size=512,
+                learning_rate=schedule_kink(0.0005, 0.0004),
                 train_freq=100,
-                learning_rate=constant(0.0003),
+                # learning_rate=constant(0.0003),
                 policy_kwargs=dict(layers=[32, 32]),
                 )
     agent.learn(total_timesteps=int(2.5e6), callback=callback)
@@ -87,7 +90,7 @@ env = CitationNormal
 # env = CitationIcing
 # env = CitationCgShift
 
-learn(current_task, env)
-# run_preexisting(current_task, env)
+# learn(current_task, env)
+run_preexisting(current_task, env)
 
 # os.system('say "your program has finished"')

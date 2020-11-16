@@ -421,15 +421,16 @@ class AltitudeTask(Task):
 
     def get_task_eval(self):
         self.time_v = time_v = np.arange(0, 120, 0.01)
-        self.signals['h'] = np.hstack([2000 * np.ones(int(3 * time_v.shape[0] / time_v[-1].round())),
-                                       np.linspace(2000, 2480, int(81 * time_v.shape[0] / time_v[-1].round())),
-                                       2480 * np.ones(int(12 * time_v.shape[0] / time_v[-1].round())),
-                                       np.linspace(2480, 2390, int(18 * time_v.shape[0] / time_v[-1].round())),
-                                       2390 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
+        initial_alt = 2000
+        self.signals['h'] = np.hstack([initial_alt * np.ones(int(3 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(initial_alt, initial_alt+480, int(81 * time_v.shape[0] / time_v[-1].round())),
+                                       (initial_alt+480) * np.ones(int(12 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(initial_alt+480, initial_alt+390, int(18 * time_v.shape[0] / time_v[-1].round())),
+                                       (initial_alt+390) * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
                                        ])
         sign = 1
         angle1 = 40
-        angle2 = 30
+        angle2 = 25
         self.signals['phi'] = np.hstack([0 * np.ones(int(7 * time_v.shape[0] / time_v[-1].round())),
                                          sign * angle2 * np.sin(
                                              time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),

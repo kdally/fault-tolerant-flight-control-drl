@@ -117,10 +117,7 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         line=dict(color='#636EFA')), row=5, col=1)
     fig.update_yaxes(title_text='h [m]', row=5, col=1, title_standoff=8)
 
-    # w_0 = 1  # Hz
-    # for i in range(1, env.time.shape[0]):
-    #     env.action_history[0, i] = env.action_history[0, i-1] / (
-    #                 1 + w_0 * env.dt) + env.action_history[0, i] * (w_0 * env.dt) / (1 + w_0 * env.dt)
+    # env.action_history = env.action_history_filtered
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.action_history[0, :].T,
