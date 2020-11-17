@@ -30,7 +30,7 @@ def learn():
 
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
-    agent = SAC(LnMlpPolicy, env_train, verbose=1,
+    agent = SAC(LnMlpPolicy, env_train,
                 ent_coef='auto', batch_size=512,
                 # learning_rate=schedule_kink(0.0005, 0.0004),
                 train_freq=100,
@@ -73,8 +73,8 @@ def keyboardInterruptHandler(signal, frame):
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
-# learn()
-run_preexisting()
+learn()
+# run_preexisting()
 
 
 # os.system('say "your program has finished"')

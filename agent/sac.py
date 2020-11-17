@@ -4,7 +4,7 @@ import os
 import json
 import zipfile
 from abc import ABC
-from collections import OrderedDict, deque
+from collections import OrderedDict
 from typing import Union, Optional
 import multiprocessing
 import numpy as np
@@ -12,7 +12,6 @@ import tensorflow as tf
 import gym
 
 from agent.buffer import ReplayBuffer
-from agent.callback import SaveOnBestReturn
 from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params # todo: check saving tools
 from tools.math_util import unscale_action, scale_action, set_global_seeds
 
@@ -46,8 +45,6 @@ class SAC(ABC):
         for hard exploration problem. Cf DDPG for the different action noise type.
     :param random_exploration: (float) Probability of taking a random action (as in an epsilon-greedy strategy)
         This is not needed for SAC normally but can help exploring when using HER + SAC.
-        This hack was present in the original OpenAI Baselines repo (DDPG + HER)
-    :param verbose: (int) the verbosity level: 0 none, 1 training information, 2 tensorflow debug
     :param _init_setup_model: (bool) Whether or not to build the network at the creation of the instance
     :param policy_kwargs: (dict) additional arguments to be passed to the policy on creation
     :param seed: (int) Seed for the pseudo-random generators (python, numpy, tensorflow).
@@ -59,14 +56,13 @@ class SAC(ABC):
                  learning_starts=100, train_freq=1, batch_size=64,
                  tau=0.005, ent_coef='auto', target_update_interval=1,
                  target_entropy='auto', action_noise=None,
-                 random_exploration=0.0, verbose=0,
+                 random_exploration=0.0,
                  _init_setup_model=True, policy_kwargs=None,
                  seed=None):
 
         self.ID = None
         self.policy = policy
         self.env = env
-        self.verbose = verbose
         self.policy_kwargs = {} if policy_kwargs is None else policy_kwargs
         self.num_timesteps = 0
         self.sess = None
@@ -94,9 +90,7 @@ class SAC(ABC):
         self.value_fn = None
         self.graph = None
         self.replay_buffer = None
-        self.verbose = verbose
         self.params = None
-        self.summary = None
         self.policy_tf = None
         self.target_entropy = target_entropy
 
@@ -123,170 +117,153 @@ class SAC(ABC):
             self.setup_model()
 
     def setup_model(self):
-        with SetVerbosity(self.verbose):
-            self.graph = tf.Graph()
-            with self.graph.as_default():
-                self.set_random_seed(self.seed)
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            self.set_random_seed(self.seed)
 
-                num_cpu = int(os.getenv('RCALL_NUM_CPU', multiprocessing.cpu_count()))
-                tf_config = tf.ConfigProto(
-                    inter_op_parallelism_threads=num_cpu,
-                    intra_op_parallelism_threads=num_cpu)
-                self.sess = tf.Session(config=tf_config, graph=self.graph)
+            num_cpu = int(os.getenv('RCALL_NUM_CPU', multiprocessing.cpu_count()))
+            tf_config = tf.ConfigProto(
+                inter_op_parallelism_threads=num_cpu,
+                intra_op_parallelism_threads=num_cpu)
+            self.sess = tf.Session(config=tf_config, graph=self.graph)
 
-                self.replay_buffer = ReplayBuffer(self.buffer_size)
+            self.replay_buffer = ReplayBuffer(self.buffer_size)
 
-                with tf.variable_scope("input", reuse=False):
-                    # Create policy and target TF objects
-                    self.policy_tf = self.policy(self.sess, self.observation_space, self.action_space,
+            with tf.variable_scope("input", reuse=False):
+                # Create policy and target TF objects
+                self.policy_tf = self.policy(self.sess, self.observation_space, self.action_space,
+                                             **self.policy_kwargs)
+                self.target_policy = self.policy(self.sess, self.observation_space, self.action_space,
                                                  **self.policy_kwargs)
-                    self.target_policy = self.policy(self.sess, self.observation_space, self.action_space,
-                                                     **self.policy_kwargs)
 
-                    # Initialize Placeholders
-                    self.observations_ph = self.policy_tf.obs_ph
-                    # Normalized observation for pixels
-                    self.processed_obs_ph = self.policy_tf.processed_obs
-                    self.next_observations_ph = self.target_policy.obs_ph
-                    self.processed_next_obs_ph = self.target_policy.processed_obs
-                    self.action_target = self.target_policy.action_ph
-                    self.terminals_ph = tf.placeholder(tf.float32, shape=(None, 1), name='terminals')
-                    self.rewards_ph = tf.placeholder(tf.float32, shape=(None, 1), name='rewards')
-                    self.actions_ph = tf.placeholder(tf.float32, shape=(None,) + self.action_space.shape,
-                                                     name='actions')
-                    self.learning_rate_ph = tf.placeholder(tf.float32, [], name="learning_rate_ph")
+                # Initialize Placeholders
+                self.observations_ph = self.policy_tf.obs_ph
+                # Normalized observation for pixels
+                self.processed_obs_ph = self.policy_tf.processed_obs
+                self.next_observations_ph = self.target_policy.obs_ph
+                self.processed_next_obs_ph = self.target_policy.processed_obs
+                self.action_target = self.target_policy.action_ph
+                self.terminals_ph = tf.placeholder(tf.float32, shape=(None, 1), name='terminals')
+                self.rewards_ph = tf.placeholder(tf.float32, shape=(None, 1), name='rewards')
+                self.actions_ph = tf.placeholder(tf.float32, shape=(None,) + self.action_space.shape,
+                                                 name='actions')
+                self.learning_rate_ph = tf.placeholder(tf.float32, [], name="learning_rate_ph")
 
-                with tf.variable_scope("model", reuse=False):
-                    # Create the policy
-                    # first return value corresponds to deterministic actions
-                    # policy_out corresponds to stochastic actions, used for training
-                    # logp_pi is the log probability of actions taken by the policy
-                    self.deterministic_action, policy_out, logp_pi = self.policy_tf.make_actor(self.processed_obs_ph)
-                    # Monitor the entropy of the policy,
-                    # this is not used for training
-                    self.entropy = tf.reduce_mean(self.policy_tf.entropy)
-                    #  Use two Q-functions to improve performance by reducing overestimation bias.
-                    qf1, qf2, value_fn = self.policy_tf.make_critics(self.processed_obs_ph, self.actions_ph,
-                                                                     create_qf=True, create_vf=True)
-                    qf1_pi, qf2_pi, _ = self.policy_tf.make_critics(self.processed_obs_ph,
-                                                                    policy_out, create_qf=True, create_vf=False,
-                                                                    reuse=True)
+            with tf.variable_scope("model", reuse=False):
+                # Create the policy
+                # first return value corresponds to deterministic actions
+                # policy_out corresponds to stochastic actions, used for training
+                # logp_pi is the log probability of actions taken by the policy
+                self.deterministic_action, policy_out, logp_pi = self.policy_tf.make_actor(self.processed_obs_ph)
+                # Monitor the entropy of the policy,
+                # this is not used for training
+                self.entropy = tf.reduce_mean(self.policy_tf.entropy)
+                #  Use two Q-functions to improve performance by reducing overestimation bias.
+                qf1, qf2, value_fn = self.policy_tf.make_critics(self.processed_obs_ph, self.actions_ph,
+                                                                 create_qf=True, create_vf=True)
+                qf1_pi, qf2_pi, _ = self.policy_tf.make_critics(self.processed_obs_ph,
+                                                                policy_out, create_qf=True, create_vf=False,
+                                                                reuse=True)
 
-                    # Target entropy is used when learning the entropy coefficient
-                    self.target_entropy = -np.prod(self.action_space.shape).astype(np.float32)
+                self.target_entropy = -np.prod(self.action_space.shape).astype(np.float32)
 
-                    # The entropy coefficient is learned automatically
-                    # see Automating Entropy Adjustment for Maximum Entropy RL section
-                    # of https://arxiv.org/abs/1812.05905
-                    # Default initial value of ent_coef when learned
-                    init_value = 1.0
+                # The entropy coefficient is learned automatically
+                # see Automating Entropy Adjustment for Maximum Entropy RL section
+                # of https://arxiv.org/abs/1812.05905
+                # Default initial value of ent_coef when learned
+                init_value = 1.0
 
-                    self.log_ent_coef = tf.get_variable('log_ent_coef', dtype=tf.float32,
-                                                        initializer=np.log(init_value).astype(np.float32))
-                    self.ent_coef = tf.exp(self.log_ent_coef)
+                self.log_ent_coef = tf.get_variable('log_ent_coef', dtype=tf.float32,
+                                                    initializer=np.log(init_value).astype(np.float32))
+                self.ent_coef = tf.exp(self.log_ent_coef)
 
-                with tf.variable_scope("target", reuse=False):
-                    # Create the value network
-                    _, _, self.value_target = self.target_policy.make_critics(self.processed_next_obs_ph,
-                                                                         create_qf=False, create_vf=True)
+            with tf.variable_scope("target", reuse=False):
+                # Create the value network
+                _, _, self.value_target = self.target_policy.make_critics(self.processed_next_obs_ph,
+                                                                     create_qf=False, create_vf=True)
 
-                with tf.variable_scope("loss", reuse=False):
-                    # Take the min of the two Q-Values (Double-Q Learning)
-                    min_qf_pi = tf.minimum(qf1_pi, qf2_pi)
+            with tf.variable_scope("loss", reuse=False):
+                # Take the min of the two Q-Values (Double-Q Learning)
+                min_qf_pi = tf.minimum(qf1_pi, qf2_pi)
 
-                    # Target for Q value regression
-                    q_backup = tf.stop_gradient(
-                        self.rewards_ph +
-                        (1 - self.terminals_ph) * self.gamma * self.value_target
-                    )
+                # Target for Q value regression
+                q_backup = tf.stop_gradient(
+                    self.rewards_ph +
+                    (1 - self.terminals_ph) * self.gamma * self.value_target
+                )
 
-                    # Compute Q-Function loss
-                    qf1_loss = 0.5 * tf.reduce_mean((q_backup - qf1) ** 2)
-                    qf2_loss = 0.5 * tf.reduce_mean((q_backup - qf2) ** 2)
+                # Compute Q-Function loss
+                qf1_loss = 0.5 * tf.reduce_mean((q_backup - qf1) ** 2)
+                qf2_loss = 0.5 * tf.reduce_mean((q_backup - qf2) ** 2)
 
-                    # Compute the entropy temperature loss
-                    ent_coef_loss = -tf.reduce_mean(
-                        self.log_ent_coef * tf.stop_gradient(logp_pi + self.target_entropy))
-                    entropy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
+                # Compute the entropy temperature loss
+                ent_coef_loss = -tf.reduce_mean(
+                    self.log_ent_coef * tf.stop_gradient(logp_pi + self.target_entropy))
+                entropy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
 
-                    # Compute the policy loss
-                    policy_loss = tf.reduce_mean(self.ent_coef * logp_pi - qf1_pi)
+                # Compute the policy loss
+                policy_loss = tf.reduce_mean(self.ent_coef * logp_pi - qf1_pi)
 
-                    # Target for value fn regression
-                    # We update the vf towards the min of two Q-functions in order to
-                    # reduce overestimation bias from function approximation error.
-                    v_backup = tf.stop_gradient(min_qf_pi - self.ent_coef * logp_pi)
-                    value_loss = 0.5 * tf.reduce_mean((value_fn - v_backup) ** 2)
+                # Target for value fn regression
+                # We update the vf towards the min of two Q-functions in order to
+                # reduce overestimation bias from function approximation error.
+                v_backup = tf.stop_gradient(min_qf_pi - self.ent_coef * logp_pi)
+                value_loss = 0.5 * tf.reduce_mean((value_fn - v_backup) ** 2)
 
-                    values_losses = qf1_loss + qf2_loss + value_loss
+                values_losses = qf1_loss + qf2_loss + value_loss
 
-                    # Policy train op
-                    # (has to be separate from value train op, because min_qf_pi appears in policy_loss)
-                    policy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
-                    policy_train_op = policy_optimizer.minimize(policy_loss,
-                                                                var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='model/pi'))
+                # Policy train op (separate from value train operation, because min_qf_pi appears in policy_loss)
+                policy_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
+                policy_train_op = policy_optimizer.minimize(policy_loss,
+                                                            var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='model/pi'))
 
-                    # Value train op
-                    value_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
-                    values_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='model/values_fn')
+                # Value train operation
+                value_optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph)
+                values_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='model/values_fn')
 
-                    source_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model/values_fn")
-                    target_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="target/values_fn")
+                source_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model/values_fn")
+                target_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="target/values_fn")
 
-                    # Polyak averaging for target variables
-                    self.target_update_op = [
-                        tf.assign(target, (1 - self.tau) * target + self.tau * source)
-                        for target, source in zip(target_params, source_params)
-                    ]
-                    # Initializing target to match source variables
-                    target_init_op = [
-                        tf.assign(target, source)
-                        for target, source in zip(target_params, source_params)
-                    ]
+                # Polyak averaging for target variables
+                self.target_update_op = [
+                    tf.assign(target, (1 - self.tau) * target + self.tau * source)
+                    for target, source in zip(target_params, source_params)
+                ]
+                # Initializing target to match source variables
+                target_init_op = [
+                    tf.assign(target, source)
+                    for target, source in zip(target_params, source_params)
+                ]
 
-                    # Control flow is used because sess.run otherwise evaluates in nondeterministic order
-                    # and we first need to compute the policy action before computing q values losses
-                    with tf.control_dependencies([policy_train_op]):
-                        train_values_op = value_optimizer.minimize(values_losses, var_list=values_params)
+                # Control flow is used because sess.run otherwise evaluates in nondeterministic order
+                # and we first need to compute the policy action before computing q values losses
+                with tf.control_dependencies([policy_train_op]):
+                    train_values_op = value_optimizer.minimize(values_losses, var_list=values_params)
 
-                        self.infos_names = ['policy_loss', 'qf1_loss', 'qf2_loss', 'value_loss', 'entropy']
-                        # All ops to call during one training step
-                        self.step_ops = [policy_loss, qf1_loss, qf2_loss,
-                                         value_loss, qf1, qf2, value_fn, logp_pi,
-                                         self.entropy, policy_train_op, train_values_op]
+                    self.infos_names = ['policy_loss', 'qf1_loss', 'qf2_loss', 'value_loss', 'entropy']
+                    # All ops to call during one training step
+                    self.step_ops = [policy_loss, qf1_loss, qf2_loss,
+                                     value_loss, qf1, qf2, value_fn, logp_pi,
+                                     self.entropy, policy_train_op, train_values_op]
 
-                        # Add entropy coefficient optimization operation
-                        with tf.control_dependencies([train_values_op]):
-                            ent_coef_op = entropy_optimizer.minimize(ent_coef_loss, var_list=self.log_ent_coef)
-                            self.infos_names += ['ent_coef_loss', 'ent_coef']
-                            self.step_ops += [ent_coef_op, ent_coef_loss, self.ent_coef]
+                    # Add entropy coefficient optimization operation
+                    with tf.control_dependencies([train_values_op]):
+                        ent_coef_op = entropy_optimizer.minimize(ent_coef_loss, var_list=self.log_ent_coef)
+                        self.infos_names += ['ent_coef_loss', 'ent_coef']
+                        self.step_ops += [ent_coef_op, ent_coef_loss, self.ent_coef]
 
-                    # Monitor losses and entropy in tensorboard
-                    tf.summary.scalar('policy_loss', policy_loss)
-                    tf.summary.scalar('qf1_loss', qf1_loss)
-                    tf.summary.scalar('qf2_loss', qf2_loss)
-                    tf.summary.scalar('entropy', self.entropy)
-                    if ent_coef_loss is not None:
-                        tf.summary.scalar('ent_coef_loss', ent_coef_loss)
-                        tf.summary.scalar('ent_coef', self.ent_coef)
+            # Retrieve parameters that must be saved
+            self.params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
+            self.target_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="target/values_fn")
 
-                    tf.summary.scalar('learning_rate', tf.reduce_mean(self.learning_rate_ph))
+            # Initialize Variables and target network
+            with self.sess.as_default():
+                self.sess.run(tf.global_variables_initializer())
+                self.sess.run(target_init_op)
 
-                # Retrieve parameters that must be saved
-                self.params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
-                self.target_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="target/values_fn")
-
-                # Initialize Variables and target network
-                with self.sess.as_default():
-                    self.sess.run(tf.global_variables_initializer())
-                    self.sess.run(target_init_op)
-
-                self.summary = tf.summary.merge_all()
-
-    def _train_step(self, step, writer, learning_rate):
+    def _train_step(self, learning_rate):
         # Sample a batch from the replay buffer
-        batch = self.replay_buffer.sample(self.batch_size)
-        batch_obs, batch_actions, batch_rewards, batch_next_obs, batch_dones = batch
+        batch_obs, batch_actions, batch_rewards, batch_next_obs, batch_dones = self.replay_buffer.sample(self.batch_size)
 
         feed_dict = {
             self.observations_ph: batch_obs,
@@ -298,200 +275,98 @@ class SAC(ABC):
         }
 
         # Do one gradient step
-        if writer is not None:
-            out = self.sess.run([self.summary] + self.step_ops, feed_dict)
-            summary = out.pop(0)
-            writer.add_summary(summary, step)
-        else:
-            out = self.sess.run(self.step_ops, feed_dict)
+        self.sess.run(self.step_ops, feed_dict)
+        return
 
-        # Unpack to monitor losses and entropy
-        policy_loss, qf1_loss, qf2_loss, value_loss, *values = out
-        entropy = values[4]
-
-        ent_coef_loss, ent_coef = values[-2:]
-        return policy_loss, qf1_loss, qf2_loss, value_loss, entropy, ent_coef_loss, ent_coef
-
-    def learn(self, total_timesteps, callback=None):
+    def learn(self, total_timesteps, callback=None, online=False, initial_state=None):
 
         callback.init_callback(self)
 
-        with SetVerbosity(self.verbose) as writer:
+        self._setup_learn()
 
-            self._setup_learn()
+        episode_rewards = [0.0]
+        episode_successes = []
+        if self.action_noise is not None:
+            self.action_noise.reset()
 
-            episode_rewards = [0.0]
-            episode_successes = []
-            if self.action_noise is not None:
-                self.action_noise.reset()
-            obs = self.env.reset()
-            n_updates = 0
-
-            for step in range(total_timesteps):
-                # Before training starts, randomly sample actions
-                # from a uniform distribution for better exploration.
-                # Afterwards, use the learned policy
-                # if random_exploration is set to 0 (normal setting)
-                if self.num_timesteps < self.learning_starts or np.random.rand() < self.random_exploration or\
-                        (len(episode_successes) > 1 and not bool(episode_successes[-1])):
-                    # actions sampled from action space are from range specific to the environment
-                    # but algorithm operates on tanh-squashed actions therefore simple scaling is used
-                    unscaled_action = self.env.action_space.sample()
-                    action = scale_action(self.action_space, unscaled_action)
-
-                else:
-                    action = self.policy_tf.step(obs[None], deterministic=False).flatten()
-                    # Add noise to the action (improve exploration,
-                    # not needed in general)
-                    if self.action_noise is not None:
-                        action = np.clip(action + self.action_noise(), -1, 1)
-                    # inferred actions need to be transformed to environment action_space before stepping
-                    unscaled_action = unscale_action(self.action_space, action)
-
-                assert action.shape == self.env.action_space.shape
-
-                new_obs, reward, done, info = self.env.step(unscaled_action)
-
-                self.num_timesteps += 1
-
-                # Only stop training if return value is False
-                if callback.on_step() is False:
-                    break
-
-                # Avoid changing the original ones
-                obs_, new_obs_, reward_ = obs, new_obs, reward
-
-                # Store transition in the replay buffer.
-                self.replay_buffer_add(obs_, action, reward_, new_obs_, done, info)
-                obs = new_obs
-                # Save the unnormalized observation
-
-                if self.num_timesteps % self.train_freq == 0:
-
-                    mb_infos_vals = []
-                    # Update policy, critics and target networks
-                    for grad_step in range(self.gradient_steps):
-                        # Break if the warmup phase is not over
-                        # or if there are not enough samples in the replay buffer
-                        if not self.replay_buffer.can_sample(self.batch_size) \
-                                or self.num_timesteps < self.learning_starts:
-                            break
-
-                        n_updates += 1
-                        # Compute current learning_rate
-                        frac = 1.0 - step / total_timesteps
-                        current_lr = self.learning_rate(frac)
-                        # Update policy and critics (q functions)
-                        mb_infos_vals.append(self._train_step(step, writer, current_lr))
-                        # Update target network
-                        if (step + grad_step) % self.target_update_interval == 0:
-                            # Update target network
-                            self.sess.run(self.target_update_op)
-
-                    # Log losses and entropy, useful for monitor training
-
-                episode_rewards[-1] += reward_
-                if done:
-                    if self.action_noise is not None:
-                        self.action_noise.reset()
-
-                    obs = self.env.reset()
-                    episode_rewards.append(0.0)
-
-                    maybe_is_success = info.get('is_success')
-                    if maybe_is_success is not None:
-                        episode_successes.append(float(maybe_is_success))
-
-            return self
-
-    def learn_online(self, total_timesteps, initial_state, callback=None):
-
-        callback.init_callback(self)
-
-        with SetVerbosity(self.verbose) as writer:
-
-            self._setup_learn()
-
-            # Transform to callable if needed
-            self.learning_rate = self.learning_rate
-            # Initial learning rate
-            current_lr = self.learning_rate(1)
-
-            start_time = time.time()
-            episode_rewards = [0.0]
-            episode_successes = []
-            if self.action_noise is not None:
-                self.action_noise.reset()
+        if online:
             obs = initial_state
+        else:
+            obs = self.env.reset()
+        n_updates = 0
 
-            n_updates = 0
+        for step in range(total_timesteps):
+            # Before training starts, randomly sample actions
+            # from a uniform distribution for better exploration.
+            # Afterwards, use the learned policy
+            # if random_exploration is set to 0 (normal setting)
+            if (self.num_timesteps < self.learning_starts or np.random.rand() < self.random_exploration or \
+                    (len(episode_successes) > 1 and not bool(episode_successes[-1]))) and not online:
+                # actions sampled from action space are from range specific to the environment
+                # but algorithm operates on tanh-squashed actions therefore simple scaling is used
+                unscaled_action = self.env.action_space.sample()
+                action = scale_action(self.action_space, unscaled_action)
 
-            for step in range(total_timesteps):
-
-                action = self.policy_tf.step(obs[None], deterministic=True).flatten()
+            else:
+                action = self.policy_tf.step(obs[None], deterministic=False).flatten()
                 # Add noise to the action (improve exploration,
                 # not needed in general)
                 if self.action_noise is not None:
                     action = np.clip(action + self.action_noise(), -1, 1)
-
                 # inferred actions need to be transformed to environment action_space before stepping
                 unscaled_action = unscale_action(self.action_space, action)
 
-                assert action.shape == self.env.action_space.shape
+            assert action.shape == self.env.action_space.shape
 
-                new_obs, reward, done, info = self.env.step(unscaled_action)
+            new_obs, reward, done, info = self.env.step(unscaled_action)
 
-                self.num_timesteps += 1
+            self.num_timesteps += 1
 
-                # Only stop training if return value is False, not when it is None. This is for backwards
-                # compatibility with callbacks that have no return statement.
-                if callback.on_step() is False:
-                    break
+            # Only stop training if return value is False
+            if callback.on_step() is False:
+                break
 
-                # Avoid changing the original ones
-                obs_, new_obs_, reward_ = obs, new_obs, reward
+            # Avoid changing the original ones
+            obs_, new_obs_, reward_ = obs, new_obs, reward
 
-                # Store transition in the replay buffer.
-                self.replay_buffer_add(obs_, action, reward_, new_obs_, done, info)
-                obs = new_obs
+            # Store transition in the replay buffer.
+            self.replay_buffer_add(obs_, action, reward_, new_obs_, done, info)
+            obs = new_obs
 
-                if self.num_timesteps % self.train_freq == 0:
+            if self.num_timesteps % self.train_freq == 0:
 
-                    mb_infos_vals = []
-                    # Update policy, critics and target networks
-                    for grad_step in range(self.gradient_steps):
-                        # Break if the warmup phase is not over
-                        # or if there are not enough samples in the replay buffer
-                        if not self.replay_buffer.can_sample(self.batch_size) \
-                                or self.num_timesteps < self.learning_starts:
-                            break
-                        n_updates += 1
-                        # Compute current learning_rate
-                        frac = 1.0 - step / total_timesteps
-                        current_lr = self.learning_rate(frac)
-                        # Update policy and critics (q functions)
-                        mb_infos_vals.append(self._train_step(step, writer, current_lr))
+                # Update policy, critics and target networks
+                for grad_step in range(self.gradient_steps):
+                    # Break if the warmup phase is not over
+                    # or if there are not enough samples in the replay buffer
+                    if not self.replay_buffer.can_sample(self.batch_size) \
+                            or self.num_timesteps < self.learning_starts:
+                        break
+
+                    n_updates += 1
+                    # Compute current learning_rate
+                    frac = 1.0 - step / total_timesteps
+                    current_lr = self.learning_rate(frac)
+                    # Update policy and critics (q functions)
+                    self._train_step(current_lr)
+                    # Update target network
+                    if (step + grad_step) % self.target_update_interval == 0:
                         # Update target network
-                        if (step + grad_step) % self.target_update_interval == 0:
-                            # Update target network
-                            self.sess.run(self.target_update_op)
-                    # Log losses and entropy, useful for monitor training
-                    if len(mb_infos_vals) > 0:
-                        infos_values = np.mean(mb_infos_vals, axis=0)
+                        self.sess.run(self.target_update_op)
 
-                episode_rewards[-1] += reward_
-                if done:
-                    if self.action_noise is not None:
-                        self.action_noise.reset()
+            episode_rewards[-1] += reward_
+            if done:
+                if self.action_noise is not None:
+                    self.action_noise.reset()
 
-                    obs = self.env.reset()
-                    episode_rewards.append(0.0)
+                obs = self.env.reset()
+                episode_rewards.append(0.0)
 
-                    maybe_is_success = info.get('is_success')
-                    if maybe_is_success is not None:
-                        episode_successes.append(float(maybe_is_success))
+                maybe_is_success = info.get('is_success')
+                if maybe_is_success is not None:
+                    episode_successes.append(float(maybe_is_success))
 
-            return self
+        return self
 
     def predict(self, observation, deterministic=True):
         observation = np.array(observation)
@@ -683,11 +558,10 @@ class SAC(ABC):
             "train_freq": self.train_freq,
             "batch_size": self.batch_size,
             "tau": self.tau,
-            "ent_coef": self.ent_coef if isinstance(self.ent_coef, float) else 'auto',
+            "ent_coef": 'auto',
             "target_entropy": self.target_entropy,
             # "replay_buffer": self.replay_buffer
             "gamma": self.gamma,
-            "verbose": self.verbose,
             "observation_space": self.observation_space,
             "action_space": self.action_space,
             "policy": self.policy,
@@ -698,17 +572,6 @@ class SAC(ABC):
         }
 
         params = self.get_parameters()
-
-        if data is not None:
-            serialized_data = data_to_json(data)
-        if params is not None:
-            serialized_params = params_to_bytes(params)
-            # We also have to store list of the parameters
-            # to store the ordering for OrderedDict.
-            serialized_param_list = json.dumps(
-                list(params.keys()),
-                indent=4
-            )
 
         # Check postfix if save_path is a string
         if isinstance(save_path, str):
@@ -722,8 +585,16 @@ class SAC(ABC):
         with zipfile.ZipFile(save_path, "w") as file_:
             # Do not try to save "None" elements
             if data is not None:
+                serialized_data = data_to_json(data)
                 file_.writestr("data", serialized_data)
             if params is not None:
+                serialized_params = params_to_bytes(params)
+                # We also have to store list of the parameters
+                # to store the ordering for OrderedDict.
+                serialized_param_list = json.dumps(
+                    list(params.keys()),
+                    indent=4
+                )
                 file_.writestr("parameters", serialized_params)
                 file_.writestr("parameter_list", serialized_param_list)
 
@@ -776,30 +647,3 @@ class SAC(ABC):
                           DeprecationWarning)
 
         return data, params
-
-
-class SetVerbosity:
-    def __init__(self, verbose=0):
-        """
-        define a region of code for certain level of verbosity
-
-        :param verbose: (int) the verbosity level: 0 none, 1 training information, 2 tensorflow debug
-        """
-        self.verbose = verbose
-
-    def __enter__(self):
-        self.tf_level = os.environ.get('TF_CPP_MIN_LOG_LEVEL', '0')
-        self.gym_level = gym.logger.MIN_LEVEL
-
-        if self.verbose <= 1:
-            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-        if self.verbose <= 0:
-            gym.logger.set_level(gym.logger.DISABLED)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.verbose <= 1:
-            os.environ['TF_CPP_MIN_LOG_LEVEL'] = self.tf_level
-
-        if self.verbose <= 0:
-            gym.logger.set_level(self.gym_level)

@@ -9,30 +9,6 @@ LOG_STD_MAX = 2
 LOG_STD_MIN = -20
 
 
-def gaussian_likelihood(input_, mu_, log_std):
-    """
-    Helper to computer log likelihood of a gaussian.
-    Here we assume this is a Diagonal Gaussian.
-
-    :param input_: (tf.Tensor)
-    :param mu_: (tf.Tensor)
-    :param log_std: (tf.Tensor)
-    :return: (tf.Tensor)
-    """
-    pre_sum = -0.5 * (((input_ - mu_) / (tf.exp(log_std) + EPS)) ** 2 + 2 * log_std + np.log(2 * np.pi))
-    return tf.reduce_sum(pre_sum, axis=1)
-
-
-def gaussian_entropy(log_std):
-    """
-    Compute the entropy for a diagonal Gaussian distribution.
-
-    :param log_std: (tf.Tensor) Log of the standard deviation
-    :return: (tf.Tensor)
-    """
-    return tf.reduce_sum(log_std + 0.5 * np.log(2.0 * np.pi * np.e), axis=-1)
-
-
 def apply_squashing_func(mu_, pi_, logp_pi):
     """
     Squash the output of the Gaussian distribution
@@ -113,7 +89,6 @@ class LnMlpPolicy(ABC):
         self.act_mu = None
         self.std = None
         self.layer_norm = True
-        self.feature_extraction = "mlp"
         if layers is None:
             layers = [64, 64]
         self.layers = layers
@@ -135,8 +110,11 @@ class LnMlpPolicy(ABC):
         self.std = std = tf.exp(log_std)
         # Reparameterization trick
         pi_ = mu_ + tf.random_normal(tf.shape(mu_)) * std
-        logp_pi = gaussian_likelihood(pi_, mu_, log_std)
-        self.entropy = gaussian_entropy(log_std)
+        # Gaussian likelihood
+        logp_pi = tf.reduce_sum(-0.5 * (((pi_ - mu_) / (tf.exp(log_std) + EPS)) ** 2 +
+                                         2 * log_std + np.log(2 * np.pi)),axis=1)
+        # Gaussian entropy
+        self.entropy = tf.reduce_sum(log_std + 0.5 * np.log(2.0 * np.pi * np.e), axis=-1)
         # Apply squashing and account for it in the probability
         deterministic_policy, policy, logp_pi = apply_squashing_func(mu_, pi_, logp_pi)
         self.policy = policy
@@ -148,18 +126,19 @@ class LnMlpPolicy(ABC):
                      create_vf=True, create_qf=True):
 
         with tf.variable_scope(scope, reuse=reuse):
-            critics_h = tf.layers.flatten(obs)
+            critics_input = tf.layers.flatten(obs)
 
             if create_vf:
                 # Value function
                 with tf.variable_scope('vf', reuse=reuse):
-                    vf_h = mlp(critics_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
+                    vf_h = mlp(critics_input, self.layers, self.activ_fn, layer_norm=self.layer_norm)
                     value_fn = tf.layers.dense(vf_h, 1, name="vf")
+                    # outputs one value for a given observation
                 self.value_fn = value_fn
 
             if create_qf:
                 # Concatenate preprocessed state and action
-                qf_h = tf.concat([critics_h, action], axis=-1)
+                qf_h = tf.concat([critics_input, action], axis=-1) # maps the state + action spaces to a value
 
                 # Double Q values to reduce overestimation
                 with tf.variable_scope('qf1', reuse=reuse):

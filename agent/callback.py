@@ -28,7 +28,6 @@ class SaveOnBestReturn(ABC):
                  eval_freq: int = 10000,
                  best_model_save_path: str = None,
                  deterministic: bool = True,
-                 render: bool = False,
                  verbose: int = 1):
         super(SaveOnBestReturn, self).__init__()
 
