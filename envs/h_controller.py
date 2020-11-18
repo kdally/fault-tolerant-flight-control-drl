@@ -33,7 +33,7 @@ class AltController(gym.Env, ABC):
         self.current_pitch_ref = None
         self.obs_inner_controller = None
         self.state = None
-        self.action_history = None
+        # self.action_history_filtered = None
         self.error = None
         self.step_count = None
 
@@ -41,7 +41,15 @@ class AltController(gym.Env, ABC):
 
         self.step_count = self.InnerController.step_count
         self.current_pitch_ref = self.bound_a(self.current_pitch_ref + self.scale_a(pitch_ref) * self.dt)
+
+        # self.w_0 = 0.08*2*np.pi  # rad/s
+        # filtered_pitch_ref = self.current_pitch_ref.copy()
+        # if self.step_count > 1:
+        #     filtered_pitch_ref = self.action_history_filtered[:, self.step_count-1]/(1+self.w_0*self.dt) + \
+        #                           self.current_pitch_ref * (self.w_0*self.dt)/(1+self.w_0*self.dt)
+
         self.InnerController.ref_signal[0, self.step_count] = self.current_pitch_ref[0]
+        # self.action_history_filtered[:, self.step_count] = filtered_pitch_ref
 
         if self.time[self.step_count] < self.InnerController.FDD_switch_time or not self.InnerController.FDD:
             action, _ = self.InnerController.agents[0].predict(self.obs_inner_controller, deterministic=True)
@@ -56,7 +64,7 @@ class AltController(gym.Env, ABC):
 
     def reset(self):
 
-        self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
+        # self.action_history_filtered = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         self.error = np.zeros(1)
         self.current_pitch_ref = np.zeros(1)
         self.obs_inner_controller = self.InnerController.reset()
@@ -69,7 +77,6 @@ class AltController(gym.Env, ABC):
         return reward
 
     def get_obs(self):
-        # return np.hstack([self.error, r2d(self.current_pitch_ref)])
         return np.hstack([self.error, self.current_pitch_ref])
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:

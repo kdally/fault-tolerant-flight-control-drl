@@ -34,13 +34,15 @@ def learn(task: Task, env_type=CitationNormal):
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
     agent = SAC(LnMlpPolicy, env_train,
-                ent_coef='auto', #batch_size=512,
-                learning_rate=schedule_kink(0.0005, 0.0004),
-                train_freq=100,
-                # learning_rate=constant(0.0003),
-                policy_kwargs=dict(layers=[32, 32]),
+                # ent_coef='auto', #batch_size=512,
+                # learning_rate=schedule_kink(0.0005, 0.0004),
+                # train_freq=100,
+                # # learning_rate=constant(0.0003),
+                # policy_kwargs=dict(layers=[32, 32]),
+                ent_coef='auto', batch_size=256,
+                learning_rate=schedule_kink(0.0004, 0.0002)
                 )
-    agent.learn(total_timesteps=int(2.5e6), callback=callback)
+    agent.learn(total_timesteps=int(1e6), callback=callback)
     ID = get_ID(6)
     if env_eval.failure_input[0] != 'normal':
         ID += f'_{env_eval.failure_input[0]}'
@@ -90,7 +92,7 @@ env = CitationNormal
 # env = CitationIcing
 # env = CitationCgShift
 
-# learn(current_task, env)
-run_preexisting(current_task, env)
+learn(current_task, env)
+# run_preexisting(current_task, env)
 
 # os.system('say "your program has finished"')

@@ -47,13 +47,7 @@ class Citation(gym.Env):
 
     def step(self, action_rates: np.ndarray):
 
-        self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt)
-
-        # self.w_0 = 0.1*2*np.pi  # rad/s
-        # filtered_deflection = self.current_deflection.copy()
-        # if self.step_count > 1:
-        #     filtered_deflection = self.action_history_filtered[:, self.step_count-1]/(1+self.w_0*self.dt) + \
-        #                           self.current_deflection * (self.w_0*self.dt)/(1+self.w_0*self.dt)
+        self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt) #diff: bound_a
 
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
@@ -66,6 +60,7 @@ class Citation(gym.Env):
         self.state_deg = self.state * self.scale_s
 
         self.error = d2r(self.ref_signal[:, self.step_count] - self.state_deg[self.track_indices])
+
         self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
         self.error[self.track_indices.index(6)] *= self.roll_factor[self.step_count]
         if 7 in self.track_indices:
