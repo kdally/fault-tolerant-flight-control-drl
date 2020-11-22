@@ -34,10 +34,10 @@ def learn(task: Task, env_type=CitationNormal):
     callback = SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="agent/trained/tmp/",
                                 best_model_save_path="agent/trained/tmp/")
     agent = SAC(LnMlpPolicy, env_train,
-                # ent_coef='auto', #batch_size=512,
-                # learning_rate=schedule_kink(0.0005, 0.0004),
+                # ent_coef='auto', batch_size=512,
+                # learning_rate=schedule_kink(0.0004, 0.0002),
                 # train_freq=100,
-                # # learning_rate=constant(0.0003),
+                # learning_rate=constant(0.0003),
                 # policy_kwargs=dict(layers=[32, 32]),
                 ent_coef='auto', batch_size=256,
                 learning_rate=schedule_kink(0.0004, 0.0002)

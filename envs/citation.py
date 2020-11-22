@@ -14,7 +14,7 @@ class Citation(gym.Env):
     def __init__(self, evaluation=False, FDD=False, task=AttitudeTask):
         super(Citation, self).__init__()
 
-        self.rate_limits = self.ActionLimits(np.array([[-15, -40, -20], [15, 40, 20]]))
+        self.rate_limits = self.ActionLimits(np.array([[-20, -40, -20], [20, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
         self.FDD_switch_time = 60
@@ -47,7 +47,8 @@ class Citation(gym.Env):
 
     def step(self, action_rates: np.ndarray):
 
-        self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt) #diff: bound_a
+        # self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt) #diff: bound_a
+        self.current_deflection = self.current_deflection + self.scale_a(action_rates) * self.dt  # diff: bound_a
 
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
@@ -79,9 +80,9 @@ class Citation(gym.Env):
             plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
                           failure=self.failure_input[0], FDD=self.FDD, broken=True)
             exit()
-        if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any() \
-                or np.greater(np.abs(r2d(self.state[6:9])), 1e3).any():
-            return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
+        # if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any() \
+        #         or np.greater(np.abs(r2d(self.state[6:9])), 1e3).any():
+        #     return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
 
