@@ -112,7 +112,7 @@ class LnMlpPolicy(ABC):
         pi_ = mu_ + tf.random_normal(tf.shape(mu_)) * std
         # Gaussian likelihood
         logp_pi = tf.reduce_sum(-0.5 * (((pi_ - mu_) / (tf.exp(log_std) + EPS)) ** 2 +
-                                         2 * log_std + np.log(2 * np.pi)),axis=1)
+                                         2 * log_std + np.log(2 * np.pi)), axis=1)
         # Gaussian entropy
         self.entropy = tf.reduce_sum(log_std + 0.5 * np.log(2.0 * np.pi * np.e), axis=-1)
         # Apply squashing and account for it in the probability
