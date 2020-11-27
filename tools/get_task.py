@@ -155,7 +155,7 @@ class AttitudeTask(Task):
     def get_agent_catalog(self):
 
         catalog = super(AttitudeTask, self).get_agent_catalog()
-        catalog['normal'] = '3attitude_step_9VZ5VE'
+        catalog['normal'] = '3attitude_step_' + 'BQS2K2'
         catalog['elev_range'] = '3attitude_step_Q4N8GV_de'
         catalog['aileron_eff'] = '3attitude_step_E919SW_da'
         catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
