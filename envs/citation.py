@@ -35,6 +35,7 @@ class Citation(gym.Env):
         self.current_deflection = np.zeros(3)
 
         self.agents, self.agentID = self.load_agent(FDD)
+        # self.agents, self.agentID = None, None
 
         self.state = None
         self.state_deg = None
@@ -43,7 +44,7 @@ class Citation(gym.Env):
         self.action_history = None
         # self.action_history_filtered = None
         self.error = None
-        self.avg_rmse = None
+        self.RMSE = None
         self.step_count = None
         self.external_ref_signal = None
 
@@ -84,8 +85,8 @@ class Citation(gym.Env):
                 agent.ID = ID
                 agent.save(f'agent/trained/{self.task_fun()[4]}_{agent.ID}.zip')
             # print(self.state_history[:, self.step_count - 2], self.time[self.step_count - 1])
-            # plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
-            #               failure=self.failure_input[0], FDD=self.FDD, broken=True)
+            plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
+                          failure=self.failure_input[0], FDD=self.FDD, broken=True)
             exit()
         # if self.state[9] <= 20.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any() \
         #         or np.greater(np.abs(r2d(self.state[6:9])), 1e3).any():
@@ -114,7 +115,7 @@ class Citation(gym.Env):
         self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         # self.action_history_filtered = self.action_history.copy()
         self.error = np.zeros(len(self.track_indices))
-        self.avg_rmse = self.error.copy()
+        self.RMSE = self.error.copy()
         self.step_count = 0
         self.current_deflection = np.zeros(3)
         return np.zeros(self.observation_space.shape)
@@ -124,8 +125,11 @@ class Citation(gym.Env):
         max_bound = np.ones(self.error.shape)
         # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
         reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        # reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
+        # reward_vec = -1 / (np.abs(self.error) * 10 + 1)
         # reward_vec = np.abs(r2d(self.error / 30))
         # reward_vec = r2d(self.error) ** 2
+
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
 
@@ -198,13 +202,13 @@ class Citation(gym.Env):
             obs, reward, done, info = self.step(action)
             return_a += reward
 
-        self.avg_rmse = np.sqrt(np.mean((self.state_history[self.track_indices, :]-self.ref_signal)**2, axis=1))
+        self.RMSE = np.sqrt(np.mean((self.state_history[self.track_indices, :] - self.ref_signal) ** 2, axis=1))
         plot_response(self.agentID, self, self.task_fun(), return_a, during_training,
                       self.failure_input[0], FDD=self.FDD)
         if verbose > 0:
             print(f'Goal reached! Return = {return_a:.2f}')
-            print('RMSE', self.avg_rmse)
-
+            np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
+            print(f'RMSE and score', self.RMSE, f'{(self.RMSE * np.array([1, 1, 4])).sum():.2f}')
             print('')
 
     def close(self):

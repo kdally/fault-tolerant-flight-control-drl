@@ -37,7 +37,7 @@ def learn():
                 learning_rate=constant(0.0003),
                 policy_kwargs=dict(layers=[32, 32]),
                 )
-    agent.learn(total_timesteps=int(2e6), callback=callback)
+    agent.learn(total_timesteps=int(1e6), callback=callback)
     ID = get_ID(6)
     if env_eval.InnerController.failure_input[0] != 'normal':
         ID += f'_{env_eval.InnerController.failure_input[0]}'
@@ -49,7 +49,7 @@ def learn():
     agent.ID = ID
     agent.save(f'agent/trained/{env_eval.task_fun()[4]}_{agent.ID}.zip')
     env_eval = AltController(evaluation=True, inner_controller=Citation)
-    env_eval.render(agent=agent)
+    env_eval.render(ext_agent=agent)
 
     return
 

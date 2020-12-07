@@ -14,7 +14,7 @@ def r2d(num):
 
 def scale_action(action_space, action):
     """
-    Rescale the action from [low, high] to [-1, 1]
+    Rescale the action from [action_space.low, action_space.high] to [-1, 1]
     (no need for symmetric action space)
 
     :param action_space: (gym.spaces.box.Box)
@@ -27,7 +27,7 @@ def scale_action(action_space, action):
 
 def unscale_action(action_space, scaled_action):
     """
-    Rescale the action from [-1, 1] to [low, high]
+    Rescale the action from [-1, 1] to [action_space.low, action_space.high]
     (no need for symmetric action space)
 
     :param action_space: (gym.spaces.box.Box)

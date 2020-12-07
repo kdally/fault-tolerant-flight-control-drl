@@ -25,6 +25,7 @@ from envs.citation import CitationNormal
 
 
 # todo: different flight conditions
+# todo: different reference signal shapes
 
 
 def learn(task: Task, env_type=CitationNormal):
@@ -92,7 +93,7 @@ env = CitationNormal
 # env = CitationIcing
 # env = CitationCgShift
 
-learn(current_task, env)
-# run_preexisting(current_task, env)
+# learn(current_task, env)
+run_preexisting(current_task, env)
 
 # os.system('say "your program has finished"')

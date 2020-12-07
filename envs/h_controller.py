@@ -35,6 +35,7 @@ class AltController(gym.Env, ABC):
         self.state = None
         # self.action_history_filtered = None
         self.error = None
+        self.RMSE = None
         self.step_count = None
 
     def step(self, pitch_ref: np.ndarray):
@@ -66,6 +67,7 @@ class AltController(gym.Env, ABC):
 
         # self.action_history_filtered = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         self.error = np.zeros(1)
+        self.RMSE = self.error.copy()
         self.current_pitch_ref = np.zeros(1)
         self.obs_inner_controller = self.InnerController.reset()
         self.step_count = self.InnerController.step_count
@@ -74,6 +76,14 @@ class AltController(gym.Env, ABC):
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
         reward = -np.abs(np.maximum(np.minimum(self.error / 60, max_bound), -max_bound))
+
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        # reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
+        # reward_vec = -1 / (np.abs(self.error) * 10 + 1)
+        # reward_vec = np.abs(r2d(self.error / 30))
+        # reward_vec = r2d(self.error) ** 2
+
         return reward
 
     def get_obs(self):
@@ -106,11 +116,14 @@ class AltController(gym.Env, ABC):
             obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
             episode_reward += reward_outer_loop
 
+        self.RMSE = np.sqrt(np.mean((self.InnerController.state_history[self.track_index, :]
+                                     - self.ref_signal) ** 2))
         plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
                       self.task_fun(), episode_reward, during_training,
                       self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
         if verbose > 0:
             print(f"Goal reached! Return = {episode_reward:.2f}")
+            print(f'RMSE {self.RMSE:.2f}')
             print('')
 
     def close(self):

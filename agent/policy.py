@@ -1,7 +1,8 @@
-import tensorflow as tf
-import numpy as np
-from gym.spaces import Box
 from abc import ABC
+
+import numpy as np
+import tensorflow as tf
+from gym.spaces import Box
 
 EPS = 1e-6  # Avoid NaN (prevents division by zero or log of zero)
 # CAP the standard deviation of the actor
@@ -29,7 +30,7 @@ def apply_squashing_func(mu_, pi_, logp_pi):
     return deterministic_policy, policy, logp_pi
 
 
-def mlp(input_tensor, layers, activ_fn=tf.nn.relu, layer_norm=False):
+def mlp(input_tensor, layers, activ_fn=tf.nn.relu, layer_norm=True):
     """
     Create a multi-layer fully connected neural network.
 
@@ -71,7 +72,6 @@ class LnMlpPolicy(ABC):
         self.n_steps = n_steps
         self.n_batch = n_batch
         with tf.variable_scope("input", reuse=False):
-
             self.obs_ph = tf.placeholder(shape=(n_batch,) + ob_space.shape, dtype=ob_space.dtype, name='Ob')
             self.processed_obs = tf.cast(self.obs_ph, tf.float32)
             self.action_ph = None
@@ -112,7 +112,7 @@ class LnMlpPolicy(ABC):
         pi_ = mu_ + tf.random_normal(tf.shape(mu_)) * std
         # Gaussian likelihood
         logp_pi = tf.reduce_sum(-0.5 * (((pi_ - mu_) / (tf.exp(log_std) + EPS)) ** 2 +
-                                         2 * log_std + np.log(2 * np.pi)), axis=1)
+                                        2 * log_std + np.log(2 * np.pi)), axis=1)
         # Gaussian entropy
         self.entropy = tf.reduce_sum(log_std + 0.5 * np.log(2.0 * np.pi * np.e), axis=-1)
         # Apply squashing and account for it in the probability
@@ -138,16 +138,16 @@ class LnMlpPolicy(ABC):
 
             if create_qf:
                 # Concatenate preprocessed state and action
-                qf_h = tf.concat([critics_input, action], axis=-1) # maps the state + action spaces to a value
+                qf_h = tf.concat([critics_input, action], axis=-1)  # maps the state + action spaces to a value
 
                 # Double Q values to reduce overestimation
                 with tf.variable_scope('qf1', reuse=reuse):
                     qf1_h = mlp(qf_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
-                    qf1 = tf.layers.dense(qf1_h, 1, name="qf1")
+                    qf1 = tf.layers.dense(qf1_h, 1, name="qf1")  # no activation
 
                 with tf.variable_scope('qf2', reuse=reuse):
                     qf2_h = mlp(qf_h, self.layers, self.activ_fn, layer_norm=self.layer_norm)
-                    qf2 = tf.layers.dense(qf2_h, 1, name="qf2")
+                    qf2 = tf.layers.dense(qf2_h, 1, name="qf2")  # no activation
 
                 self.qf1 = qf1
                 self.qf2 = qf2

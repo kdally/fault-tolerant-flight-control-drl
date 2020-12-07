@@ -155,7 +155,8 @@ class AttitudeTask(Task):
     def get_agent_catalog(self):
 
         catalog = super(AttitudeTask, self).get_agent_catalog()
-        catalog['normal'] = '3attitude_step_' + 'BQS2K2'
+        catalog['normal'] = '3attitude_step_9VZ5VE'
+        # catalog['normal'] = '3attitude_step_' + '83F7VE'
         catalog['elev_range'] = '3attitude_step_Q4N8GV_de'
         catalog['aileron_eff'] = '3attitude_step_E919SW_da'
         catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
@@ -589,7 +590,7 @@ class CascadedAltTask(AltitudeTask):
 
     def get_agent_catalog(self):
         catalog = AttitudeTask().get_agent_catalog()
-        catalog['normal_outer_loop'] = 'altitude_2pitch_XQ2G4Q'
+        catalog['normal_outer_loop'] = 'altitude_2pitch_7QD79R'
 
         return catalog
 

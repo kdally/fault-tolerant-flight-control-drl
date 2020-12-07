@@ -97,6 +97,7 @@ class SaveOnBestReturn(ABC):
             if self.verbose > 0:
                 print(f"Eval num_timesteps={self.num_timesteps}, "
                       f"current return={episode_reward:.2f}, best return={self.best_reward:.2f}")
+                # print('Entropy : ', self.model.ent_coef.eval(session=self.model.sess))
 
         return True
 
