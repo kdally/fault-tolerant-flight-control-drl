@@ -100,7 +100,7 @@ def plot_trainings(IDs: list, task_type: str, window: int = 20):
             tickmode='array',
             tickvals=-np.log10(-return_ticks),
             ticktext=return_ticks,
-            range=[-np.log10(2000), -np.log10(200)],
+                range=[-np.log10(2000), -np.log10(200)],
             # range=[-500, 0],
             tickfont=dict(size=18)
         ),
@@ -168,7 +168,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
     df2['r_up_smooth'] = -np.log10(-df2['r_up_smooth'])
     df2['r_down_smooth'] = -np.log10(-df2['r_down_smooth'])
 
-    return_ticks = np.array([-2000, -1000, -500, -250, -125, -60, -30, -15])
+    return_ticks = np.array([-2000, -1000, -500, -200, -100, -50, -30, -15])
     fig = go.Figure()
 
     fig.add_trace(go.Scatter(
@@ -201,34 +201,45 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
         line=dict(color='#E45756'),  name='Altitude Controller'
     ))
 
+    fig.layout.font.family = 'Arial'
+
     fig.update_layout(
-        font=dict(size=17),
+        font=dict(size=19),
         yaxis=dict(
             tickmode='array',
             tickvals=-np.log10(-return_ticks),
             ticktext=return_ticks,
-            range=[-np.log10(2000), -np.log10(200)],
+            range=[-np.log10(2000), -np.log10(50)],
             # range=[-500, 0],
-            tickfont=dict(size=18)
+            tickfont=dict(size=17),
+            title_font_family='Balto',
         ),
         xaxis=dict(
-            tickfont=dict(size=18),
+            tickfont=dict(size=17),
             tickvals=np.linspace(0, 1e6, 6),
-            ticktext=['0', '0.2M', '0.4M', '0.6M', '0.8M', '1M'],
+            ticktext=['0', '0.2', '0.4', '0.6', '0.8', '1'],
             range=[0, 1e6],
+            title_font_family='Balto',
         ),
         xaxis_title='Training steps', yaxis_title='Return',
         template="plotly", height=400,
-        margin=dict(l=50, r=5, b=50, t=10)
+        margin=dict(l=10, r=40, b=10, t=5),
+        legend=dict(
+            font=dict(family='Balto',size=20),
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01,
+            bgcolor='rgba(230,236,245,1)',
+        )
     )
 
-    fig.update_layout(legend=dict(
-        yanchor="top",
-        y=0.99,
-        xanchor="left",
-        x=0.01,
-        bgcolor='rgba(0,0,0,0)',
-    ))
+    fig.add_annotation(text="10<sup>6</sup>",
+                       xref="paper", yref="paper",
+                       x=1.065, y=-0.13, showarrow=False)
+
+    fig.update_xaxes(title_font_family="Balto")
+    fig.update_yaxes(title_font_family="Balto")
 
     fig.update_traces(mode='lines')
     fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
@@ -240,4 +251,4 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
 # plot_training('P7V00G','altitude_2attitude')
 # plot_trainings(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], '3attitude_step')
 # plot_trainings(['9VZ5VE', '7AK56O','GXA2KT'], '3attitude_step')
-# plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], ['XQ2G4Q', 'PZ5QGL'])
+plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], ['XQ2G4Q', 'DH0TLO','S7A1PX','H0IC1R','6UBL9Y'])

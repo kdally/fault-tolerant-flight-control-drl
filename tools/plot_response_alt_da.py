@@ -14,7 +14,7 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2, shared_xaxes=True,)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
 
     if broken:
         env.time = env.time[:env.step_count-2]
@@ -83,7 +83,7 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
                      tickmode='array',
                      tickvals=np.arange(-5, 10+5, 5),
                      # ticktext=['-5','0','5', '10'],
-                     range=[-5, 11],
+                     range=[-5, 10],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
                      )
@@ -166,10 +166,10 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         line=dict(color='#636EFA')), row=5, col=1)
     fig.update_yaxes(title_text=r'$h\:\: [\text{m}]$', row=5, col=1, title_standoff=5,
                      tickmode='array',
-                     tickvals=np.arange(2000, 2400 + 100, 100),
-                     ticktext=['2000', ' ', '2200 ', ' ', '2400'],
+                     tickvals=np.arange(2000, 2500 + 125, 125),
+                     ticktext=['2000', ' ', '2250 ', ' ', '2500'],
                      tickfont=dict(size=11),
-                     range=[1980, 2400],
+                     range=[1980, 2500],
                      titlefont=dict(size=13)
                      )
 
