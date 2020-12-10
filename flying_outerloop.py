@@ -73,8 +73,8 @@ def keyboardInterruptHandler(signal, frame):
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
-learn()
-# run_preexisting()
+# learn()
+run_preexisting()
 
 
 # os.system('say "your program has finished"')

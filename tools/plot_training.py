@@ -9,11 +9,10 @@ def plot_training(ID: str, task_type: str):
     df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
                      f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)
 
-    print(df['r'].max())
     df['r'] = -np.log10(-df['r'])
     # df['r_avg'] = -np.log10(-df['r_avg'])
     # df['r_avg'] = df['r'].ewm(alpha=0.1).mean()
-    df['r_avg'] = df['r'].rolling(50).mean()
+    df['r_avg'] = df['r'].rolling(50, min_periods=1).mean()
 
     return_ticks = np.array([-2000, -1000, -500, -250, -125, -60, -30, -15])
     fig = go.Figure()
@@ -100,7 +99,7 @@ def plot_trainings(IDs: list, task_type: str, window: int = 20):
             tickmode='array',
             tickvals=-np.log10(-return_ticks),
             ticktext=return_ticks,
-                range=[-np.log10(2000), -np.log10(200)],
+            range=[-np.log10(2000), -np.log10(200)],
             # range=[-500, 0],
             tickfont=dict(size=18)
         ),
@@ -198,7 +197,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
     fig.add_trace(go.Scatter(
         x=df2['l'], y=df2['r_avg_smooth'],
         showlegend=True,
-        line=dict(color='#E45756'),  name='Altitude Controller'
+        line=dict(color='#E45756'), name='Altitude Controller'
     ))
 
     fig.layout.font.family = 'Arial'
@@ -209,7 +208,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
             tickmode='array',
             tickvals=-np.log10(-return_ticks),
             ticktext=return_ticks,
-            range=[-np.log10(2000), -np.log10(50)],
+            range=[-np.log10(2000), -np.log10(70)],
             # range=[-500, 0],
             tickfont=dict(size=17),
             title_font_family='Balto',
@@ -221,11 +220,11 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
             range=[0, 1e6],
             title_font_family='Balto',
         ),
-        xaxis_title='Training steps', yaxis_title='Return',
+        xaxis_title='Training time steps', yaxis_title='Return',
         template="plotly", height=400,
         margin=dict(l=10, r=40, b=10, t=5),
         legend=dict(
-            font=dict(family='Balto',size=20),
+            font=dict(family='Balto', size=20),
             yanchor="top",
             y=0.99,
             xanchor="left",
@@ -246,9 +245,10 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
                     f"Thesis/DRL-cessna-citation-fc/figures/combined_training.pdf")
 
 
-# plot_training('XQ2G4Q', 'altitude_2pitch')
-# plot_training('R0EV0U_ht', '3attitude_step')
+# plot_training('PZ5QGW', 'altitude_2pitch')
+# plot_training('TBNJM4', 'altitude_2pitch')
 # plot_training('P7V00G','altitude_2attitude')
 # plot_trainings(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], '3attitude_step')
 # plot_trainings(['9VZ5VE', '7AK56O','GXA2KT'], '3attitude_step')
-plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], ['XQ2G4Q', 'DH0TLO','S7A1PX','H0IC1R','6UBL9Y'])
+# plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', 'GT0PLE', 'GXA2KT'],
+#                         ['XQ2G4Q', 'DH0TLO', 'AZ5QGW', 'H0IC1R', 'TBNJM4'])

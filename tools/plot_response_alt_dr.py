@@ -77,10 +77,10 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
     fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
-                     tickmode='array',
-                     tickvals=np.arange(-5, 5+2.5, 2.5),
-                     ticktext=['-5',' ', '0',' ', '5'],
-                     range=[-5, 6],
+                     # tickmode='array',
+                     # tickvals=np.arange(-5, 5+2.5, 2.5),
+                     # ticktext=['-5',' ', '0',' ', '5'],
+                     # range=[-5, 6],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
                      )
@@ -114,10 +114,10 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         x=env.time, y=env.state_history[4, :].T, name=r'$\alpha [^\circ]$',
         line=dict(color='#636EFA')), row=2, col=1)
     fig.update_yaxes(title_text=r'$\alpha\:\: [\text{deg}]$', row=2, col=1, title_standoff=18,
-                     tickmode='array',
-                     tickvals=np.arange(2, 6+1, 1),
-                     ticktext=['2', ' ','4', ' ', '6'],
-                     range=[1.5, 6],
+                     # tickmode='array',
+                     # tickvals=np.arange(2, 6+1, 1),
+                     # ticktext=['2', ' ','4', ' ', '6'],
+                     # range=[1.5, 6],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
                      )
@@ -126,10 +126,10 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         x=env.time, y=env.state_history[5, :].T, name=r'$\beta [^\circ]$',
         line=dict(color='#636EFA')), row=4, col=2)
     fig.update_yaxes(title_text=r'$\beta\:\: [\text{deg}]$', row=4, col=2, title_standoff=14,
-                     tickmode='array',
-                     tickvals=np.arange(-1, 1 + 0.5, 0.5),
-                     ticktext=['-1', ' ', '0', ' ', '1'],
-                     range=[-1, 1],
+                     # tickmode='array',
+                     # tickvals=np.arange(-1, 1 + 0.5, 0.5),
+                     # ticktext=['-1', ' ', '0', ' ', '1'],
+                     # range=[-1, 1],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
                      )
@@ -138,11 +138,11 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         x=env.time, y=env.state_history[6, :].T, name=r'$\phi [^\circ]$',
         line=dict(color='#636EFA')), row=3, col=2)
     fig.update_yaxes(title_text=r'$\phi\:\: [\text{deg}]$', row=3, col=2, title_standoff=6,
-                     tickmode='array',
-                     tickvals=np.arange(-40, 40 + 20, 20),
-                     ticktext=['-40', ' ', '0', ' ', '40'],
+                     # tickmode='array',
+                     # tickvals=np.arange(-40, 40 + 20, 20),
+                     # ticktext=['-40', ' ', '0', ' ', '40'],
                      tickfont=dict(size=11),
-                     range=[-41, 41],
+                     range=[-22, 40],
                      titlefont=dict(size=13)
                      )
 
@@ -150,9 +150,9 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         x=env.time, y=env.state_history[7, :].T, name=r'$\theta [^\circ]$',
         line=dict(color='#636EFA')), row=3, col=1)
     fig.update_yaxes(title_text=r'$\theta\:\: [\text{deg}]$', row=3, col=1,
-                     tickmode='array',
-                     tickvals=np.arange(0, 10 + 2.5, 2.5),
-                     ticktext=['0', ' ', '5 ', ' ', '10'],
+                     # tickmode='array',
+                     # tickvals=np.arange(0, 10 + 2.5, 2.5),
+                     # ticktext=['0', ' ', '5 ', ' ', '10'],
                      tickfont=dict(size=11),
                      # range=[-16, 20.5],
                      titlefont=dict(size=13)
@@ -163,10 +163,10 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         line=dict(color='#636EFA')), row=5, col=1)
     fig.update_yaxes(title_text=r'$h\:\: [\text{m}]$', row=5, col=1, title_standoff=5,
                      tickmode='array',
-                     tickvals=np.arange(2000, 2500 + 125, 125),
-                     ticktext=['2000', ' ', '2250 ', ' ', '2500'],
+                     tickvals=np.arange(2000, 2400 + 100, 100),
+                     ticktext=['2000', ' ', '2200 ', ' ', '2400'],
                      tickfont=dict(size=11),
-                     range=[1980, 2500],
+                     range=[1980, 2400],
                      titlefont=dict(size=13)
                      )
 
@@ -177,10 +177,10 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         name=r'$\delta_e [^\circ]$', line=dict(color='#00CC96')), row=6, col=1)
     fig.update_yaxes(title_text=r'$\delta_\text{e} \:\:  [\text{deg}]$', row=6, col=1, title_standoff=20,
                      tickmode='array',
-                     tickvals=np.arange(-4, 0 + 1, 1),
-                     ticktext=['-4', ' ', '-2', ' ', '0'],
+                     tickvals=np.arange(-10, 0 + 2.5, 2.5),
+                     ticktext=['-10', ' ', '-5', ' ', '0'],
                      tickfont=dict(size=11),
-                     # range=[-6.5, 3.5],
+                     range=[-10, 0],
                      titlefont=dict(size=13)
                      )
 
@@ -188,9 +188,9 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         x=env.time, y=env.action_history[1, :].T,
         name='&#948; [&deg;]', line=dict(color='#00CC96')), row=5, col=2)
     fig.update_yaxes(title_text=r'$\delta_\text{a} \:\:   [\text{deg}]$', row=5, col=2, title_standoff=8,
-                     tickmode='array',
-                     tickvals=np.arange(-5, 5 + 2.5, 2.5),
-                     ticktext=['-5', ' ', '0', ' ', '5'],
+                     # tickmode='array',
+                     # tickvals=np.arange(-5, 5 + 2.5, 2.5),
+                     # ticktext=['-5', ' ', '0', ' ', '5'],
                      tickfont=dict(size=11),
                      # range=[-10, 10],
                      titlefont=dict(size=13)
@@ -200,8 +200,8 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
         name=r'$\delta_r [^\circ]$', line=dict(color='#00CC96')), row=6, col=2)
     fig.update_yaxes(title_text=r'$\delta_\text{r} \:\: [\text{deg}]$', row=6, col=2, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(-5, 5 + 2.5, 2.5),
-                     ticktext=['-5', ' ', '0', ' ', '5'],
+                     tickvals=np.arange(0, 20 + 5, 5),
+                     ticktext=['0', ' ', '10', ' ', '20'],
                      tickfont=dict(size=11),
                      # range=[-5, 6],
                      titlefont=dict(size=13)

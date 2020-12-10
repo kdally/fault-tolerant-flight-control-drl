@@ -18,7 +18,8 @@ class Citation(gym.Env):
         self.rate_limits = self.ActionLimits(np.array([[-20, -40, -20], [20, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
-        self.FDD_switch_time = 60
+        self.FDD_switch_time = 80
+        self.failure_time = 20
         self.task = task()
         self.task_fun, self.evaluation, self.FDD = self.task.choose_task(evaluation, self.failure_input, FDD)
 
@@ -55,7 +56,7 @@ class Citation(gym.Env):
 
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
-        if self.time[self.step_count] < 5.0 and self.evaluation:
+        if self.time[self.step_count] < self.failure_time and self.evaluation:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
         else:

@@ -84,9 +84,9 @@ signal.signal(signal.SIGINT, keyboardInterruptHandler)
 # current_task = AltitudeTask
 current_task = AttitudeTask
 
-env = CitationNormal
+# env = CitationNormal
 # env = CitationElevRange
-# env = CitationAileronEff
+env = CitationAileronEff
 # env = CitationRudderStuck
 # env = CitationHorzTail
 # env = CitationVertTail

@@ -156,7 +156,7 @@ class AttitudeTask(Task):
 
         catalog = super(AttitudeTask, self).get_agent_catalog()
         # catalog['normal'] = '3attitude_step_9VZ5VE'
-        catalog['normal'] = '3attitude_step_' + 'K27PVO'
+        catalog['normal'] = '3attitude_step_' + 'GT0PLE'
         catalog['elev_range'] = '3attitude_step_Q4N8GV_de'
         catalog['aileron_eff'] = '3attitude_step_E919SW_da'
         catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
@@ -540,18 +540,20 @@ class AltitudeTask(Task):
 
                                        2150 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
                                        np.linspace(2150, 2360, int(36 * time_v.shape[0] / time_v[-1].round())),
-                                       2360 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
-                                       np.linspace(2360, 2300, int(9 * time_v.shape[0] / time_v[-1].round())),
-                                       2300 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+                                       # 2360 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
+                                       # np.linspace(2360, 2300, int(9 * time_v.shape[0] / time_v[-1].round())),
+                                       # 2300 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
+
+                                       2360 * np.ones(int(20 * time_v.shape[0] / time_v[-1].round())),
                                        ])
         sign = 1
         angle1 = 20
-        angle2 = 15
+        angle2 = 20
         self.signals['phi'] = np.hstack([0 * np.ones(int(7 * time_v.shape[0] / time_v[-1].round())),
-                                         sign * angle2 * np.sin(
+                                         sign * angle1 * np.sin(
                                              time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
-                                         sign * angle2 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
-                                         sign * angle2 * np.cos(
+                                         sign * angle1 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
+                                         sign * angle1 * np.cos(
                                              time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
                                          0 * np.ones(int(7 * time_v.shape[0] / time_v[-1].round())),
                                          -sign * angle1 * np.sin(
@@ -559,19 +561,19 @@ class AltitudeTask(Task):
                                          -sign * angle1 * np.ones(int(17 * time_v.shape[0] / time_v[-1].round())),
                                          -sign * angle1 * np.cos(
                                              time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
-                                         0 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
+                                         0 * np.ones(int(13 * time_v.shape[0] / time_v[-1].round())),
                                          sign * angle1 * np.sin(
-                                             time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.05 * np.pi * 2),
+                                             time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
                                          sign * angle1 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
                                          sign * angle1 * np.cos(
-                                             time_v[:np.argwhere(time_v == 5.5)[0, 0]] * 0.045 * np.pi * 2),
+                                             time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.12 * np.pi * 2),
                                          0 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
                                          -sign * angle2 * np.sin(
-                                             time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
+                                             time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
                                          -sign * angle2 * np.ones(int(12 * time_v.shape[0] / time_v[-1].round())),
                                          -sign * angle2 * np.cos(
-                                             time_v[:np.argwhere(time_v == 1.5)[0, 0]] * 0.16 * np.pi * 2),
-                                         0 * np.ones(int(9 * time_v.shape[0] / time_v[-1].round())),
+                                             time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
+                                         0 * np.ones(int(8 * time_v.shape[0] / time_v[-1].round())),
                                          ])
 
         return self.return_signals()
@@ -590,8 +592,8 @@ class CascadedAltTask(AltitudeTask):
 
     def get_agent_catalog(self):
         catalog = AttitudeTask().get_agent_catalog()
-        catalog['normal_outer_loop'] = 'altitude_2pitch_XQ2G4Q'
-        # catalog['normal_outer_loop'] = 'altitude_2pitch_4G1ZPZ'
+        # catalog['normal_outer_loop'] = 'altitude_2pitch_XQ2G4Q'
+        catalog['normal_outer_loop'] = 'altitude_2pitch_PZ5QGW'
 
         return catalog
 
