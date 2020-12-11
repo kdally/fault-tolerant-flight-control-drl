@@ -118,12 +118,17 @@ class AltController(gym.Env, ABC):
 
         self.RMSE = np.sqrt(np.mean((self.InnerController.state_history[self.track_index, :]
                                      - self.ref_signal) ** 2))
-        plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
-                      self.task_fun(), episode_reward, during_training,
-                      self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
+        self.InnerController.RMSE = np.sqrt(np.mean((
+                                            self.InnerController.state_history[self.InnerController.track_indices, :] -
+                                            self.InnerController.ref_signal) ** 2, axis=1))
+
+        # plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
+        #               self.task_fun(), episode_reward, during_training,
+        #               self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
         if verbose > 0:
             print(f"Goal reached! Return = {episode_reward:.2f}")
-            print(f'RMSE {self.RMSE:.2f}')
+            print(f'RMSE score attitude controller, RMSE alt: '
+                  f'{(self.InnerController.RMSE * np.array([1, 1, 4])).sum():.2f},{self.RMSE:.2f}')
             print('')
 
     def close(self):

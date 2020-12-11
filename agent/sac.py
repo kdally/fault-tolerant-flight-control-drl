@@ -1,15 +1,19 @@
-import time
 import warnings
+warnings.filterwarnings('ignore',category=FutureWarning)
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import json
 import zipfile
 from abc import ABC
 from collections import OrderedDict
-from typing import Union, Optional
+from typing import Optional
 import multiprocessing
 import numpy as np
 import tensorflow as tf
-import gym
+tf.get_logger().warning('test')
+# WARNING:tensorflow:test
+tf.get_logger().setLevel('ERROR')
+tf.get_logger().warning('test')
 
 from agent.buffer import ReplayBuffer
 from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params # todo: check saving tools

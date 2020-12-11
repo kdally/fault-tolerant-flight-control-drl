@@ -11,8 +11,13 @@ from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_weights import plot_weights
 
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+deprecation._PRINTED_WARNING = False
+
 warnings.filterwarnings("ignore", module='tensorflow')
 warnings.filterwarnings("ignore", module='gym')
+
 
 # from envs.citation import CitationElevRange as Citation
 # from envs.citation import CitationAileronEff as Citation

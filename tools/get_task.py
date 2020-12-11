@@ -2,6 +2,8 @@ import numpy as np
 import random
 from abc import abstractmethod, ABC
 
+couple = ['GT0PLE', 'PZ5QGW']
+
 
 class Task(ABC):
 
@@ -155,8 +157,7 @@ class AttitudeTask(Task):
     def get_agent_catalog(self):
 
         catalog = super(AttitudeTask, self).get_agent_catalog()
-        # catalog['normal'] = '3attitude_step_9VZ5VE'
-        catalog['normal'] = '3attitude_step_' + 'GT0PLE'
+        catalog['normal'] = '3attitude_step_' + couple[0]
         catalog['elev_range'] = '3attitude_step_Q4N8GV_de'
         catalog['aileron_eff'] = '3attitude_step_E919SW_da'
         catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
@@ -593,7 +594,7 @@ class CascadedAltTask(AltitudeTask):
     def get_agent_catalog(self):
         catalog = AttitudeTask().get_agent_catalog()
         # catalog['normal_outer_loop'] = 'altitude_2pitch_XQ2G4Q'
-        catalog['normal_outer_loop'] = 'altitude_2pitch_PZ5QGW'
+        catalog['normal_outer_loop'] = 'altitude_2pitch_' + couple[1]
 
         return catalog
 

@@ -48,8 +48,8 @@ current_task = CascadedAltTask
 # run_preexisting(current_task, CitationRudderStuck)
 # run_preexisting(current_task, CitationHorzTail)
 # run_preexisting(current_task, CitationVertTail)
-run_preexisting(current_task, CitationIcing)
-# run_preexisting(current_task, CitationCgShift)
+# run_preexisting(current_task, CitationIcing)
+run_preexisting(current_task, CitationCgShift)
 
 
 

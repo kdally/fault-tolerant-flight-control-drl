@@ -106,8 +106,11 @@ class Citation(gym.Env):
 
         self.C_MODEL.initialize()
         action_trim = np.array(
-            [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0., 0., 0., 0., 0.,
-             0.38576210972746433, 0.38576210972746433, self.failure_input[1]])
+            [0, 0, 0, 0., 0., 0., 0., 0.,
+             0, 0, self.failure_input[1]])
+        # action_trim = np.array(
+        #     [-0.024761262011031245, 1.3745996716698875e-14, -7.371050575286063e-14, 0., 0., 0., 0., 0.,
+        #      0.38576210972746433, 0.38576210972746433, self.failure_input[1]])
         self.state = self.C_MODEL.step(action_trim)
         self.scale_s = np.ones(self.state.shape)
         self.scale_s[[0, 1, 2, 4, 5, 6, 7, 8]] = 180 / np.pi
