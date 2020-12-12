@@ -1,12 +1,13 @@
 import gym
 import numpy as np
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from agent.sac import SAC
-from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask
+from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
 from tools.plot_response import plot_response
 import importlib
 from tools.math_util import unscale_action, d2r, r2d
 from tools.identifier import get_ID
+from alive_progress import alive_bar
 
 
 class Citation(gym.Env):
@@ -18,8 +19,8 @@ class Citation(gym.Env):
         self.rate_limits = self.ActionLimits(np.array([[-20, -40, -20], [20, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
-        self.FDD_switch_time = 80
-        self.failure_time = 20
+        self.FDD_switch_time = 60
+        self.failure_time = 10
         self.task = task()
         self.task_fun, self.evaluation, self.FDD = self.task.choose_task(evaluation, self.failure_input, FDD)
 
@@ -45,7 +46,6 @@ class Citation(gym.Env):
         self.action_history = None
         # self.action_history_filtered = None
         self.error = None
-        self.RMSE = None
         self.step_count = None
         self.external_ref_signal = None
 
@@ -119,7 +119,6 @@ class Citation(gym.Env):
         self.action_history = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         # self.action_history_filtered = self.action_history.copy()
         self.error = np.zeros(len(self.track_indices))
-        self.RMSE = self.error.copy()
         self.step_count = 0
         self.current_deflection = np.zeros(3)
         return np.zeros(self.observation_space.shape)
@@ -141,6 +140,20 @@ class Citation(gym.Env):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
         return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
+
+    def get_RMSE(self):
+
+        assert bool(self.step_count >= self.time.shape[0]), \
+            f'Error: cannot obtain RMSE before episode is completed. Current time is {self.time[self.step_count]}s.'
+        y_ref = self.ref_signal.copy()
+        y_ref2 = self.ref_signal.copy()
+        y_meas = self.state_history[self.track_indices, :].copy()
+        y_ref2[-1, 0] = 5
+        y_ref2[-1, 1] = -5
+        # print(np.mean((self.state_history[6, :]-self.ref_signal[1,:])**2)**0.5/80)
+
+        RMSE = np.sqrt(np.mean(np.square((y_ref - y_meas)), axis=1))/(y_ref2.max(axis=1)-y_ref2.min(axis=1))
+        return RMSE
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
@@ -197,22 +210,24 @@ class Citation(gym.Env):
         obs = self.reset_soft()
         return_a = 0
         done = False
-        while not done:
-            if self.time[self.step_count] < self.FDD_switch_time or not self.FDD:
-                action, _ = agent_robust.predict(obs, deterministic=True)
-            else:
-                self.FFD_change()
-                action, _ = agent_adaptive.predict(obs, deterministic=True)
-            obs, reward, done, info = self.step(action)
-            return_a += reward
+        items = range(self.time.shape[0])
+        with alive_bar(len(items)) as bar:
+            while not done:
+                if self.time[self.step_count] < self.FDD_switch_time or not self.FDD:
+                    action, _ = agent_robust.predict(obs, deterministic=True)
+                else:
+                    self.FFD_change()
+                    action, _ = agent_adaptive.predict(obs, deterministic=True)
+                obs, reward, done, info = self.step(action)
+                return_a += reward
+                bar()
 
-        self.RMSE = np.sqrt(np.mean((self.state_history[self.track_indices, :] - self.ref_signal) ** 2, axis=1))
         plot_response(self.agentID, self, self.task_fun(), return_a, during_training,
                       self.failure_input[0], FDD=self.FDD)
         if verbose > 0:
             print(f'Goal reached! Return = {return_a:.2f}')
             np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
-            print(f'RMSE and score', self.RMSE, f'{(self.RMSE * np.array([1, 1, 4])).sum():.2f}')
+            print(f'RMSE and score', self.get_RMSE(), f'{(self.get_RMSE() * np.array([1, 1, 4])).sum():.2f}')
             print('')
 
     def close(self):

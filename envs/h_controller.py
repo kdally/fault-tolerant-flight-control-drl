@@ -1,11 +1,11 @@
 import gym
 import numpy as np
-from abc import ABC, abstractmethod
+from abc import ABC
 from agent.sac import SAC
-from tools.get_task import CascadedAltTask
+from tools.get_task import CascadedAltTask, ReliabilityTask
 from tools.plot_response import plot_response
-import importlib
-from tools.math_util import unscale_action, d2r, r2d
+from alive_progress import alive_bar
+from tools.math_util import unscale_action
 from envs.citation import CitationNormal
 
 
@@ -15,7 +15,7 @@ class AltController(gym.Env, ABC):
     def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False):
         super(AltController, self).__init__()
 
-        self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask, FDD=FDD)
+        self.InnerController = inner_controller(evaluation=evaluation, task=ReliabilityTask, FDD=FDD)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.rate_limits = self.ActionLimits(np.array([[-10], [10]]))
         self.time = self.InnerController.time
@@ -89,6 +89,17 @@ class AltController(gym.Env, ABC):
     def get_obs(self):
         return np.hstack([self.error, self.current_pitch_ref])
 
+    def get_RMSE(self):
+
+        assert bool(self.InnerController.step_count >= self.InnerController.time.shape[0]), \
+            f'Error: cannot obtain RMSE before episode is completed. Current time is {self.time[self.step_count]}s.'
+
+        y_ref = self.ref_signal.copy()
+        y_ref2 = self.ref_signal.copy()
+        y_meas = self.InnerController.state_history[self.track_index, :].copy()
+        RMSE = np.sqrt(np.mean(np.square(y_ref - y_meas))) / (y_ref2.max() - y_ref2.min())
+        return RMSE
+
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
 
@@ -110,25 +121,21 @@ class AltController(gym.Env, ABC):
         obs_outer_loop = self.reset()
         episode_reward = 0
         done = False
-        while not done:
+        items = range(self.time.shape[0])
+        with alive_bar(len(items)) as bar:
+            while not done:
+                pitch_ref, _ = self.agent.predict(obs_outer_loop, deterministic=True)
+                obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
+                episode_reward += reward_outer_loop
+                bar()
 
-            pitch_ref, _ = self.agent.predict(obs_outer_loop, deterministic=True)
-            obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
-            episode_reward += reward_outer_loop
-
-        self.RMSE = np.sqrt(np.mean((self.InnerController.state_history[self.track_index, :]
-                                     - self.ref_signal) ** 2))
-        self.InnerController.RMSE = np.sqrt(np.mean((
-                                            self.InnerController.state_history[self.InnerController.track_indices, :] -
-                                            self.InnerController.ref_signal) ** 2, axis=1))
-
-        # plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
-        #               self.task_fun(), episode_reward, during_training,
-        #               self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
+        plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
+                      self.task_fun(), episode_reward, during_training,
+                      self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
         if verbose > 0:
             print(f"Goal reached! Return = {episode_reward:.2f}")
-            print(f'RMSE score attitude controller, RMSE alt: '
-                  f'{(self.InnerController.RMSE * np.array([1, 1, 4])).sum():.2f},{self.RMSE:.2f}')
+            print(self.InnerController.get_RMSE(), self.get_RMSE())
+            print(f'RMSE% avg: {(self.InnerController.get_RMSE()[1:].sum()+self.get_RMSE())/3*100:.2f}%')
             print('')
 
     def close(self):

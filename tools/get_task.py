@@ -1,8 +1,10 @@
 import numpy as np
 import random
 from abc import abstractmethod, ABC
+from scipy import signal
 
-couple = ['GT0PLE', 'PZ5QGW']
+# couple = ['B8OXF4',	'ASTCVW']
+couple = ['PZ5QGW',	'GT0PLE']
 
 
 class Task(ABC):
@@ -157,7 +159,7 @@ class AttitudeTask(Task):
     def get_agent_catalog(self):
 
         catalog = super(AttitudeTask, self).get_agent_catalog()
-        catalog['normal'] = '3attitude_step_' + couple[0]
+        catalog['normal'] = '3attitude_step_' + couple[1]
         catalog['elev_range'] = '3attitude_step_Q4N8GV_de'
         catalog['aileron_eff'] = '3attitude_step_E919SW_da'
         catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
@@ -550,10 +552,10 @@ class AltitudeTask(Task):
         sign = 1
         angle1 = 20
         angle2 = 20
-        self.signals['phi'] = np.hstack([0 * np.ones(int(7 * time_v.shape[0] / time_v[-1].round())),
+        self.signals['phi'] = np.hstack([0 * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
                                          sign * angle1 * np.sin(
                                              time_v[:np.argwhere(time_v == 2.0)[0, 0]] * 0.13 * np.pi * 2),
-                                         sign * angle1 * np.ones(int(15 * time_v.shape[0] / time_v[-1].round())),
+                                         sign * angle1 * np.ones(int(16 * time_v.shape[0] / time_v[-1].round())),
                                          sign * angle1 * np.cos(
                                              time_v[:np.argwhere(time_v == 2)[0, 0]] * 0.12 * np.pi * 2),
                                          0 * np.ones(int(7 * time_v.shape[0] / time_v[-1].round())),
@@ -594,7 +596,7 @@ class CascadedAltTask(AltitudeTask):
     def get_agent_catalog(self):
         catalog = AttitudeTask().get_agent_catalog()
         # catalog['normal_outer_loop'] = 'altitude_2pitch_XQ2G4Q'
-        catalog['normal_outer_loop'] = 'altitude_2pitch_' + couple[1]
+        catalog['normal_outer_loop'] = 'altitude_2pitch_' + couple[0]
 
         return catalog
 
@@ -612,3 +614,29 @@ class CascadedAltTask(AltitudeTask):
 
         return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'altitude_2pitch', \
                signal_outer_controller, obs_indices_outer_controller, track_indices_outer_controller
+
+
+class ReliabilityTask(CascadedAltTask):
+
+    # def get_task_eval(self):
+    #
+    #     self.time_v = time_v = np.arange(0, 120, 0.01)
+    #     initial_alt = 2000
+    #     w_0 = 1/80
+    #     self.signals['h'] = initial_alt + 100*np.sin(2*np.pi*w_0*self.time_v)
+    #     w_1 = 1/50
+    #     self.signals['phi'] = 40*np.sin(2*np.pi*w_1*self.time_v)
+    #
+    #     signal.square(2 * np.pi * 5 * t)
+    #     return self.return_signals()
+
+    def get_task_eval(self):
+
+        self.time_v = time_v = np.arange(0, 120, 0.01)
+        initial_alt = 2000
+        w_0 = 1/80
+        self.signals['h'] = initial_alt + 50*signal.sawtooth(2 * np.pi * w_0 * self.time_v, width=0.5) + 50
+        w_1 = 1/50
+        self.signals['phi'] = 40*np.sin(2*np.pi*w_1*self.time_v)
+
+        return self.return_signals()

@@ -142,7 +142,7 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
                      # tickvals=np.arange(-40, 40 + 20, 20),
                      # ticktext=['-40', ' ', '0', ' ', '40'],
                      tickfont=dict(size=11),
-                     range=[-22, 40],
+                     # range=[-22, 40],
                      titlefont=dict(size=13)
                      )
 
@@ -180,7 +180,7 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
                      tickvals=np.arange(-10, 0 + 2.5, 2.5),
                      ticktext=['-10', ' ', '-5', ' ', '0'],
                      tickfont=dict(size=11),
-                     range=[-10, 0],
+                     # range=[-10, 0],
                      titlefont=dict(size=13)
                      )
 
@@ -208,7 +208,7 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
                      )
 
     if failure != 'normal' and not during_training:
-        fig.add_vline(x=5.0, row='all', col="all", line=dict(color="Grey", width=1.5))
+        fig.add_vline(x=env.failure_time, row='all', col="all", line=dict(color="Grey", width=1.5))
 
     if FDD:
         fig.add_vline(x=env.FDD_switch_time, row='all', col="all", line=dict(color="Grey", width=1.5, dash='dot'))
