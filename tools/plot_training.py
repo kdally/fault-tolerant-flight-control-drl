@@ -247,7 +247,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
 
 # plot_training('PZ5QGW', 'altitude_2pitch')
 # plot_training('TBNJM4', 'altitude_2pitch')
-# plot_training('P7V00G','altitude_2attitude')
+# plot_training('BZVWF5','3attitude_step')
 # plot_trainings(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], '3attitude_step')
 # plot_trainings(['9VZ5VE', '7AK56O','GXA2KT'], '3attitude_step')
 # plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', 'GT0PLE', 'GXA2KT'],

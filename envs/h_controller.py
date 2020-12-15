@@ -100,6 +100,18 @@ class AltController(gym.Env, ABC):
         RMSE = np.sqrt(np.mean(np.square(y_ref - y_meas))) / (y_ref2.max() - y_ref2.min())
         return RMSE
 
+    def get_MAE(self):
+
+        assert bool(self.InnerController.step_count >= self.InnerController.time.shape[0]), \
+            f'Error: cannot obtain MAE before episode is completed. Current time is {self.time[self.step_count]}s.'
+
+        y_ref = self.ref_signal.copy()
+        y_ref2 = self.ref_signal.copy()
+        y_meas = self.InnerController.state_history[self.track_index, :].copy()
+        MAE = np.mean(np.absolute(y_ref - y_meas)) / (y_ref2.max() - y_ref2.min())
+        return MAE
+
+
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
 
@@ -134,8 +146,8 @@ class AltController(gym.Env, ABC):
                       self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
         if verbose > 0:
             print(f"Goal reached! Return = {episode_reward:.2f}")
-            print(self.InnerController.get_RMSE(), self.get_RMSE())
-            print(f'RMSE% avg: {(self.InnerController.get_RMSE()[1:].sum()+self.get_RMSE())/3*100:.2f}%')
+            print(f'nRMSE% avg: {(self.InnerController.get_RMSE()[1:].sum()+self.get_RMSE()) / 3 * 100:.2f}%')
+            print(f'nMAE% avg: {(self.InnerController.get_MAE()[1:].sum() + self.get_MAE()) / 3 * 100:.2f}%')
             print('')
 
     def close(self):

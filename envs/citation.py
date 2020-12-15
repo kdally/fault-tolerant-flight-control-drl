@@ -150,10 +150,22 @@ class Citation(gym.Env):
         y_meas = self.state_history[self.track_indices, :].copy()
         y_ref2[-1, 0] = 5
         y_ref2[-1, 1] = -5
-        # print(np.mean((self.state_history[6, :]-self.ref_signal[1,:])**2)**0.5/80)
 
         RMSE = np.sqrt(np.mean(np.square((y_ref - y_meas)), axis=1))/(y_ref2.max(axis=1)-y_ref2.min(axis=1))
         return RMSE
+
+    def get_MAE(self):
+
+        assert bool(self.step_count >= self.time.shape[0]), \
+            f'Error: cannot obtain MAE before episode is completed. Current time is {self.time[self.step_count]}s.'
+        y_ref = self.ref_signal.copy()
+        y_ref2 = self.ref_signal.copy()
+        y_meas = self.state_history[self.track_indices, :].copy()
+        y_ref2[-1, 0] = 5
+        y_ref2[-1, 1] = -5
+
+        MAE = np.mean(np.absolute(y_ref - y_meas), axis=1)/(y_ref2.max(axis=1)-y_ref2.min(axis=1))
+        return MAE
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
@@ -243,7 +255,7 @@ class Citation(gym.Env):
 class CitationNormal(Citation):
 
     def get_plant(self):
-        plant = importlib.import_module(f'envs.normal._citation', package=None)
+        plant = importlib.import_module(f'envs.normal_2000_90._citation', package=None)
         return plant, ['normal', 1.0, 1.0]
 
     def load_agent(self, FDD=False):
