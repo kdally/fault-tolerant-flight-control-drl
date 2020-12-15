@@ -3,8 +3,8 @@ import random
 from abc import abstractmethod, ABC
 from scipy import signal
 
-# couple = ['B8OXF4',	'ASTCVW']
-couple = ['PZ5QGW',	'GT0PLE']
+couple = ['B8OXF4',	'UMJB0W']
+# couple = ['PZ5QGW',	'GT0PLE']
 
 
 class Task(ABC):
@@ -618,24 +618,24 @@ class CascadedAltTask(AltitudeTask):
 
 class ReliabilityTask(CascadedAltTask):
 
-    def get_task_eval(self):
-
-        self.time_v = np.arange(0, 120, 0.01)
-        initial_alt = 2000
-        w_0 = 1/80
-        self.signals['h'] = initial_alt + 100*np.sin(2*np.pi*w_0*self.time_v)
-        w_1 = 1/50
-        self.signals['phi'] = 40*np.sin(2*np.pi*w_1*self.time_v)
-
-        return self.return_signals()
-
     # def get_task_eval(self):
     #
     #     self.time_v = np.arange(0, 120, 0.01)
     #     initial_alt = 2000
     #     w_0 = 1/80
-    #     self.signals['h'] = initial_alt + 100*(signal.sawtooth(2 * np.pi * w_0 * self.time_v, width=0.5) + 1)
-    #     w_1 = 1/50
-    #     self.signals['phi'] = 40*(signal.sawtooth(2 * np.pi * w_1 * (self.time_v-12), width=0.5))
+    #     self.signals['h'] = initial_alt + 100*np.sin(2*np.pi*w_0*self.time_v)
+    #     w_1 = 1/20
+    #     self.signals['phi'] = 40*np.sin(2*np.pi*w_1*self.time_v)
     #
     #     return self.return_signals()
+
+    def get_task_eval(self):
+
+        self.time_v = np.arange(0, 120, 0.01)
+        initial_alt = 2000
+        w_0 = 1/80
+        self.signals['h'] = initial_alt + 100*(signal.sawtooth(2 * np.pi * w_0 * self.time_v, width=0.5) + 1)
+        w_1 = 1/20
+        self.signals['phi'] = 40*(signal.sawtooth(2 * np.pi * w_1 * (self.time_v-12), width=0.5))
+
+        return self.return_signals()

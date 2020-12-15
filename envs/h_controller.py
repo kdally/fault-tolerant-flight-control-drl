@@ -15,7 +15,7 @@ class AltController(gym.Env, ABC):
     def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False):
         super(AltController, self).__init__()
 
-        self.InnerController = inner_controller(evaluation=evaluation, task=ReliabilityTask, FDD=FDD)
+        self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask, FDD=FDD)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.rate_limits = self.ActionLimits(np.array([[-10], [10]]))
         self.time = self.InnerController.time
@@ -146,6 +146,7 @@ class AltController(gym.Env, ABC):
                       self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
         if verbose > 0:
             print(f"Goal reached! Return = {episode_reward:.2f}")
+            print(self.InnerController.get_MAE(), self.get_MAE())
             print(f'nRMSE% avg: {(self.InnerController.get_RMSE()[1:].sum()+self.get_RMSE()) / 3 * 100:.2f}%')
             print(f'nMAE% avg: {(self.InnerController.get_MAE()[1:].sum() + self.get_MAE()) / 3 * 100:.2f}%')
             print('')

@@ -126,8 +126,8 @@ class Citation(gym.Env):
     def get_reward(self):
 
         max_bound = np.ones(self.error.shape)
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
-        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
+        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
         # reward_vec = -1 / (np.abs(self.error) * 10 + 1)
         # reward_vec = np.abs(r2d(self.error / 30))
@@ -239,7 +239,8 @@ class Citation(gym.Env):
         if verbose > 0:
             print(f'Goal reached! Return = {return_a:.2f}')
             np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
-            print(f'RMSE and score', self.get_RMSE(), f'{(self.get_RMSE() * np.array([1, 1, 4])).sum():.2f}')
+            print(f'nRMSE% avg: {(self.get_RMSE().sum()) / 3 * 100:.2f}%')
+            print(f'nMAE% avg: {(self.get_MAE().sum()) / 3 * 100:.2f}%')
             print('')
 
     def close(self):

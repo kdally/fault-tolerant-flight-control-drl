@@ -11,6 +11,10 @@ from tools.identifier import get_ID
 from tools.plot_training import plot_training
 from tools.plot_weights import plot_weights
 
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+deprecation._PRINTED_WARNING = False
+
 warnings.filterwarnings("ignore", category=FutureWarning, module='tensorflow')
 warnings.filterwarnings("ignore", category=UserWarning, module='gym')
 
@@ -22,11 +26,6 @@ from envs.citation import CitationVertTail
 from envs.citation import CitationIcing
 from envs.citation import CitationCgShift
 from envs.citation import CitationNormal
-
-
-# todo: different flight conditions
-# todo: different reference signal shapes
-
 
 def learn(task: Task, env_type=CitationNormal):
     env_train = env_type(task=task)
