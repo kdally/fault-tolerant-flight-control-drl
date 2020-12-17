@@ -5,7 +5,7 @@ from agent.sac import SAC
 from tools.get_task import CascadedAltTask, ReliabilityTask
 from tools.plot_response import plot_response
 from alive_progress import alive_bar
-from tools.math_util import unscale_action
+from tools.math_util import unscale_action, d2r, r2d
 from envs.citation import CitationNormal
 
 
@@ -75,9 +75,8 @@ class AltController(gym.Env, ABC):
 
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
-        reward = -np.abs(np.maximum(np.minimum(self.error / 60, max_bound), -max_bound))
-
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
+        # reward = -np.abs(np.maximum(np.minimum(self.error / 60, max_bound), -max_bound))
+        reward = - np.abs(np.maximum(np.minimum(r2d(self.error / 240)**2, max_bound), -max_bound))
         # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
         # reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
         # reward_vec = -1 / (np.abs(self.error) * 10 + 1)
@@ -139,6 +138,7 @@ class AltController(gym.Env, ABC):
                 pitch_ref, _ = self.agent.predict(obs_outer_loop, deterministic=True)
                 obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
                 episode_reward += reward_outer_loop
+
                 bar()
 
         plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,

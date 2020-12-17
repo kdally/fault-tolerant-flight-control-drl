@@ -13,7 +13,7 @@ from alive_progress import alive_bar
 class Citation(gym.Env):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, evaluation=False, FDD=False, task=AttitudeTask):
+    def __init__(self, evaluation=False, FDD=False, task=AttitudeTask, sensor_noise=False):
         super(Citation, self).__init__()
 
         self.rate_limits = self.ActionLimits(np.array([[-20, -40, -20], [20, 40, 20]]))
@@ -23,6 +23,7 @@ class Citation(gym.Env):
         self.failure_time = 10
         self.task = task()
         self.task_fun, self.evaluation, self.FDD = self.task.choose_task(evaluation, self.failure_input, FDD)
+        self.is_sensor_noise = sensor_noise
 
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
@@ -64,14 +65,7 @@ class Citation(gym.Env):
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
         self.state_deg = self.state * self.scale_s
 
-        self.error = d2r(self.ref_signal[:, self.step_count] - self.state_deg[self.track_indices])
-
-        self.error[self.track_indices.index(5)] *= self.sideslip_factor[self.step_count]
-        self.error[self.track_indices.index(6)] *= self.roll_factor[self.step_count]
-        if 7 in self.track_indices:
-            self.error[self.track_indices.index(7)] *= self.pitch_factor[self.step_count]
-        if 9 in self.track_indices:
-            self.error[self.track_indices.index(9)] *= self.alt_factor[self.step_count]
+        self.error = d2r(self.ref_signal[:, self.step_count] - self.state_deg[self.track_indices]) * self.scale_error(self.step_count)
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
@@ -139,7 +133,9 @@ class Citation(gym.Env):
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
+        obs = np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
+        obs += self.get_sensor_noise()
+        return obs
 
     def get_RMSE(self):
 
@@ -166,6 +162,24 @@ class Citation(gym.Env):
 
         MAE = np.mean(np.absolute(y_ref - y_meas), axis=1)/(y_ref2.max(axis=1)-y_ref2.min(axis=1))
         return MAE
+
+    def get_sensor_noise(self):
+
+        if self.is_sensor_noise:
+            self.
+
+        else:
+            sensor_noise = np.zeros(self.observation_space.shape)
+        return sensor_noise
+
+    def scale_error(self, step_count):
+
+        if 7 in self.track_indices:
+            return np.array([self.pitch_factor[step_count],
+                                    self.roll_factor[step_count], self.sideslip_factor[step_count]])
+        else:
+            return np.array([self.alt_factor[step_count],
+                                    self.roll_factor[step_count], self.sideslip_factor[step_count]])
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
