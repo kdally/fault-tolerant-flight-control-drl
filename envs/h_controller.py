@@ -76,13 +76,8 @@ class AltController(gym.Env, ABC):
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
         # reward = -np.abs(np.maximum(np.minimum(self.error / 60, max_bound), -max_bound))
-        reward = - np.abs(np.maximum(np.minimum(r2d(self.error / 240)**2, max_bound), -max_bound))
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        # reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
-        # reward_vec = -1 / (np.abs(self.error) * 10 + 1)
-        # reward_vec = np.abs(r2d(self.error / 30))
-        # reward_vec = r2d(self.error) ** 2
-
+        # reward = -np.abs(np.maximum(np.minimum(r2d(self.error / 240)**2, max_bound), -max_bound))
+        reward = -np.maximum(np.minimum(1 / (np.abs(self.error) * 0.09 + 1), max_bound), -max_bound)
         return reward
 
     def get_obs(self):

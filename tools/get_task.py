@@ -3,7 +3,7 @@ import random
 from abc import abstractmethod, ABC
 from scipy import signal
 
-couple = ['B8OXF4',	'BZVWF5']
+couple = ['1MY88Q',	'BZVWF5']
 # couple = ['PZ5QGW',	'GT0PLE']
 # XQ2G4Q
 

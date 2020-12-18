@@ -63,9 +63,11 @@ class Citation(gym.Env):
         else:
             self.state = self.C_MODEL.step(
                 np.hstack([d2r(self.current_deflection), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
+        self.state += self.get_sensor_noise()
         self.state_deg = self.state * self.scale_s
 
-        self.error = d2r(self.ref_signal[:, self.step_count] - self.state_deg[self.track_indices]) * self.scale_error(self.step_count)
+        self.error = d2r(self.ref_signal[:, self.step_count] -
+                         self.state_deg[self.track_indices]) * self.scale_error(self.step_count)
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = self.current_deflection
@@ -79,7 +81,6 @@ class Citation(gym.Env):
                 agent = SAC.load("agent/trained/tmp/best_model.zip", env=self)
                 agent.ID = ID
                 agent.save(f'agent/trained/{self.task_fun()[4]}_{agent.ID}.zip')
-            # print(self.state_history[:, self.step_count - 2], self.time[self.step_count - 1])
             plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
                           failure=self.failure_input[0], FDD=self.FDD, broken=True)
             exit()
@@ -120,22 +121,16 @@ class Citation(gym.Env):
     def get_reward(self):
 
         max_bound = np.ones(self.error.shape)
-        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
         # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        # reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
-        # reward_vec = -1 / (np.abs(self.error) * 10 + 1)
-        # reward_vec = np.abs(r2d(self.error / 30))
-        # reward_vec = r2d(self.error) ** 2
-
+        reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
 
     def get_obs(self):
 
         untracked_obs_index = np.setdiff1d(self.obs_indices, self.track_indices)
-        obs = np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
-        obs += self.get_sensor_noise()
-        return obs
+        return np.hstack([self.error, self.state[untracked_obs_index], self.current_deflection])
 
     def get_RMSE(self):
 
@@ -166,10 +161,10 @@ class Citation(gym.Env):
     def get_sensor_noise(self):
 
         if self.is_sensor_noise:
-            self.
-
+            sensor_noise = np.zeros(self.state.shape)
+            sensor_noise[3] += np.random.normal(scale=0.005)
         else:
-            sensor_noise = np.zeros(self.observation_space.shape)
+            sensor_noise = np.zeros(self.state.shape)
         return sensor_noise
 
     def scale_error(self, step_count):
@@ -493,9 +488,6 @@ class CitationVerif(CitationNormal):
             plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
                           failure=self.failure_input[0], FDD=self.FDD, broken=True)
             exit()
-        if self.state[9] <= 50.0 or self.state[9] >= 1e4 or np.greater(np.abs(r2d(self.state[:3])), 1e4).any() \
-                or np.greater(np.abs(r2d(self.state[6:9])), 1e3).any():
-            return np.zeros(self.observation_space.shape), -1 * self.time.shape[0], True, {'is_success': False}
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
 
