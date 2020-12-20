@@ -12,7 +12,7 @@ from envs.citation import CitationNormal
 class AltController(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False):
+    def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False, low_pass=False):
         super(AltController, self).__init__()
 
         self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask, FDD=FDD)
@@ -24,6 +24,7 @@ class AltController(gym.Env, ABC):
         self.ref_signal = self.InnerController.external_ref_signal = self.task_fun()[5]
         self.obs_indices = self.task_fun()[6]
         self.track_index = self.task_fun()[7]
+        self.enable_low_pass = low_pass
 
         self.observation_space = gym.spaces.Box(-100, 100, shape=(2,), dtype=np.float64)
         self.action_space = gym.spaces.Box(-1., 1., shape=(1,), dtype=np.float64)
@@ -33,24 +34,16 @@ class AltController(gym.Env, ABC):
         self.current_pitch_ref = None
         self.obs_inner_controller = None
         self.state = None
-        # self.action_history_filtered = None
         self.error = None
-        self.RMSE = None
         self.step_count = None
 
     def step(self, pitch_ref: np.ndarray):
 
         self.step_count = self.InnerController.step_count
         self.current_pitch_ref = self.bound_a(self.current_pitch_ref + self.scale_a(pitch_ref) * self.dt)
+        filtered_deflection = self.filter_control_input(self.current_pitch_ref)
 
-        # self.w_0 = 0.08*2*np.pi  # rad/s
-        # filtered_pitch_ref = self.current_pitch_ref.copy()
-        # if self.step_count > 1:
-        #     filtered_pitch_ref = self.action_history_filtered[:, self.step_count-1]/(1+self.w_0*self.dt) + \
-        #                           self.current_pitch_ref * (self.w_0*self.dt)/(1+self.w_0*self.dt)
-
-        self.InnerController.ref_signal[0, self.step_count] = self.current_pitch_ref[0]
-        # self.action_history_filtered[:, self.step_count] = filtered_pitch_ref
+        self.InnerController.ref_signal[0, self.step_count] = filtered_deflection[0]
 
         if self.time[self.step_count] < self.InnerController.FDD_switch_time or not self.InnerController.FDD:
             action, _ = self.InnerController.agents[0].predict(self.obs_inner_controller, deterministic=True)
@@ -65,9 +58,7 @@ class AltController(gym.Env, ABC):
 
     def reset(self):
 
-        # self.action_history_filtered = np.zeros((self.action_space.shape[0], self.time.shape[0]))
         self.error = np.zeros(1)
-        self.RMSE = self.error.copy()
         self.current_pitch_ref = np.zeros(1)
         self.obs_inner_controller = self.InnerController.reset()
         self.step_count = self.InnerController.step_count
@@ -105,6 +96,15 @@ class AltController(gym.Env, ABC):
         MAE = np.mean(np.absolute(y_ref - y_meas)) / (y_ref2.max() - y_ref2.min())
         return MAE
 
+    def filter_control_input(self, current_pitch_ref):
+
+        w_0 = 0.08*2*np.pi  # rad/s
+        filtered_pitch_ref = current_pitch_ref
+        if self.step_count > 1 and self.enable_low_pass:
+            filtered_pitch_ref = self.InnerController.ref_signal[0, self.step_count-1]/(1+w_0*self.dt) + \
+                                  current_pitch_ref * (w_0*self.dt)/(1+w_0*self.dt)
+
+        return filtered_pitch_ref
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""

@@ -170,8 +170,6 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
                      titlefont=dict(size=13)
                      )
 
-    # env.action_history = env.action_history_filtered
-
     fig.append_trace(go.Scatter(
         x=env.time, y=env.action_history[0, :].T,
         name=r'$\delta_e [^\circ]$', line=dict(color='#00CC96')), row=6, col=1)
