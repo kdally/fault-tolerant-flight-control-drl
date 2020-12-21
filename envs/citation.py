@@ -13,7 +13,8 @@ from alive_progress import alive_bar
 class Citation(gym.Env):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, evaluation=False, FDD=False, task=AttitudeTask, disturbance=False, sensor_noise=False, low_pass=True):
+    def __init__(self, evaluation=False, FDD=False, task=AttitudeTask,
+                 disturbance=False, sensor_noise=True, low_pass=True):
         super(Citation, self).__init__()
 
         self.rate_limits = self.ActionLimits(np.array([[-20, -40, -20], [20, 40, 20]]))
@@ -75,14 +76,16 @@ class Citation(gym.Env):
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
         if np.isnan(self.state).sum() > 0:
+            print('Encountered crash. Episode terminated early.')
             if not self.evaluation:
                 ID = get_ID(6)
                 agent = SAC.load("agent/trained/tmp/best_model.zip", env=self)
                 agent.ID = ID
                 agent.save(f'agent/trained/{self.task_fun()[4]}_{agent.ID}.zip')
+                print('Training is corrupt because of NaN values, terminated early. '
+                      'So-far best trained agent may be good-performing.')
             plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
                           failure=self.failure_input[0], FDD=self.FDD, broken=True)
-            print('Encountered crash. Training terminated early but so-far best trained agent may perform well.')
             exit()
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
@@ -155,7 +158,7 @@ class Citation(gym.Env):
 
     def filter_control_input(self, deflection):
 
-        w_0 = 10*2*np.pi  # rad/s
+        w_0 = 2*2*np.pi  # rad/s
         filtered_deflection = deflection.copy()
         if self.step_count > 1 and self.enable_low_pass:
             filtered_deflection = self.action_history[:, self.step_count-1]/(1+w_0*self.dt) + \
@@ -168,7 +171,7 @@ class Citation(gym.Env):
         sensor_noise = np.zeros(self.state.shape)
         if self.has_sensor_noise:  # from https://doi.org/10.2514/6.2018-1127
             sensor_noise[0:3] += np.random.normal(scale=6.32e-4, size=3)   # p, q, r
-            sensor_noise[5] += np.random.normal(scale=8.72e-4)             # sideslip, estimate from alpha
+            sensor_noise[5] += np.random.normal(scale=8.72e-3)             # sideslip, estimate from alpha
             sensor_noise[6:8] += np.random.normal(scale=3.16e-5, size=2)   # phi, theta
             sensor_noise[9] += np.random.normal(scale=0.5)                 # h (from Joon)
         return sensor_noise
