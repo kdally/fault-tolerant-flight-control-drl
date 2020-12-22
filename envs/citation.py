@@ -75,18 +75,9 @@ class Citation(gym.Env):
 
         self.step_count += 1
         done = bool(self.step_count >= self.time.shape[0])
+
         if np.isnan(self.state).sum() > 0:
-            print('Encountered crash. Episode terminated early.')
-            if not self.evaluation:
-                ID = get_ID(6)
-                agent = SAC.load("agent/trained/tmp/best_model.zip", env=self)
-                agent.ID = ID
-                agent.save(f'agent/trained/{self.task_fun()[4]}_{agent.ID}.zip')
-                print('Training is corrupt because of NaN values, terminated early. '
-                      'So-far best trained agent may be good-performing.')
-            plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
-                          failure=self.failure_input[0], FDD=self.FDD, broken=True)
-            exit()
+            self.stop_NaNs()
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
 
@@ -152,6 +143,19 @@ class Citation(gym.Env):
 
         MAE = np.mean(np.absolute(y_ref - y_meas), axis=1)/(y_ref2.max(axis=1)-y_ref2.min(axis=1))
         return MAE
+
+    def stop_NaNs(self):
+        print('Encountered crash. Episode terminated early.')
+        if not self.evaluation:
+            ID = get_ID(6)
+            agent = SAC.load("agent/trained/tmp/best_model.zip", env=self)
+            agent.ID = ID
+            agent.save(f'agent/trained/{self.task_fun()[4]}_{agent.ID}.zip')
+            print('Training is corrupt because of NaN values, terminated early. '
+                  'So-far best trained agent may be good-performing.')
+        plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
+                      failure=self.failure_input[0], FDD=self.FDD, broken=True)
+        exit()
 
     def filter_control_input(self, deflection):
 
