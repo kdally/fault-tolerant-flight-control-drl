@@ -27,6 +27,7 @@ from envs.citation import CitationIcing
 from envs.citation import CitationCgShift
 from envs.citation import CitationNormal
 
+
 def learn(task: Task, env_type=CitationNormal):
     env_train = env_type(task=task)
     env_eval = env_type(task=task)
@@ -80,8 +81,8 @@ signal.signal(signal.SIGINT, keyboardInterruptHandler)
 ########################################################################################################################
 # ***** CHOOSE FLIGHT SETTINGS ****** #
 
-# current_task = AltitudeTask
-current_task = AttitudeTask
+current_task = AltitudeTask
+# current_task = AttitudeTask
 
 env = CitationNormal
 # env = CitationElevRange
@@ -92,7 +93,7 @@ env = CitationNormal
 # env = CitationIcing
 # env = CitationCgShift
 
-learn(current_task, env)
-# run_preexisting(current_task, env)
+# learn(current_task, env)
+run_preexisting(current_task, env)
 
 # os.system('say "your program has finished"')
