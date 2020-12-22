@@ -67,8 +67,9 @@ class Citation(gym.Env):
                 np.hstack([d2r(filtered_deflection + self.get_disturbance()), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
         self.state_deg = self.state * self.scale_s
 
-        self.error = (d2r(self.ref_signal[:, self.step_count]) -
-                          self.state[self.track_indices] + self.get_sensor_noise()[self.track_indices]) * self.scale_error(self.step_count)
+        self.error = d2r(self.ref_signal[:, self.step_count] -
+                          self.state_deg[self.track_indices] + self.get_sensor_noise()[self.track_indices]) \
+                     * self.scale_error(self.step_count)
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = filtered_deflection
@@ -215,11 +216,11 @@ class Citation(gym.Env):
 
         pitch_factor = np.ones(self.time.shape[0])
         roll_factor = np.ones(self.time.shape[0])
-        alt_factor = 0.25 * np.ones(self.time.shape[0])
+        alt_factor = np.ones(self.time.shape[0])
         if self.evaluation:
             sideslip_factor = 4.0 * np.ones(self.time.shape[0])
             if self.task_fun()[4] == 'altitude_2attitude':
-                roll_factor = 2 * np.ones(self.time.shape[0])
+                roll_factor *= 2
         else:
             sideslip_factor = 10.0 * np.ones(self.time.shape[0])
 
