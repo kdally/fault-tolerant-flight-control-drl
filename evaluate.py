@@ -1,27 +1,7 @@
-import warnings
-import PySimpleGUI as sg
-from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, Task, CascadedAltTask
-from envs.h_controller import AltController
-
-from tensorflow.python.util import deprecation
-
-deprecation._PRINT_DEPRECATION_WARNINGS = False
-deprecation._PRINTED_WARNING = False
-
-warnings.filterwarnings("ignore", module='tensorflow')
-warnings.filterwarnings("ignore", module='gym')
-
-from envs.citation import CitationElevRange
-from envs.citation import CitationAileronEff
-from envs.citation import CitationRudderStuck
-from envs.citation import CitationHorzTail
-from envs.citation import CitationVertTail
-from envs.citation import CitationIcing
-from envs.citation import CitationCgShift
-from envs.citation import CitationNormal
-
 
 def GUI():
+    import PySimpleGUI as sg
+
     section1 = [[sg.T('Initial Flight Conditions :')],
                 [sg.Text('Initial Altitude [m]:'),
                  sg.InputCombo(values=('2000', '5000'), auto_size_text=True, default_value='2000')],
@@ -36,8 +16,10 @@ def GUI():
                 [sg.Text('Initial conditions are fixed at 2000m and 90 m/s for the altitude and speed, respectively.')]]
 
     section3 = [[sg.T('Controller Structure :')],
-                [sg.Radio('Cascaded (recommended)', 'struct', size=(25, 1), default=True),
-                 sg.Radio('Single (not recommended)', 'struct', size=(25, 1))], ]
+                [sg.Radio('Cascaded (recommended)', 'struct', size=(25, 1), default=True, enable_events=True,
+                          key='-OPEN CASC'),
+                 sg.Radio('Single (not recommended)', 'struct', size=(25, 1), enable_events=True,
+                          key='-OPEN SINGLE')], ]
 
     layout = [[sg.Text('Fault Tolerant Flight Control for the Cessna Citation 500', font=('Helvetica', 18))],
               [sg.Text('with Soft Actor Critic Deep Reinforcement Learning', font=('Helvetica', 18))],
@@ -59,10 +41,11 @@ def GUI():
 
               [sg.Text('_' * 100, size=(75, 1))],
               [sg.Text('Other Settings (not recommended)', font=('Helvetica', 14))],
-              [sg.Checkbox('Sensor noise', default=False), sg.Checkbox('Wind disturbance', default=False),
-               sg.Checkbox('Low pass filter', default=False)],
+              [sg.Checkbox('Sensor noise', default=False, key='sens_noise'),
+               sg.Checkbox('Wind disturbance', default=False, key='dist'),
+               sg.Checkbox('Low pass filter', default=False, key='low_pass')],
 
-              [sg.CloseButton('Run Simulation', key='Run'), sg.Cancel('Exit')]]
+              [sg.Cancel('Run Simulation', key='RUN'), sg.Cancel('Exit', key='EXIT')]]
 
     window = sg.Window('Control Interface', layout)
 
@@ -72,7 +55,8 @@ def GUI():
 
     while True:  # Event Loop
         event, instructions = window.read()
-        if event == sg.WIN_CLOSED or event == 'Run' or event == 'Exit':
+
+        if event == sg.WIN_CLOSED or event == 'RUN' or event == 'EXIT':
             break
 
         if event.startswith('-OPEN COND-'):
@@ -83,6 +67,16 @@ def GUI():
             window['-COND-NORM'].update(visible=opened1)
             window['-COND-FAIL'].update(visible=opened2)
 
+        if event.startswith('-OPEN SINGLE'):
+            window['sens_noise'].update(disabled=True, value=False)
+            window['dist'].update(disabled=True, value=False)
+            window['low_pass'].update(disabled=True, value=False)
+
+        if event.startswith('-OPEN STRUCT-ATT') or event.startswith('-OPEN CASC'):
+            window['sens_noise'].update(disabled=False)
+            window['dist'].update(disabled=False)
+            window['low_pass'].update(disabled=False)
+
         if event.startswith('-OPEN STRUCT-'):
             opened3 = not opened3
             window['-OPEN STRUCT-ALT'].update(opened3)
@@ -91,7 +85,7 @@ def GUI():
 
     window.close()
 
-    if event == 'Exit' or event == sg.WIN_CLOSED:
+    if event == 'EXIT' or event == sg.WIN_CLOSED:
         exit()
 
     return instructions
@@ -101,13 +95,39 @@ def __main__():
 
     instructions = GUI()
 
+    import warnings
+
+    from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, Task, CascadedAltTask
+    from envs.h_controller import AltController
+
+    from tensorflow.python.util import deprecation
+
+    deprecation._PRINT_DEPRECATION_WARNINGS = False
+    deprecation._PRINTED_WARNING = False
+
+    warnings.filterwarnings("ignore", module='tensorflow')
+    warnings.filterwarnings("ignore", module='gym')
+
+    from envs.citation import CitationElevRange
+    from envs.citation import CitationAileronEff
+    from envs.citation import CitationRudderStuck
+    from envs.citation import CitationHorzTail
+    from envs.citation import CitationVertTail
+    from envs.citation import CitationIcing
+    from envs.citation import CitationCgShift
+    from envs.citation import CitationNormal
+
     is_failed = instructions['-OPEN COND-FAIL']
     fail_type = instructions[3]
     init_alt = float(instructions[0])
     init_speed = float(instructions[1])
 
     is_task_alt = instructions['-OPEN STRUCT-ALT']
-    is_cascaded = instructions[5]
+    is_cascaded = instructions['-OPEN CASC']
+
+    disturbance = instructions['dist']
+    sensor_noise = instructions['sens_noise']
+    low_pass = instructions['low_pass']
 
     if is_failed:
         if fail_type == 'rudder stuck at -15deg':
@@ -130,12 +150,14 @@ def __main__():
     if is_task_alt:
         if is_cascaded:
             env_eval = AltController(evaluation=True, FDD=is_failed, inner_controller=env,
-                                     init_alt=init_alt, init_speed=init_speed)
+                                     init_alt=init_alt, init_speed=init_speed, disturbance=disturbance,
+                                     sensor_noise=sensor_noise, low_pass=low_pass)
         else:
-            env_eval = env(evaluation=True, FDD=is_failed, task=AltitudeTask, init_alt=init_alt, init_speed=init_speed)
+            env_eval = env(evaluation=True, FDD=is_failed, task=AltitudeTask, init_alt=init_alt, init_speed=init_speed,
+                           disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
     else:
-        print('here')
-        env_eval = env(evaluation=True, task=AttitudeTask, FDD=is_failed, init_alt=init_alt, init_speed=init_speed)
+        env_eval = env(evaluation=True, task=AttitudeTask, FDD=is_failed, init_alt=init_alt, init_speed=init_speed,
+                       disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
 
     env_eval.render()
 

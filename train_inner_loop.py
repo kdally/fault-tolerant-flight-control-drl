@@ -93,7 +93,7 @@ env = CitationNormal
 # env = CitationIcing
 # env = CitationCgShift
 
-# learn(current_task, env)
+learn(current_task, env)
 run_preexisting(current_task, env)
 
 # os.system('say "your program has finished"')

@@ -12,8 +12,8 @@ from envs.citation import CitationNormal
 class AltController(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False,
-                 low_pass=False, init_alt=2000, init_speed=90):
+    def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False, disturbance=False,
+                 sensor_noise=False, low_pass=False, init_alt=2000, init_speed=90):
         super(AltController, self).__init__()
         assert bool((FDD and init_alt == 2000 and init_speed == 90) or not FDD), \
             'Failure cases only implemented for initial conditions init_alt == 2000 & init_speed == 90'
@@ -144,8 +144,8 @@ class AltController(gym.Env, ABC):
                       self.task_fun(), episode_reward, during_training,
                       self.InnerController.failure_input[0], FDD=self.InnerController.FDD)
         if verbose > 0:
-            print(f"Goal reached! Return = {episode_reward:.2f}")
-            print(self.InnerController.get_MAE(), self.get_MAE())
+            # print(f"Goal reached! Return = {episode_reward:.2f}")
+            # print(self.InnerController.get_MAE(), self.get_MAE())
             print(f'nRMSE% avg: {(self.InnerController.get_RMSE()[1:].sum()+self.get_RMSE()) / 3 * 100:.2f}%')
             print(f'nMAE% avg: {(self.InnerController.get_MAE()[1:].sum() + self.get_MAE()) / 3 * 100:.2f}%')
             print('')

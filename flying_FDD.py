@@ -19,6 +19,7 @@ from envs.citation import CitationCgShift
 def run_preexisting(task: Task, env_type):
 
     if task == CascadedAltTask:
+        print('here')
         env_eval = AltController(evaluation=True, FDD=True, inner_controller=env_type)
     else:
         env_eval = env_type(evaluation=True, FDD=True, task=task)
@@ -37,14 +38,14 @@ env = CitationElevRange
 # env = CitationIcing
 # env = CitationCgShift
 
-current_task = CascadedAltTask
-# current_task = AltitudeTask
+# current_task = CascadedAltTask
+current_task = AltitudeTask
 # current_task = AttitudeTask
 
 # run_preexisting(current_task, env)
 
-# run_preexisting(current_task, CitationElevRange)
-run_preexisting(current_task, CitationAileronEff)
+run_preexisting(current_task, CitationElevRange)
+# run_preexisting(current_task, CitationAileronEff)
 # run_preexisting(current_task, CitationRudderStuck)
 # run_preexisting(current_task, CitationHorzTail)
 # run_preexisting(current_task, CitationVertTail)

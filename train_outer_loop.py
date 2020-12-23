@@ -78,7 +78,7 @@ def keyboardInterruptHandler(signal, frame):
 
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
-# learn()
+learn()
 run_preexisting()
 
 

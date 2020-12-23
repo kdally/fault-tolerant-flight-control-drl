@@ -431,10 +431,10 @@ class SAC(ABC):
 
         # sanity checking the environment
         assert self.observation_space == env.observation_space, \
-            f"Error: the environment ({env.observation_space}) passed must have at least the same observation space as " \
+            f"Error: the environment ({env.observation_space}) must have the same observation space that " \
             f"the model was trained on ({self.observation_space})."
         assert self.action_space == env.action_space, \
-            f"Error: the environment ({env.action_space}) passed must have at least the same action space as the model" \
+            f"Error: the environment ({env.action_space}) must have the same action space that the model" \
             f" was trained on ({self.action_space})."
 
         self.env = env

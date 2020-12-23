@@ -1,6 +1,9 @@
 import gym
 import numpy as np
 from abc import abstractmethod
+
+from typing import List
+
 from agent.sac import SAC
 from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
 from tools.plot_response import plot_response
@@ -44,7 +47,7 @@ class Citation(gym.Env):
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
 
-        self.agents, self.agentID = self.load_agent(FDD)
+        self.agents, self.agentID = self.load_agent(FDD)  # type: SAC
 
         self.state = None
         self.state_deg = None
@@ -256,6 +259,7 @@ class Citation(gym.Env):
         return_a = 0
         done = False
         items = range(self.time.shape[0])
+
         with alive_bar(len(items)) as bar:
             while not done:
                 if self.time[self.step_count] < self.FDD_switch_time or not self.FDD:
@@ -270,7 +274,7 @@ class Citation(gym.Env):
         plot_response(self.agentID, self, self.task_fun(), return_a, during_training,
                       self.failure_input[0], FDD=self.FDD)
         if verbose > 0:
-            print(f'Goal reached! Return = {return_a:.2f}')
+            # print(f'Goal reached! Return = {return_a:.2f}')
             np.set_printoptions(formatter={'float': lambda x: "{0:0.3f}".format(x)})
             print(f'nRMSE% avg: {(self.get_RMSE().sum()) / 3 * 100:.2f}%')
             print(f'nMAE% avg: {(self.get_MAE().sum()) / 3 * 100:.2f}%')
@@ -338,7 +342,7 @@ class CitationRudderStuck(Citation):
 
     def load_agent(self, FDD):
         if FDD:
-            return [CitationNormal().load_agent()[0][0],
+            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
                     SAC.load(f"agent/trained/{self.task.agent_catalog['rudder_stuck']}.zip", env=self)], \
                    self.task.agent_catalog['rudder_stuck']
         return CitationNormal().load_agent()
@@ -362,7 +366,7 @@ class CitationAileronEff(Citation):
 
     def load_agent(self, FDD):
         if FDD:
-            return [CitationNormal().load_agent()[0][0],
+            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
                     SAC.load(f"agent/trained/{self.task.agent_catalog['aileron_eff']}.zip", env=self)], \
                    self.task.agent_catalog['aileron_eff']
         return CitationNormal().load_agent()
@@ -384,7 +388,7 @@ class CitationElevRange(Citation):
 
     def load_agent(self, FDD):
         if FDD:
-            return [CitationNormal().load_agent()[0][0],
+            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
                     SAC.load(f"agent/trained/{self.task.agent_catalog['elev_range']}.zip", env=self)], \
                    self.task.agent_catalog['elev_range']
         return CitationNormal().load_agent()
@@ -403,7 +407,7 @@ class CitationCgShift(Citation):
 
     def load_agent(self, FDD):
         if FDD:
-            return [CitationNormal().load_agent()[0][0],
+            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
                     SAC.load(f"agent/trained/{self.task.agent_catalog['cg_shift']}.zip", env=self)], \
                    self.task.agent_catalog['cg_shift']
         return CitationNormal().load_agent()
@@ -425,7 +429,7 @@ class CitationIcing(Citation):
 
     def load_agent(self, FDD):
         if FDD:
-            return [CitationNormal().load_agent()[0][0],
+            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
                     SAC.load(f"agent/trained/{self.task.agent_catalog['icing']}.zip", env=self)], \
                    self.task.agent_catalog['icing']
         return CitationNormal().load_agent()
@@ -455,7 +459,7 @@ class CitationHorzTail(Citation):
 
     def load_agent(self, FDD):
         if FDD:
-            return [CitationNormal().load_agent()[0][0],
+            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
                     SAC.load(f"agent/trained/{self.task.agent_catalog['horz_tail']}.zip", env=self)], \
                    self.task.agent_catalog['horz_tail']
         return CitationNormal().load_agent()
@@ -478,7 +482,7 @@ class CitationVertTail(Citation):
 
     def load_agent(self, FDD):
         if FDD:
-            return [CitationNormal().load_agent()[0][0],
+            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
                     SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self)], \
                    self.task.agent_catalog['vert_tail']
         return CitationNormal().load_agent()
