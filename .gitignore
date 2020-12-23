@@ -1,6 +1,9 @@
 /example/
 /figures/
+/optimization_logs/
+/reliability/
 /envs/phlab/
+/envs/thrust_obs/
 .idea
 scratchpad.py
 flying2.py

@@ -1,3 +1,4 @@
+import os
 import warnings
 import signal
 import pandas as pd
@@ -18,6 +19,8 @@ deprecation._PRINTED_WARNING = False
 warnings.filterwarnings("ignore", module='tensorflow')
 warnings.filterwarnings("ignore", module='gym')
 
+if not os.path.exists('figures/during_training'):
+    os.makedirs('figures/during_training')
 
 # from envs.citation import CitationElevRange as Citation
 # from envs.citation import CitationAileronEff as Citation

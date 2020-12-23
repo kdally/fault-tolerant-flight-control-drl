@@ -123,6 +123,8 @@ def create_model(env1, **kwargs):
     return SAC(LnMlpPolicy, env=env1, verbose=0, ent_coef='auto', **kwargs)
 
 
+if not os.path.exists('optimization_logs'):
+    os.makedirs('optimization_logs')
 data_frame = hyperparam_optimization()
 
 report_name = "report_100-trials_{}.csv".format(int(time.time()))
