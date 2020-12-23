@@ -171,7 +171,7 @@ class AttitudeTask(Task):
 
         return catalog
 
-    def get_task_tr(self):
+    def get_task_tr(self, init_alt=2000):
         super(AttitudeTask, self).get_task_tr()
 
         angle_theta = random.choice([20, 15, -20, -15])
@@ -205,7 +205,7 @@ class AttitudeTask(Task):
 
         return self.return_signals()
 
-    def get_task_eval(self):
+    def get_task_eval(self, init_alt=2000):
         super(AttitudeTask, self).get_task_eval()
 
         time_v = self.time_v
@@ -249,7 +249,7 @@ class AttitudeTask(Task):
 
         return self.return_signals()
 
-    def get_task_tr_fail(self, theta_angle=15):
+    def get_task_tr_fail(self, theta_angle=15, init_alt=2000):
         super(AttitudeTask, self).get_task_tr()
 
         time_v = self.time_v
@@ -280,7 +280,7 @@ class AttitudeTask(Task):
 
         return self.return_signals()
 
-    def get_task_eval_fail(self, theta_angle=15):
+    def get_task_eval_fail(self, theta_angle=15, init_alt=2000):
         super(AttitudeTask, self).get_task_eval_fail()
         time_v = self.time_v
 
@@ -312,7 +312,7 @@ class AttitudeTask(Task):
 
         return self.return_signals()
 
-    def get_task_eval_FDD(self, theta_angle=15):
+    def get_task_eval_FDD(self, theta_angle=15, init_alt=2000):
         super(AttitudeTask, self).get_task_eval_FDD()
         time_v = self.time_v
 
@@ -391,18 +391,22 @@ class AltitudeTask(Task):
     def get_agent_catalog(self):
         catalog = super(AltitudeTask, self).get_agent_catalog()
         catalog['normal'] = 'altitude_2attitude_P7V00G'
-        catalog['elev_range'] = 'altitude_2attitude_2DPKKS_de'
-        catalog['aileron_eff'] = 'altitude_2attitude_GGFC9G_da'
-
+        catalog['elev_range'] = 'altitude_2attitude_P7V00G'
+        catalog['aileron_eff'] = 'altitude_2attitude_P7V00G'
+        catalog['rudder_stuck'] = 'altitude_2attitude_P7V00G'
+        catalog['horz_tail'] = 'altitude_2attitude_P7V00G'
+        catalog['vert_tail'] = 'altitude_2attitude_P7V00G'
+        catalog['icing'] = 'altitude_2attitude_P7V00G'
+        catalog['cg_shift'] = 'altitude_2attitude_P7V00G'
         return catalog
 
-    def get_task_tr(self):
+    def get_task_tr(self, init_alt=2000):
         super(AltitudeTask, self).get_task_tr()
 
         time_v = self.time_v
 
-        self.signals['h'] = np.hstack([np.linspace(2000, 2055, int(10 * time_v.shape[0] / time_v[-1].round())),
-                                       2055 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
+        self.signals['h'] = np.hstack([np.linspace(init_alt, init_alt+55, int(10 * time_v.shape[0] / time_v[-1].round())),
+                                       init_alt+55 * np.ones(int(10 * time_v.shape[0] / time_v[-1].round())),
                                        # np.linspace(2044, 2025, int(3.75 * time_v.shape[0] / time_v[-1].round())),
                                        # 2025 * np.ones(int(6.75 * time_v.shape[0] / time_v[-1].round())),
                                        ])
@@ -424,14 +428,14 @@ class AltitudeTask(Task):
 
         return self.return_signals()
 
-    def get_task_eval(self):
+    def get_task_eval(self, init_alt=2000):
+
         self.time_v = time_v = np.arange(0, 120, 0.01)
-        initial_alt = 2000
-        self.signals['h'] = np.hstack([initial_alt * np.ones(int(3 * time_v.shape[0] / time_v[-1].round())),
-                                       np.linspace(initial_alt, initial_alt+480, int(81 * time_v.shape[0] / time_v[-1].round())),
-                                       (initial_alt+480) * np.ones(int(12 * time_v.shape[0] / time_v[-1].round())),
-                                       np.linspace(initial_alt+480, initial_alt+390, int(18 * time_v.shape[0] / time_v[-1].round())),
-                                       (initial_alt+390) * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
+        self.signals['h'] = np.hstack([init_alt * np.ones(int(3 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(init_alt, init_alt+480, int(81 * time_v.shape[0] / time_v[-1].round())),
+                                       (init_alt+480) * np.ones(int(12 * time_v.shape[0] / time_v[-1].round())),
+                                       np.linspace(init_alt+480, init_alt+390, int(18 * time_v.shape[0] / time_v[-1].round())),
+                                       (init_alt+390) * np.ones(int(6 * time_v.shape[0] / time_v[-1].round())),
                                        ])
         sign = 1
         angle1 = 40
@@ -465,7 +469,7 @@ class AltitudeTask(Task):
 
         return self.return_signals()
 
-    def get_task_tr_fail(self, theta_angle=None):
+    def get_task_tr_fail(self, init_alt=2000):
         super(AltitudeTask, self).get_task_tr()
 
         time_v = self.time_v
@@ -493,7 +497,7 @@ class AltitudeTask(Task):
 
         return self.return_signals()
 
-    def get_task_eval_fail(self, theta_angle=None):
+    def get_task_eval_fail(self, init_alt=2000):
         self.time_v = time_v = np.arange(0, 200, 0.01)
         self.signals['h'] = np.hstack([2000 * np.ones(int(5 * time_v.shape[0] / time_v[-1].round())),
                                        np.linspace(2000, 2800, int(135 * time_v.shape[0] / time_v[-1].round())),
@@ -534,7 +538,7 @@ class AltitudeTask(Task):
         # self.signals['phi'] =np.zeros(int(self.time_v.shape[0]))
         return self.return_signals()
 
-    def get_task_eval_FDD(self, theta_angle=None):
+    def get_task_eval_FDD(self, init_alt=2000):
         self.time_v = time_v = np.arange(0, 120, 0.01)
         self.signals['h'] = np.hstack([2000 * np.ones(int(3 * time_v.shape[0] / time_v[-1].round())),
                                        np.linspace(2000, 2210, int(36 * time_v.shape[0] / time_v[-1].round())),

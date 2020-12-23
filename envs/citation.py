@@ -14,8 +14,12 @@ class Citation(gym.Env):
     """Custom Environment that follows gym interface"""
 
     def __init__(self, evaluation=False, FDD=False, task=AttitudeTask,
-                 disturbance=False, sensor_noise=False, low_pass=False):
+                 disturbance=False, sensor_noise=False, low_pass=False,
+                 init_alt=2000, init_speed=90):
         super(Citation, self).__init__()
+
+        assert bool((FDD and init_alt == 2000 and init_speed == 90) or not FDD), \
+            'Failure cases only implemented for initial conditions init_alt == 2000 & init_speed == 90'
 
         self.rate_limits = self.ActionLimits(np.array([[-20, -40, -20], [20, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
@@ -30,7 +34,7 @@ class Citation(gym.Env):
 
         self.time = self.task_fun()[3]
         self.dt = self.time[1] - self.time[0]
-        self.ref_signal = self.task_fun()[0]
+        self.ref_signal = self.task_fun(init_alt=init_alt)[0]
         self.track_indices = self.task_fun()[1]
         self.obs_indices = self.task_fun()[2]
 
@@ -41,7 +45,6 @@ class Citation(gym.Env):
         self.current_deflection = np.zeros(3)
 
         self.agents, self.agentID = self.load_agent(FDD)
-        # self.agents, self.agentID = None, None
 
         self.state = None
         self.state_deg = None
@@ -54,21 +57,22 @@ class Citation(gym.Env):
 
     def step(self, action_rates: np.ndarray):
 
-        # self.current_deflection = self.bound_a(self.current_deflection + self.scale_a(action_rates) * self.dt) #diff: bound_a
-        self.current_deflection = self.current_deflection + self.scale_a(action_rates) * self.dt  # diff: bound_a
+        self.current_deflection = self.current_deflection + self.scale_a(action_rates) * self.dt
         filtered_deflection = self.filter_control_input(self.current_deflection)
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
 
         if self.time[self.step_count] < self.failure_time and self.evaluation:
             self.state = self.C_MODEL.step(
-                np.hstack([d2r(filtered_deflection + self.get_disturbance()), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[1]]))
+                np.hstack([d2r(filtered_deflection + self.get_disturbance()), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           self.failure_input[1]]))
         else:
             self.state = self.C_MODEL.step(
-                np.hstack([d2r(filtered_deflection + self.get_disturbance()), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, self.failure_input[2]]))
+                np.hstack([d2r(filtered_deflection + self.get_disturbance()), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           self.failure_input[2]]))
         self.state_deg = self.state * self.scale_s
 
         self.error = d2r(self.ref_signal[:, self.step_count] -
-                          self.state_deg[self.track_indices] + self.get_sensor_noise()[self.track_indices]) \
+                         self.state_deg[self.track_indices] + self.get_sensor_noise()[self.track_indices]) \
                      * self.scale_error(self.step_count)
 
         self.state_history[:, self.step_count] = self.state_deg
@@ -108,9 +112,10 @@ class Citation(gym.Env):
     def get_reward(self):
 
         max_bound = np.ones(self.error.shape)
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))
-        reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound), -max_bound)
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))  # square function
+        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))   # rational function
+        reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound),
+                                 -max_bound)  # abs. linear function
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
 
@@ -129,7 +134,7 @@ class Citation(gym.Env):
         y_ref2[-1, 0] = 5
         y_ref2[-1, 1] = -5
 
-        RMSE = np.sqrt(np.mean(np.square((y_ref - y_meas)), axis=1))/(y_ref2.max(axis=1)-y_ref2.min(axis=1))
+        RMSE = np.sqrt(np.mean(np.square((y_ref - y_meas)), axis=1)) / (y_ref2.max(axis=1) - y_ref2.min(axis=1))
         return RMSE
 
     def get_MAE(self):
@@ -142,7 +147,7 @@ class Citation(gym.Env):
         y_ref2[-1, 0] = 5
         y_ref2[-1, 1] = -5
 
-        MAE = np.mean(np.absolute(y_ref - y_meas), axis=1)/(y_ref2.max(axis=1)-y_ref2.min(axis=1))
+        MAE = np.mean(np.absolute(y_ref - y_meas), axis=1) / (y_ref2.max(axis=1) - y_ref2.min(axis=1))
         return MAE
 
     def stop_NaNs(self):
@@ -153,18 +158,18 @@ class Citation(gym.Env):
             agent.ID = ID
             agent.save(f'agent/trained/{self.task_fun()[4]}_{agent.ID}.zip')
             print('Training is corrupt because of NaN values, terminated early. '
-                  'So-far best trained agent may be good-performing.')
+                  'So-far best trained agent may show good performance.')
         plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
                       failure=self.failure_input[0], FDD=self.FDD, broken=True)
         exit()
 
     def filter_control_input(self, deflection):
 
-        w_0 = 2*2*np.pi  # rad/s
+        w_0 = 2 * 2 * np.pi  # rad/s
         filtered_deflection = deflection.copy()
         if self.step_count > 1 and self.enable_low_pass:
-            filtered_deflection = self.action_history[:, self.step_count-1]/(1+w_0*self.dt) + \
-                                  deflection * (w_0*self.dt)/(1+w_0*self.dt)
+            filtered_deflection = self.action_history[:, self.step_count - 1] / (1 + w_0 * self.dt) + \
+                                  deflection * (w_0 * self.dt) / (1 + w_0 * self.dt)
 
         return filtered_deflection
 
@@ -172,10 +177,10 @@ class Citation(gym.Env):
 
         sensor_noise = np.zeros(self.state.shape)
         if self.has_sensor_noise:  # from https://doi.org/10.2514/6.2018-1127
-            sensor_noise[0:3] += np.random.normal(scale=6.32e-4, size=3)   # p, q, r
-            sensor_noise[5] += np.random.normal(scale=8.72e-3)             # sideslip, estimate from alpha
-            sensor_noise[6:8] += np.random.normal(scale=3.16e-5, size=2)   # phi, theta
-            sensor_noise[9] += np.random.normal(scale=0.5)                 # h (from Joon)
+            sensor_noise[0:3] += np.random.normal(scale=6.32e-4, size=3)  # p, q, r
+            sensor_noise[5] += np.random.normal(scale=8.72e-3)  # sideslip, estimate from alpha
+            sensor_noise[6:8] += np.random.normal(scale=3.16e-5, size=2)  # phi, theta
+            sensor_noise[9] += np.random.normal(scale=0.5)  # h (from Joon)
         return sensor_noise
 
     def get_disturbance(self):
@@ -190,10 +195,10 @@ class Citation(gym.Env):
 
         if 7 in self.track_indices:
             return np.array([self.pitch_factor[step_count],
-                                    self.roll_factor[step_count], self.sideslip_factor[step_count]])
+                             self.roll_factor[step_count], self.sideslip_factor[step_count]])
         else:
             return np.array([self.alt_factor[step_count],
-                                    self.roll_factor[step_count], self.sideslip_factor[step_count]])
+                             self.roll_factor[step_count], self.sideslip_factor[step_count]])
 
     def scale_a(self, action_unscaled: np.ndarray) -> np.ndarray:
         """Min-max un-normalization from [-1, 1] action space to actuator limits"""
@@ -283,8 +288,28 @@ class Citation(gym.Env):
 
 class CitationNormal(Citation):
 
+    def __init__(self, init_alt=2000, init_speed=90, evaluation=False, FDD=False, task=AttitudeTask,
+                 disturbance=False, sensor_noise=False, low_pass=False):
+        self.init_alt = init_alt
+        self.init_speed = init_speed
+        super(CitationNormal, self).__init__(evaluation=evaluation, FDD=FDD, task=task,
+                                       disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
+        self.ref_signal = self.task_fun(init_alt=init_alt)[0]
+
     def get_plant(self):
-        plant = importlib.import_module(f'envs.normal_2000_90._citation', package=None)
+
+        if self.init_alt == 2000 and self.init_speed == 90:
+            plant = importlib.import_module(f'envs.normal_2000_90._citation', package=None)
+        elif self.init_alt == 2000 and self.init_speed == 140:
+            plant = importlib.import_module(f'envs.normal_2000_140._citation', package=None)
+        elif self.init_alt == 5000 and self.init_speed == 90:
+            plant = importlib.import_module(f'envs.normal_5000_90._citation', package=None)
+        elif self.init_alt == 5000 and self.init_speed == 140:
+            plant = importlib.import_module(f'envs.normal_5000_140._citation', package=None)
+        else:
+            raise NotImplementedError('No model with the specified initial conditions is present. ' \
+                                      'Choose within init_alt={2000, 5000} and init_speed={90, 120}.')
+
         return plant, ['normal', 1.0, 1.0]
 
     def load_agent(self, FDD=False):
@@ -292,6 +317,16 @@ class CitationNormal(Citation):
             raise NotImplementedError('No fault detection and diagnosis on the non-failed system.')
         return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip",
                          env=self)], self.task.agent_catalog['normal']
+
+    def reset(self):
+        super(CitationNormal, self).reset()
+        self.ref_signal = self.task_fun(init_alt=self.init_alt)[0]
+        return np.zeros(self.observation_space.shape)
+
+    def reset_soft(self):
+        super(CitationNormal, self).reset_soft()
+        self.ref_signal = self.task_fun(init_alt=self.init_alt)[0]
+        return np.zeros(self.observation_space.shape)
 
 
 class CitationRudderStuck(Citation):
@@ -385,7 +420,7 @@ class CitationIcing(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.ice2000._citation', package=None)
+        plant = importlib.import_module(f'envs.ice._citation', package=None)
         return plant, ['ice', 1.0, 0.7]  # https://doi.org/10.1016/S0376-0421(01)00018-5
 
     def load_agent(self, FDD):
@@ -491,7 +526,6 @@ class CitationVerif(CitationNormal):
             exit()
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
-
 
 # from stable_baselines.common.env_checker import check_env
 # envs = Citation()

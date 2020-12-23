@@ -33,7 +33,6 @@ class SaveOnBestReturn(ABC):
 
         # The RL model
         self.model = None
-        # An alias for self.model.get_env(), the environment used for training
         self.training_env = None  # type: Union[gym.Env, None]
         # Number of time the callback was called
         self.n_calls = 0  # type: int

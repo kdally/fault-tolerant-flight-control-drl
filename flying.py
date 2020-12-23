@@ -60,7 +60,7 @@ def learn(task: Task, env_type=CitationNormal):
 
 
 def run_preexisting(task: Task = AltitudeTask, env_type=CitationNormal, during_training=False):
-    env_eval = env_type(evaluation=True, task=task)
+    env_eval = env_type(evaluation=True, task=task, init_speed=140)
 
     if during_training:
         agent = SAC.load(f"agent/trained/tmp/best_model.zip", env=env_eval)

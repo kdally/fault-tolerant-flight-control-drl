@@ -1,6 +1,5 @@
 import random
 from typing import List, Union
-
 import numpy as np
 
 
@@ -18,16 +17,6 @@ class ReplayBuffer(object):
 
     def __len__(self) -> int:
         return len(self._storage)
-
-    @property
-    def storage(self):
-        """[(Union[np.ndarray, int], Union[np.ndarray, int], float, Union[np.ndarray, int], bool)]: content of the replay buffer"""
-        return self._storage
-
-    @property
-    def buffer_size(self) -> int:
-        """float: Max capacity of the buffer"""
-        return self._maxsize
 
     def can_sample(self, n_samples: int) -> bool:
         """
@@ -57,22 +46,6 @@ class ReplayBuffer(object):
             self._storage[self._next_idx] = data
         self._next_idx = (self._next_idx + 1) % self._maxsize
 
-    def _encode_sample(self, idxes: Union[List[int], np.ndarray]):
-        obses_t, actions, rewards, obses_tp1, dones = [], [], [], [], []
-        for i in idxes:
-            data = self._storage[i]
-            obs_t, action, reward, obs_tp1, done = data
-            obses_t.append(np.array(obs_t, copy=False))
-            actions.append(np.array(action, copy=False))
-            rewards.append(reward)
-            obses_tp1.append(np.array(obs_tp1, copy=False))
-            dones.append(done)
-        return (np.array(obses_t),
-                np.array(actions),
-                np.array(rewards),
-                np.array(obses_tp1),
-                np.array(dones))
-
     def sample(self, batch_size: int, **_kwargs):
         """
         Sample a batch of experiences.
@@ -87,6 +60,21 @@ class ReplayBuffer(object):
                 and 0 otherwise.
         """
         idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
-        return self._encode_sample(idxes)
+
+        obses_t, actions, rewards, obses_tp1, dones = [], [], [], [], []
+        for i in idxes:
+            data = self._storage[i]
+            obs_t, action, reward, obs_tp1, done = data
+            obses_t.append(np.array(obs_t, copy=False))
+            actions.append(np.array(action, copy=False))
+            rewards.append(reward)
+            obses_tp1.append(np.array(obs_tp1, copy=False))
+            dones.append(done)
+
+        return (np.array(obses_t),
+                np.array(actions),
+                np.array(rewards),
+                np.array(obses_tp1),
+                np.array(dones))
 
 

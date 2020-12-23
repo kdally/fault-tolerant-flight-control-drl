@@ -60,7 +60,7 @@ def learn():
 
 
 def run_preexisting(during_training=False):
-    env_eval = AltController(evaluation=True, inner_controller=Citation)
+    env_eval = AltController(evaluation=True, inner_controller=Citation, init_alt=5000, init_speed=90)
 
     if during_training:
         agent = SAC.load(f"agent/trained/tmp/best_model.zip", env=env_eval)

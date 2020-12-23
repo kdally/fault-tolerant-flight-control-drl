@@ -12,16 +12,20 @@ from envs.citation import CitationNormal
 class AltController(gym.Env, ABC):
     """Custom Environment that follows gym interface"""
 
-    def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False, low_pass=False):
+    def __init__(self, inner_controller=CitationNormal, evaluation=False, FDD=False,
+                 low_pass=False, init_alt=2000, init_speed=90):
         super(AltController, self).__init__()
+        assert bool((FDD and init_alt == 2000 and init_speed == 90) or not FDD), \
+            'Failure cases only implemented for initial conditions init_alt == 2000 & init_speed == 90'
 
-        self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask, FDD=FDD)
+        self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask,
+                                                FDD=FDD, init_speed=init_speed, init_alt=init_alt)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.rate_limits = self.ActionLimits(np.array([[-10], [10]]))
         self.time = self.InnerController.time
         self.dt = self.InnerController.dt
         self.task_fun = self.InnerController.task_fun
-        self.ref_signal = self.InnerController.external_ref_signal = self.task_fun()[5]
+        self.ref_signal = self.InnerController.external_ref_signal = self.task_fun(init_alt=init_alt)[5]
         self.obs_indices = self.task_fun()[6]
         self.track_index = self.task_fun()[7]
         self.enable_low_pass = low_pass
@@ -160,11 +164,7 @@ class AltController(gym.Env, ABC):
             self.low, self.high = limits[0, :], limits[1, :]
 
 # from stable_baselines.common.env_checker import check_env
-#
 # envs = AltController()
-#
-# # Box(4,) means that it is a Vector with 4 components
 # print("Observation space:", envs.observation_space.shape)
 # print("Action space:", envs.action_space)
-#
 # check_env(envs, warn=True)
