@@ -95,6 +95,10 @@ def __main__():
 
     instructions = GUI()
 
+    import os
+    if not os.path.exists('figures'):
+        os.makedirs('figures')
+
     import warnings
 
     from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, Task, CascadedAltTask

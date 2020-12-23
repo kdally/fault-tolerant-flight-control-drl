@@ -249,6 +249,8 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
+    fig.show()
+
 
 def plot_response_att(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -489,6 +491,8 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
+
+    fig.show()
 
 
 def plot_response_da(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
@@ -741,6 +745,8 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
+    fig.show()
+
 
 def plot_response_dr(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -987,6 +993,8 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
+
+    fig.show()
 
 
 def plot_response_cg(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
@@ -1239,6 +1247,8 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
+    fig.show()
+
 
 def plot_response_ice(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -1490,6 +1500,8 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
+    fig.show()
+
 
 def plot_response_norm(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -1737,6 +1749,7 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
+    fig.show()
 
 def plot_response_single(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -1984,11 +1997,14 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
+    fig.show()
+
 
 def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
-    if 9 in env.track_indices:
+    if 9 in env.track_indices or type(env.external_ref_signal) == np.ndarray:
         if '_dr' in env.agentID:
+            print(env.agentID)
             plot_response_dr(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
         elif '_da' in env.agentID:
             plot_response_da(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
@@ -2001,4 +2017,5 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
 
     else:
         plot_response_att(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
+
 
