@@ -68,4 +68,9 @@ python optimization.py
 
 * Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S (2018) [[paper](https://arxiv.org/abs/1801.01290)][[code](https://github.com/haarnoja/sac/tree/master/sac)]
 * Hill, A. et al. (2018) [[doc](https://stable-baselines.readthedocs.io/)][[code](https://github.com/hill-a/stable-baselines)]
+
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
+
 ***
