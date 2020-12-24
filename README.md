@@ -38,8 +38,10 @@ python evaluate.py
 ```
 
 > Select flight settings on the GUI. Default choices are recommended for unexperienced users.
-<img src="https://i.ibb.co/2snzpfJ/GUI.png" width="400"/>
 
+<p align="center">
+  <img src="https://i.ibb.co/2snzpfJ/GUI.png" width="350"/>
+</p>
 
 2. To train the inner-loop and outer-loop controllers ⚙️
 ```sh
