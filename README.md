@@ -24,7 +24,7 @@ cd fault-tolerant-flight-control-drl
 ```
 
 2. Install required packages
- > Only compatible with TensorFlow 1.14
+ > Only compatible with TensorFlow 1.XX
 
 ```sh
 pip install -r requirements.txt
