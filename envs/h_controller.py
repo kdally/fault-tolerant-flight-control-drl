@@ -120,10 +120,6 @@ class AltController(gym.Env, ABC):
 
     def render(self, ext_agent=None, verbose=1):
 
-        # import matlab.engine
-        # eng = matlab.engine.start_matlab()
-        # eng.cd('/Users/kdally/OneDrive - Delft University of Technology/TU/MSc Thesis/DRL-cessna-citation-fc/matlab')
-
         during_training = False
         if ext_agent is not None:
             self.agent = ext_agent
@@ -138,7 +134,6 @@ class AltController(gym.Env, ABC):
         items = range(self.time.shape[0])
         with alive_bar(len(items)) as bar:
             while not done:
-                # eng.run_3d_sim(matlab.double(list(self.InnerController.state)), nargout=0)
                 pitch_ref, _ = self.agent.predict(obs_outer_loop, deterministic=True)
                 obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
                 episode_reward += reward_outer_loop

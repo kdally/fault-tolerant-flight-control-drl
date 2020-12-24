@@ -1,21 +1,18 @@
-import os
-import warnings
-import PySimpleGUI as sg
-
 
 def GUI():
+    import PySimpleGUI as sg
 
     section1 = [[sg.T('Initial Flight Conditions :')],
                 [sg.Text('Initial Altitude [m]:'),
-                 sg.InputCombo(values=('2000', '5000'), auto_size_text=True, default_value='2000',key='init_alt')],
+                 sg.InputCombo(values=('2000', '5000'), auto_size_text=True, default_value='2000')],
                 [sg.Text('Initial Speed [m/s]:'),
-                 sg.InputCombo(values=('90', '140'), auto_size_text=True, default_value='90',key='init_speed')]]
+                 sg.InputCombo(values=('90', '140'), auto_size_text=True, default_value='90')]]
 
     section2 = [[sg.T('Failure Type')],
                 [sg.InputCombo(values=(
                 'rudder stuck at -15deg', '-70% aileron effectiveness', 'elevator range reduced to [-3deg, 3deg]',
                 'partial horizontal tail loss', 'partial vertical tail loss', 'c.g. shift', 'severe icing'),
-                               default_value='rudder stuck at -15deg', auto_size_text=True, key='fail_type')],
+                               default_value='rudder stuck at -15deg', auto_size_text=True)],
                 [sg.Text('Initial conditions are fixed at 2000m and 90 m/s for the altitude and speed, respectively.')]]
 
     section3 = [[sg.T('Controller Structure :')],
@@ -24,12 +21,9 @@ def GUI():
                  sg.Radio('Single (not recommended)', 'struct', size=(25, 1), enable_events=True,
                           key='-OPEN SINGLE')], ]
 
-    fname = 'envs/citation_550.png'
-
     layout = [[sg.Text('Fault Tolerant Flight Control for the Cessna Citation 500', font=('Helvetica', 18))],
               [sg.Text('with Soft Actor Critic Deep Reinforcement Learning', font=('Helvetica', 18))],
               [sg.Text('Author: Killian Dally, TU Delft (2020)')],
-              [sg.Image(filename=fname, size=(450, 200), tooltip='PH-LAB Aircraft')],
 
               [sg.Text('_' * 100, size=(75, 1))],
               [sg.Text('Aircraft condition', font=('Helvetica', 14))],
@@ -51,7 +45,7 @@ def GUI():
                sg.Checkbox('Wind disturbance', default=False, key='dist'),
                sg.Checkbox('Low pass filter', default=False, key='low_pass')],
 
-              [sg.Cancel('Run Simulation', key='RUN',tooltip='Sim. time: 20s'), sg.Cancel('Exit', key='EXIT')]]
+              [sg.Cancel('Run Simulation', key='RUN'), sg.Cancel('Exit', key='EXIT')]]
 
     window = sg.Window('Control Interface', layout)
 
@@ -101,8 +95,11 @@ def __main__():
 
     instructions = GUI()
 
+    import os
     if not os.path.exists('figures'):
         os.makedirs('figures')
+
+    import warnings
 
     from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, Task, CascadedAltTask
     from envs.h_controller import AltController
@@ -125,9 +122,9 @@ def __main__():
     from envs.citation import CitationNormal
 
     is_failed = instructions['-OPEN COND-FAIL']
-    fail_type = instructions['fail_type']
-    init_alt = float(instructions['init_alt'])
-    init_speed = float(instructions['init_speed'])
+    fail_type = instructions[3]
+    init_alt = float(instructions[0])
+    init_speed = float(instructions[1])
 
     is_task_alt = instructions['-OPEN STRUCT-ALT']
     is_cascaded = instructions['-OPEN CASC']
