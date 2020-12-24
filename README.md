@@ -8,10 +8,11 @@
 
 > Fault tolerant flight control for the Cessna Citation 500. First-ever use of Deep Reinforcement Learning for jet aircraft. Employed Soft Actor Critic (SAC). 
 
-![](https://i.ibb.co/kKqdN38/otherview-copy.png)
-![](https://i.ibb.co/2snzpfJ/GUI.png)
+![](https://i.ibb.co/kKqdN38/otherview-copy.png =350x)
+
 
 ## Install
+> Only compatible with MacOS at the moment. Compatibility with Linux and Windows expected in the future.
 
 1. Clone fault-tolerant-flight-control-drl
 ```sh
@@ -33,6 +34,8 @@ pip install -r requirements.txt
 ```sh
 python evaluate.py
 ```
+> Select flight settings on the GUI. Default choices recommended.
+![](https://i.ibb.co/2snzpfJ/GUI.png | width=100)
 
 2. To train the inner-loop and outer-loop controllers ⚙️
 ```sh
