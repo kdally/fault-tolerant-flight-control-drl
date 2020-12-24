@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to the First  DRL Controller for a Jet Aircraft 👋</h1>
+<h1 align="center">Welcome to the First  DRL Controller for a Jet Aircraft 🛩</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
@@ -8,7 +8,6 @@
 
 > Fault tolerant flight control for the Cessna Citation 500. First-ever use of Deep Reinforcement Learning for jet aircraft. Employed Soft Actor Critic (SAC). 
 
-> Developped as part of a Master's Thesis at the Control & Simulation Division of Delft University of Technology.
 
 ## Install
 
@@ -28,7 +27,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-1. To fly the aircraft right away ✈️
+1. To fly the aircraft right away 🚀
 ```sh
 python evaluate.py
 ```
@@ -51,6 +50,8 @@ python optimization.py
 (Delft University of Technology MSc. Student)
 * Github: [@kdally](https://github.com/kdally)
 * LinkedIn: [@kdally](https://linkedin.com/in/kdally)
+
+> Project developed as part of a Master's Thesis at the Control & Simulation Division of Delft University of Technology.
 
 
 ***
