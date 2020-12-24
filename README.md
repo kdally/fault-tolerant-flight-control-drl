@@ -8,6 +8,7 @@
 
 > Fault tolerant flight control for the Cessna Citation 500. First-ever use of Deep Reinforcement Learning for jet aircraft. Employed Soft Actor Critic (SAC). 
 
+![alt text](https://github.com/kdally/fault-tolerant-flight-control-drl/envs/GUI.png?raw=true)
 
 ## Install
 
@@ -38,7 +39,7 @@ python train_inner_loop.py
 python train_outer_loop.py
 ```
 
-3. Perform hyperparameter optimization 🎯
+3. To perform a hyperparameter optimization 🎯
 ```sh
 python optimization.py
 ```
@@ -53,5 +54,8 @@ python optimization.py
 
 > Project developed as part of a Master's Thesis at the Control & Simulation Division of Delft University of Technology.
 
+## References
 
+* Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S (2018) [[paper](https://arxiv.org/abs/1801.01290)][[code](https://github.com/haarnoja/sac/tree/master/sac)]
+* Hill, A. et al. (2018) [[doc](https://stable-baselines.readthedocs.io/)][[code](https://github.com/hill-a/stable-baselines)]
 ***
