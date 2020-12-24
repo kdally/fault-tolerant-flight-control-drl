@@ -29,7 +29,7 @@ def GUI():
     layout = [[sg.Text('Fault Tolerant Flight Control for the Cessna Citation 500', font=('Helvetica', 18))],
               [sg.Text('with Soft Actor Critic Deep Reinforcement Learning', font=('Helvetica', 18))],
               [sg.Text('Author: Killian Dally, TU Delft (2020)')],
-              [sg.Image(filename=fname, size=(450, 200), tooltip='PH-LAB Aircraft')],
+              [sg.Image(filename=fname, size=(440, 140), tooltip='PH-LAB Aircraft')],
 
               [sg.Text('_' * 100, size=(75, 1))],
               [sg.Text('Aircraft condition', font=('Helvetica', 14))],
