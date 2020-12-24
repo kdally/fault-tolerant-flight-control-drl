@@ -4,6 +4,8 @@
 /reliability/
 /envs/phlab/
 /envs/thrust_obs/
+/matlab/
+verification.py
 .idea
 scratchpad.py
 flying2.py

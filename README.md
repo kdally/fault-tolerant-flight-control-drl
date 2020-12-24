@@ -8,7 +8,8 @@
 
 > Fault tolerant flight control for the Cessna Citation 500. First-ever use of Deep Reinforcement Learning for jet aircraft. Employed Soft Actor Critic (SAC). 
 
-![alt text](https://github.com/kdally/fault-tolerant-flight-control-drl/envs/GUI.png?raw=true)
+![](https://ibb.co/WnBTmDy)
+![](https://ibb.co/1dvC4wc)
 
 ## Install
 
