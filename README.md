@@ -12,7 +12,7 @@
   <img src="./envs/citation_550_header.svg" width="700"/>
 </p>
 
-## Install
+## Installation
 > Only compatible with MacOS at the moment. Compatibility with Linux and Windows expected in the future.
 
 1. Clone fault-tolerant-flight-control-drl
