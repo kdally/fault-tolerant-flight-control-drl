@@ -28,14 +28,14 @@ cd fault-tolerant-flight-control-drl
  > Only compatible with TensorFlow 1.XX
 
 ```sh
-pip install -r requirements.txt
+python setup.py install
 ```
 
 ## Usage
 
 1. To fly the aircraft right away 🛩
 ```sh
-python evaluate.py
+python tests/test_all.py
 ```
 
 > Select flight settings on the GUI. Default choices are recommended for unexperienced users.
@@ -47,13 +47,13 @@ python evaluate.py
 
 2. To train the inner-loop and outer-loop controllers ⚙️
 ```sh
-python train_inner_loop.py
-python train_outer_loop.py
+python tests/train_inner_loop.py
+python tests/train_outer_loop.py
 ```
 
 3. To perform a hyperparameter optimization 🎯
 ```sh
-python optimization.py
+python tests/optimization.py
 ```
 
 
