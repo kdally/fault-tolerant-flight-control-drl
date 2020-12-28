@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
 
 pd.set_option('mode.chained_assignment', None)
@@ -9,12 +7,10 @@ pd.set_option('mode.chained_assignment', None)
 def plot_weights(ID: str, task_type: str, last=None):
 
     if last:
-        df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                         f'Thesis/DRL-cessna-citation-fc/agent/trained/tmp/monitor.csv', header=0)
+        df = pd.read_csv(f'./agent/trained/tmp/monitor.csv', header=0)
 
     else:
-        df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                         f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)
+        df = pd.read_csv(f'./agent/trained/{task_type}_{ID}.csv', header=0)
 
     fig = px.line(df, x=df['l'], y=df.iloc[:, 3:].columns)
 
@@ -33,8 +29,7 @@ def plot_weights(ID: str, task_type: str, last=None):
         margin=dict(l=50, r=5, b=50, t=10)
     )
 
-    fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
-                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_weights.pdf")
+    fig.write_image(f"figures/{task_type}_{ID}_weights.pdf")
 
 
 # plot_weights('7AJEAX_ice', '3attitude_step', last=True)

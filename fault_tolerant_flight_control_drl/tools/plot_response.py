@@ -244,12 +244,14 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+        return
     elif failure != 'normal':
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
     fig.show()
+    return
 
 
 def plot_response_att(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
@@ -487,12 +489,14 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+        return
     elif failure != 'normal':
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
     fig.show()
+    return
 
 
 def plot_response_da(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
@@ -740,12 +744,14 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+        return
     elif failure != 'normal':
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
     fig.show()
+    return
 
 
 def plot_response_dr(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
@@ -1242,13 +1248,14 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+        return
     elif failure != 'normal':
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
     fig.show()
-
+    return
 
 def plot_response_ice(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -1495,12 +1502,14 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+        return
     elif failure != 'normal':
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
     fig.show()
+    return
 
 
 def plot_response_norm(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
@@ -1744,12 +1753,15 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+        return
     elif failure != 'normal':
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
     fig.show()
+    return
+
 
 def plot_response_single(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 
@@ -1992,12 +2004,14 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
     fig.update_traces(mode='lines')
     if during_training:
         fig.write_image(f"figures/during_training/{env.task_fun()[4]}_r{abs(int(perf))}.eps")
+        return
     elif failure != 'normal':
         fig.write_image(f"figures/{name}_{failure}_r{abs(int(perf))}.pdf")
     else:
         fig.write_image(f"figures/{name}_r{abs(int(perf))}.pdf")
 
     fig.show()
+    return
 
 
 def plot_response(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):

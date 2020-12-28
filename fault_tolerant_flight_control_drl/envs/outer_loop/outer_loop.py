@@ -1,12 +1,12 @@
 import gym
 import numpy as np
 from abc import ABC
-from agent.sac import SAC
-from tools.get_task import CascadedAltTask, ReliabilityTask
-from tools.plot_response import plot_response
+from fault_tolerant_flight_control_drl.agent.sac import SAC
+from fault_tolerant_flight_control_drl.tools import CascadedAltTask, ReliabilityTask
+from fault_tolerant_flight_control_drl.tools import plot_response
 from alive_progress import alive_bar
-from tools.math_util import unscale_action, d2r, r2d
-from envs.citation import CitationNormal
+from fault_tolerant_flight_control_drl.tools.math_util import unscale_action, d2r, r2d
+from fault_tolerant_flight_control_drl.envs import CitationNormal
 
 
 class AltController(gym.Env, ABC):

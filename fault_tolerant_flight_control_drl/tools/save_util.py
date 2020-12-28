@@ -104,11 +104,14 @@ def json_to_data(json_string, custom_objects=None):
     # This will be filled with deserialized data
     return_data = {}
     for data_key, data_item in json_dict.items():
+        # print(data_key,data_item)
         if custom_objects is not None and data_key in custom_objects.keys():
             # If item is provided in custom_objects, replace
             # the one from JSON with the one in custom_objects
             return_data[data_key] = custom_objects[data_key]
         elif isinstance(data_item, dict) and ":serialized:" in data_item.keys():
+            if isinstance(data_item, dict) and "__module__" in data_item.keys():
+                data_item["__module__"] = "fault_tolerant_flight_control_drl.agent.policy"
             # If item is dictionary with ":serialized:"
             # key, this means it is serialized with cloudpickle.
             serialization = data_item[":serialized:"]
@@ -116,9 +119,13 @@ def json_to_data(json_string, custom_objects=None):
             # errors. If so, we can tell bit more information to
             # user.
             try:
+                print('here2')
+                print(data_item, dict)
                 deserialized_object = cloudpickle.loads(
                     base64.b64decode(serialization.encode())
                 )
+            # except ModuleNotFoundError:
+            #     pass
             except pickle.UnpicklingError:
                 raise RuntimeError(
                     "Could not deserialize object {}. ".format(data_key) +

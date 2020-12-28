@@ -6,8 +6,7 @@ pd.set_option('mode.chained_assignment', None)
 
 
 def plot_training(ID: str, task_type: str):
-    df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                     f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{ID}.csv', header=0)
+    df = pd.read_csv(f'./agent/trained/{task_type}_{ID}.csv', header=0)
 
     df['r'] = -np.log10(-df['r'])
     # df['r_avg'] = -np.log10(-df['r_avg'])
@@ -49,17 +48,14 @@ def plot_training(ID: str, task_type: str):
         margin=dict(l=50, r=5, b=50, t=10)
     )
 
-    fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
-                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_{ID}_training.pdf")
+    fig.write_image(f"figures/{task_type}_{ID}_training.pdf")
 
 
 def plot_trainings(IDs: list, task_type: str, window: int = 20):
-    df = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                     f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{IDs[0]}.csv', header=0)
+    df = pd.read_csv(f'./agent/trained/{task_type}_{IDs[0]}.csv', header=0)
 
     for i in range(len(IDs)):
-        df_extra = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                               f'Thesis/DRL-cessna-citation-fc/agent/trained/{task_type}_{IDs[i]}.csv', header=0)
+        df_extra = pd.read_csv(f'./agent/trained/{task_type}_{IDs[i]}.csv', header=0)
         assert df_extra.shape[0] == df.shape[0]
 
         df[f'r_{i}'] = df_extra['r']
@@ -114,17 +110,14 @@ def plot_trainings(IDs: list, task_type: str, window: int = 20):
         margin=dict(l=50, r=5, b=50, t=10)
     )
     fig.update_traces(mode='lines')
-    fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
-                    f"Thesis/DRL-cessna-citation-fc/figures/{task_type}_training.pdf")
+    fig.write_image(f"figures/{task_type}_training.pdf")
 
 
 def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
-    df1 = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                      f'Thesis/DRL-cessna-citation-fc/agent/trained/3attitude_step_{IDs_1[0]}.csv', header=0)
+    df1 = pd.read_csv(f'./agent/trained/3attitude_step_{IDs_1[0]}.csv', header=0)
 
     for i in range(len(IDs_1)):
-        df_extra1 = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                                f'Thesis/DRL-cessna-citation-fc/agent/trained/3attitude_step_{IDs_1[i]}.csv', header=0)
+        df_extra1 = pd.read_csv(f'./agent/trained/3attitude_step_{IDs_1[i]}.csv', header=0)
         assert df_extra1.shape[0] == df1.shape[0]
 
         df1[f'r_{i}'] = df_extra1['r']
@@ -143,14 +136,12 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
     df1['r_up_smooth'] = -np.log10(-df1['r_up_smooth'])
     df1['r_down_smooth'] = -np.log10(-df1['r_down_smooth'])
 
-    df2 = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                      f'Thesis/DRL-cessna-citation-fc/agent/trained/altitude_2pitch_{IDs_2[0]}.csv', header=0)
+    df2 = pd.read_csv(f'./agent/trained/altitude_2pitch_{IDs_2[0]}.csv', header=0)
 
     df2 = df2.iloc[:, :4]
 
     for i in range(len(IDs_2)):
-        df_extra2 = pd.read_csv(f'/Users/kdally/OneDrive - Delft University of Technology/TU/MSc '
-                                f'Thesis/DRL-cessna-citation-fc/agent/trained/altitude_2pitch_{IDs_2[i]}.csv', header=0)
+        df_extra2 = pd.read_csv(f'./agent/trained/altitude_2pitch_{IDs_2[i]}.csv', header=0)
         df2[f'r_{i}'] = df_extra2['r']
 
     df2['r_avg'] = df2.iloc[:, 4:4 + len(IDs_2)].mean(axis=1)
@@ -241,8 +232,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
     fig.update_yaxes(title_font_family="Balto")
 
     fig.update_traces(mode='lines')
-    fig.write_image(f"/Users/kdally/OneDrive - Delft University of Technology/TU/MSc "
-                    f"Thesis/DRL-cessna-citation-fc/figures/combined_training.pdf")
+    fig.write_image(f"figures/combined_training.pdf")
 
 
 # plot_training('PZ5QGW', 'altitude_2pitch')

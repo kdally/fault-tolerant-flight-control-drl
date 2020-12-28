@@ -1,13 +1,10 @@
-/example/
 /figures/
-/optimization_logs/
-/reliability/
-/envs/phlab/
-/envs/thrust_obs/
-/matlab/
-verification.py
+/tests/optimization_logs/
+fault-tolerant-flight-control-drl/envs/thrust_obs
+/assets/matlab/
+/tests/verification.py
+/tests/scratchpad.py
 .idea
-scratchpad.py
 flying2.py
 
 *.xml

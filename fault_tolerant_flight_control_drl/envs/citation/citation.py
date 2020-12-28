@@ -2,14 +2,12 @@ import gym
 import numpy as np
 from abc import abstractmethod
 
-from typing import List
-
-from agent.sac import SAC
-from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
-from tools.plot_response import plot_response
+from fault_tolerant_flight_control_drl.agent.sac import SAC
+from fault_tolerant_flight_control_drl.tools import AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
+from fault_tolerant_flight_control_drl.tools import plot_response
 import importlib
-from tools.math_util import unscale_action, d2r, r2d
-from tools.identifier import get_ID
+from fault_tolerant_flight_control_drl.tools.math_util import unscale_action, d2r, r2d
+from fault_tolerant_flight_control_drl.tools import get_ID
 from alive_progress import alive_bar
 
 
@@ -47,7 +45,9 @@ class Citation(gym.Env):
         self.action_space = gym.spaces.Box(-1., 1., shape=(3,), dtype=np.float64)
         self.current_deflection = np.zeros(3)
 
-        self.agents, self.agentID = self.load_agent(FDD)  # type: SAC
+        self.agent_path = 'fault_tolerant_flight_control_drl/agent/trained'
+        # self.agents, self.agentID = self.load_agent(FDD)  # type: SAC
+        self.agents, self.agentID = None, None
 
         self.state = None
         self.state_deg = None
@@ -159,7 +159,7 @@ class Citation(gym.Env):
             ID = get_ID(6)
             agent = SAC.load("agent/trained/tmp/best_model.zip", env=self)
             agent.ID = ID
-            agent.save(f'agent/trained/{self.task_fun()[4]}_{agent.ID}.zip')
+            agent.save(f'{self.agent_path}/{self.task_fun()[4]}_{agent.ID}.zip')
             print('Training is corrupt because of NaN values, terminated early. '
                   'So-far best trained agent may show good performance.')
         plot_response('before_crash', self, self.task_fun(), 100, during_training=False,
@@ -302,14 +302,15 @@ class CitationNormal(Citation):
 
     def get_plant(self):
 
+        path = 'fault_tolerant_flight_control_drl.envs.citation'
         if self.init_alt == 2000 and self.init_speed == 90:
-            plant = importlib.import_module(f'envs.normal_2000_90._citation', package=None)
+            plant = importlib.import_module(f'{path}.normal_2000_90._citation', package=None)
         elif self.init_alt == 2000 and self.init_speed == 140:
-            plant = importlib.import_module(f'envs.normal_2000_140._citation', package=None)
+            plant = importlib.import_module(f'{path}.normal_2000_140._citation', package=None)
         elif self.init_alt == 5000 and self.init_speed == 90:
-            plant = importlib.import_module(f'envs.normal_5000_90._citation', package=None)
+            plant = importlib.import_module(f'{path}.normal_5000_90._citation', package=None)
         elif self.init_alt == 5000 and self.init_speed == 140:
-            plant = importlib.import_module(f'envs.normal_5000_140._citation', package=None)
+            plant = importlib.import_module(f'{path}.normal_5000_140._citation', package=None)
         else:
             raise NotImplementedError('No model with the specified initial conditions is present. ' \
                                       'Choose within init_alt={2000, 5000} and init_speed={90, 120}.')
@@ -319,7 +320,7 @@ class CitationNormal(Citation):
     def load_agent(self, FDD=False):
         if FDD:
             raise NotImplementedError('No fault detection and diagnosis on the non-failed system.')
-        return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip",
+        return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip",
                          env=self)], self.task.agent_catalog['normal']
 
     def reset(self):
@@ -336,14 +337,13 @@ class CitationNormal(Citation):
 class CitationRudderStuck(Citation):
 
     def get_plant(self):
-
-        plant = importlib.import_module(f'envs.dr._citation', package=None)
+        plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.dr._citation', package=None)
         return plant, ['dr', 0.0, -15.0]
 
     def load_agent(self, FDD):
         if FDD:
-            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['rudder_stuck']}.zip", env=self)], \
+            return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['rudder_stuck']}.zip", env=self)], \
                    self.task.agent_catalog['rudder_stuck']
         return CitationNormal().load_agent()
 
@@ -361,13 +361,13 @@ class CitationAileronEff(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.da._citation', package=None)
+        plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.da._citation', package=None)
         return plant, ['da', 1.0, 0.3]
 
     def load_agent(self, FDD):
         if FDD:
-            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['aileron_eff']}.zip", env=self)], \
+            return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['aileron_eff']}.zip", env=self)], \
                    self.task.agent_catalog['aileron_eff']
         return CitationNormal().load_agent()
 
@@ -383,13 +383,13 @@ class CitationAileronEff(Citation):
 class CitationElevRange(Citation):
 
     def get_plant(self):
-        plant = importlib.import_module(f'envs.de._citation', package=None)
+        plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.de._citation', package=None)
         return plant, ['de', 20.05, 3.0]
 
     def load_agent(self, FDD):
         if FDD:
-            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['elev_range']}.zip", env=self)], \
+            return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['elev_range']}.zip", env=self)], \
                    self.task.agent_catalog['elev_range']
         return CitationNormal().load_agent()
 
@@ -402,13 +402,13 @@ class CitationCgShift(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.cg._citation', package=None)
+        plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.cg._citation', package=None)
         return plant, ['cg', 1.0, 1.04]
 
     def load_agent(self, FDD):
         if FDD:
-            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['cg_shift']}.zip", env=self)], \
+            return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['cg_shift']}.zip", env=self)], \
                    self.task.agent_catalog['cg_shift']
         return CitationNormal().load_agent()
 
@@ -424,13 +424,13 @@ class CitationIcing(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.ice._citation', package=None)
+        plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.ice._citation', package=None)
         return plant, ['ice', 1.0, 0.7]  # https://doi.org/10.1016/S0376-0421(01)00018-5
 
     def load_agent(self, FDD):
         if FDD:
-            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['icing']}.zip", env=self)], \
+            return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['icing']}.zip", env=self)], \
                    self.task.agent_catalog['icing']
         return CitationNormal().load_agent()
 
@@ -454,13 +454,13 @@ class CitationHorzTail(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.ht._citation', package=None)
+        plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.ht._citation', package=None)
         return plant, ['ht', 1.0, 0.3]
 
     def load_agent(self, FDD):
         if FDD:
-            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['horz_tail']}.zip", env=self)], \
+            return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['horz_tail']}.zip", env=self)], \
                    self.task.agent_catalog['horz_tail']
         return CitationNormal().load_agent()
 
@@ -477,13 +477,13 @@ class CitationVertTail(Citation):
 
     def get_plant(self):
 
-        plant = importlib.import_module(f'envs.vt._citation', package=None)
+        plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.vt._citation', package=None)
         return plant, ['vt', 1.0, 0.3]
 
     def load_agent(self, FDD):
         if FDD:
-            return [SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"agent/trained/{self.task.agent_catalog['normal']}.zip", env=self)], \
+            return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self)], \
                    self.task.agent_catalog['vert_tail']
         return CitationNormal().load_agent()
 
@@ -531,8 +531,12 @@ class CitationVerif(CitationNormal):
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
 
+
+# import os
+# print(os.getcwd())
 # from stable_baselines.common.env_checker import check_env
-# envs = Citation()
+# envs = CitationNormal()
 # print("Observation space:", envs.observation_space.shape)
-# print("Action space:", envs.action_space)
+# print("Action space:", envs.action_space.shape)
 # check_env(envs, warn=True)
+

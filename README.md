@@ -2,14 +2,16 @@
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
+   <img alt="Python Version" src="https://img.shields.io/pypi/pyversions/Django.svg" />
     <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" />
   </a>
 </p>
 
+
 > Fault tolerant flight control for the Cessna Citation 500. First-ever use of Deep Reinforcement Learning for jet aircraft. Employed Soft Actor Critic (SAC). 
 
 <p align="center">
-  <img src="./envs/citation_550_header.svg" width="750"/>
+  <img src="./assets/citation_550_header.svg" width="750"/>
 </p>
 
 ## Installation
@@ -70,7 +72,5 @@ python optimization.py
 * Hill, A. et al. (2018) [[doc](https://stable-baselines.readthedocs.io/)][[code](https://github.com/hill-a/stable-baselines)]
 
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
 
 ***

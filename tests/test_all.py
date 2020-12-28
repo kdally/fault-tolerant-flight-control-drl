@@ -4,18 +4,17 @@ import PySimpleGUI as sg
 
 
 def GUI():
-
     section1 = [[sg.T('Initial Flight Conditions :')],
                 [sg.Text('Initial Altitude [m]:'),
-                 sg.InputCombo(values=('2000', '5000'), auto_size_text=True, default_value='2000',key='init_alt')],
+                 sg.InputCombo(values=('2000', '5000'), auto_size_text=True, default_value='2000', key='init_alt')],
                 [sg.Text('Initial Speed [m/s]:'),
-                 sg.InputCombo(values=('90', '140'), auto_size_text=True, default_value='90',key='init_speed')]]
+                 sg.InputCombo(values=('90', '140'), auto_size_text=True, default_value='90', key='init_speed')]]
 
     section2 = [[sg.T('Failure Type')],
                 [sg.InputCombo(values=(
-                'rudder stuck at -15deg', '-70% aileron effectiveness', 'elevator range reduced to [-3deg, 3deg]',
-                'partial horizontal tail loss', 'partial vertical tail loss', 'c.g. shift', 'severe icing'),
-                               default_value='rudder stuck at -15deg', auto_size_text=True, key='fail_type')],
+                    'rudder stuck at -15deg', '-70% aileron effectiveness', 'elevator range reduced to [-3deg, 3deg]',
+                    'partial horizontal tail loss', 'partial vertical tail loss', 'c.g. shift', 'severe icing'),
+                    default_value='rudder stuck at -15deg', auto_size_text=True, key='fail_type')],
                 [sg.Text('Initial conditions are fixed at 2000m and 90 m/s for the altitude and speed, respectively.')]]
 
     section3 = [[sg.T('Controller Structure :')],
@@ -24,7 +23,7 @@ def GUI():
                  sg.Radio('Single (not recommended)', 'struct', size=(25, 1), enable_events=True,
                           key='-OPEN SINGLE')], ]
 
-    fname = 'envs/citation_550.png'
+    fname = 'assets/citation_550.png'
 
     layout = [[sg.Text('Fault Tolerant Flight Control for the Cessna Citation 500', font=('Helvetica', 18))],
               [sg.Text('with Soft Actor Critic Deep Reinforcement Learning', font=('Helvetica', 18))],
@@ -51,7 +50,7 @@ def GUI():
                sg.Checkbox('Wind disturbance', default=False, key='dist'),
                sg.Checkbox('Low pass filter', default=False, key='low_pass')],
 
-              [sg.Cancel('Run Simulation', key='RUN',tooltip='Sim. time: 20s'), sg.Cancel('Exit', key='EXIT')]]
+              [sg.Cancel('Run Simulation', key='RUN', tooltip='Sim. time: 20s'), sg.Cancel('Exit', key='EXIT')]]
 
     window = sg.Window('Control Interface', layout)
 
@@ -104,8 +103,7 @@ def __main__():
     if not os.path.exists('figures'):
         os.makedirs('figures')
 
-    from tools.get_task import AltitudeTask, AttitudeTask, BodyRateTask, Task, CascadedAltTask
-    from envs.h_controller import AltController
+    import fault_tolerant_flight_control_drl as ft
 
     from tensorflow.python.util import deprecation
 
@@ -114,15 +112,6 @@ def __main__():
 
     warnings.filterwarnings("ignore", module='tensorflow')
     warnings.filterwarnings("ignore", module='gym')
-
-    from envs.citation import CitationElevRange
-    from envs.citation import CitationAileronEff
-    from envs.citation import CitationRudderStuck
-    from envs.citation import CitationHorzTail
-    from envs.citation import CitationVertTail
-    from envs.citation import CitationIcing
-    from envs.citation import CitationCgShift
-    from envs.citation import CitationNormal
 
     is_failed = instructions['-OPEN COND-FAIL']
     fail_type = instructions['fail_type']
@@ -138,32 +127,33 @@ def __main__():
 
     if is_failed:
         if fail_type == 'rudder stuck at -15deg':
-            env = CitationRudderStuck
+            env = ft.envs.CitationRudderStuck
         elif fail_type == '-70% aileron effectiveness':
-            env = CitationAileronEff
+            env = ft.envs.CitationAileronEff
         elif fail_type == 'elevator range reduced to [-3deg, 3deg]':
-            env = CitationElevRange
+            env = ft.envs.CitationElevRange
         elif fail_type == 'partial horizontal tail loss':
-            env = CitationHorzTail
+            env = ft.envs.CitationHorzTail
         elif fail_type == 'partial vertical tail loss':
-            env = CitationVertTail
+            env = ft.envs.CitationVertTail
         elif fail_type == 'c.g. shift':
-            env = CitationCgShift
+            env = ft.envs.CitationCgShift
         else:  # fail_type == 'severe icing':
-            env = CitationIcing
+            env = ft.envs.CitationIcing
     else:
-        env = CitationNormal
+        env = ft.envs.CitationNormal
 
     if is_task_alt:
         if is_cascaded:
-            env_eval = AltController(evaluation=True, FDD=is_failed, inner_controller=env,
-                                     init_alt=init_alt, init_speed=init_speed, disturbance=disturbance,
-                                     sensor_noise=sensor_noise, low_pass=low_pass)
+            env_eval = ft.envs.AltController(evaluation=True, FDD=is_failed, inner_controller=env,
+                                             init_alt=init_alt, init_speed=init_speed, disturbance=disturbance,
+                                             sensor_noise=sensor_noise, low_pass=low_pass)
         else:
-            env_eval = env(evaluation=True, FDD=is_failed, task=AltitudeTask, init_alt=init_alt, init_speed=init_speed,
+            env_eval = env(evaluation=True, FDD=is_failed, task=ft.tools.AltitudeTask, init_alt=init_alt,
+                           init_speed=init_speed,
                            disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
     else:
-        env_eval = env(evaluation=True, task=AttitudeTask, FDD=is_failed, init_alt=init_alt, init_speed=init_speed,
+        env_eval = env(evaluation=True, task=ft.tools.AttitudeTask, FDD=is_failed, init_alt=init_alt, init_speed=init_speed,
                        disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
 
     env_eval.render()

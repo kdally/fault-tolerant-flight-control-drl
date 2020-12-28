@@ -15,9 +15,9 @@ tf.get_logger().warning('test')
 tf.get_logger().setLevel('ERROR')
 tf.get_logger().warning('test')
 
-from agent.buffer import ReplayBuffer
-from tools.save_utiil import data_to_json, json_to_data, params_to_bytes, bytes_to_params # todo: check saving tools
-from tools.math_util import unscale_action, scale_action, set_global_seeds
+from fault_tolerant_flight_control_drl.agent import ReplayBuffer
+from fault_tolerant_flight_control_drl.tools.save_util import data_to_json, json_to_data, params_to_bytes, bytes_to_params # todo: check saving tools
+from fault_tolerant_flight_control_drl.tools.math_util import unscale_action, scale_action, set_global_seeds
 
 
 class SAC(ABC):
@@ -135,6 +135,7 @@ class SAC(ABC):
 
             with tf.variable_scope("input", reuse=False):
                 # Create policy and target TF objects
+                print(**self.policy_kwargs)
                 self.policy_tf = self.policy(self.sess, self.observation_space, self.action_space,
                                              **self.policy_kwargs)
                 self.target_policy = self.policy(self.sess, self.observation_space, self.action_space,

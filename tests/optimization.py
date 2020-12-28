@@ -4,12 +4,7 @@ import time
 import optuna
 from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
-from agent.sac import SAC
-from agent.policy import LnMlpPolicy
-from agent.callback import SaveOnBestReturn
-
-from envs.citation import Citation
-from tools.schedule import schedule, constant
+import fault_tolerant_flight_control_drl as ft
 
 
 def sample_sac_params(trial):
@@ -32,7 +27,7 @@ def sample_sac_params(trial):
     }[net_arch]
 
     return {
-        'learning_rate': constant(learning_rate),
+        'learning_rate': ft.tools.constant(learning_rate),
         'train_freq': train_freq,
         'buffer_size':buffer_size,
         'batch_size': batch_size,
@@ -65,11 +60,11 @@ def hyperparam_optimization(n_trials=60, n_timesteps=int(1e5),
 
         kwargs.update(algo_sampler(trial))
 
-        eval_env = Citation()
-        env_train = Citation()
+        eval_env = ft.envs.CitationNormal()
+        env_train = ft.envs.CitationNormal()
         model = create_model(env_train, **kwargs)
 
-        eval_callback = SaveOnBestReturn(eval_env=eval_env, eval_freq=2000, log_path='optimization_logs/tmp/',
+        eval_callback = ft.agent.SaveOnBestReturn(eval_env=eval_env, eval_freq=2000, log_path='optimization_logs/tmp/',
                                          best_model_save_path='optimization_logs/tmp/', verbose=0)
 
         try:
@@ -90,7 +85,7 @@ def hyperparam_optimization(n_trials=60, n_timesteps=int(1e5),
             eval_env.close()
             env_train.close()
             raise optuna.exceptions.TrialPruned()
-        cost = -1 * eval_callback.last_mean_reward
+        cost = -1 * eval_callback.best_reward
 
         del model.env, eval_env
         del model
@@ -120,7 +115,7 @@ def create_model(env1, **kwargs):
     """
     Helper to create a model with different hyperparameters
     """
-    return SAC(LnMlpPolicy, env=env1, verbose=0, ent_coef='auto', **kwargs)
+    return ft.agent.SAC(ft.agent.LnMlpPolicy, env=env1, verbose=0, ent_coef='auto', **kwargs)
 
 
 if not os.path.exists('optimization_logs'):
