@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from abc import abstractmethod
 
-from fault_tolerant_flight_control_drl.agent.sac import SAC
+from fault_tolerant_flight_control_drl.agent import SAC
 from fault_tolerant_flight_control_drl.tools import AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
 from fault_tolerant_flight_control_drl.tools import plot_response
 import importlib

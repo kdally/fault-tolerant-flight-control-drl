@@ -6,7 +6,7 @@ fault-tolerant-flight-control-drl/envs/thrust_obs
 /tests/scratchpad.py
 .idea
 flying2.py
-
+fault_tolerant_flight_control_drl/tools/fix.py
 *.xml
 *.pyc
 *.xlsx

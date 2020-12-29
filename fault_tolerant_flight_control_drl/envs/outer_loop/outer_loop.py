@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from abc import ABC
-from fault_tolerant_flight_control_drl.agent.sac import SAC
+from fault_tolerant_flight_control_drl.agent import SAC
 from fault_tolerant_flight_control_drl.tools import CascadedAltTask, ReliabilityTask
 from fault_tolerant_flight_control_drl.tools import plot_response
 from alive_progress import alive_bar
