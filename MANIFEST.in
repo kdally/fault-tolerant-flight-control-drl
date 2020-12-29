@@ -2,4 +2,16 @@ include LICENSE
 include assets/*.png
 include assets/*.svg
 include fault_tolerant_flight_control_drl/agent/trained/*.zip
-include fault_tolerant_flight_control_drl/envs/*
+include fault_tolerant_flight_control_drl/envs/citation/cg/*.so
+include fault_tolerant_flight_control_drl/envs/citation/da/*.so
+include fault_tolerant_flight_control_drl/envs/citation/de/*.so
+include fault_tolerant_flight_control_drl/envs/citation/dr/*.so
+include fault_tolerant_flight_control_drl/envs/citation/ht/*.so
+include fault_tolerant_flight_control_drl/envs/citation/vt/*.so
+include fault_tolerant_flight_control_drl/envs/citation/ice/*.so
+include fault_tolerant_flight_control_drl/envs/citation/normal_2000_90/*.so
+include fault_tolerant_flight_control_drl/envs/citation/normal_2000_140/*.so
+include fault_tolerant_flight_control_drl/envs/citation/normal_5000_90/*.so
+include fault_tolerant_flight_control_drl/envs/citation/normal_5000_140/*.so
+
+
