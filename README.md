@@ -16,7 +16,8 @@
 </p>
 
 ## Installation
-> Only compatible with MacOS at the moment. Compatibility with Linux and Windows expected in the future.
+> MacOS users can use the module straight away.
+> Linux and Windows users are required to recompile the CitAST high-fidelity simulation model as instructed in `docs/CitAST_for_Python.pdf`.
 
 1. Clone fault-tolerant-flight-control-drl
 ```sh
