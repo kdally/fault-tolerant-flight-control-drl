@@ -46,8 +46,8 @@ class Citation(gym.Env):
         self.current_deflection = np.zeros(3)
 
         self.agent_path = 'fault_tolerant_flight_control_drl/agent/trained'
-        # self.agents, self.agentID = self.load_agent(FDD)  # type: SAC
-        self.agents, self.agentID = None, None
+        self.agents, self.agentID = self.load_agent(FDD)  # type: SAC
+        # self.agents, self.agentID = None, None
 
         self.state = None
         self.state_deg = None
@@ -531,7 +531,7 @@ class CitationVerif(CitationNormal):
 
         return self.get_obs(), self.get_reward(), done, {'is_success': True}
 
-
+#
 # import os
 # print(os.getcwd())
 # from stable_baselines.common.env_checker import check_env
@@ -539,4 +539,4 @@ class CitationVerif(CitationNormal):
 # print("Observation space:", envs.observation_space.shape)
 # print("Action space:", envs.action_space.shape)
 # check_env(envs, warn=True)
-
+#
