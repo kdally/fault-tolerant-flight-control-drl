@@ -1,0 +1,5 @@
+include LICENSE
+include assets/*.png
+include assets/*.svg
+include fault_tolerant_flight_control_drl/agent/trained/*.zip
+include fault_tolerant_flight_control_drl/envs/*
