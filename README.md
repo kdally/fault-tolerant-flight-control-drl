@@ -1,6 +1,6 @@
 <h1 align="center">Welcome to the First  DRL Controller for a Jet Aircraft </h1>
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-blue.svg" />
   <a href="#" target="_blank">
    <img alt="Python Version" src="https://img.shields.io/pypi/pyversions/Django.svg" />
     <a href="#" target="_blank">
