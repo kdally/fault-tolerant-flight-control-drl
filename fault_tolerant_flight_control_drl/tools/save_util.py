@@ -103,15 +103,12 @@ def json_to_data(json_string, custom_objects=None):
     json_dict = json.loads(json_string)
     # This will be filled with deserialized data
     return_data = {}
-    import os
-    # os.chdir('fault_tolerant_flight_control_drl')
     for data_key, data_item in json_dict.items():
         # print(data_key,data_item)
         if custom_objects is not None and data_key in custom_objects.keys():
             # If item is provided in custom_objects, replace
             # the one from JSON with the one in custom_objects
             return_data[data_key] = custom_objects[data_key]
-            print('here2')
         elif isinstance(data_item, dict) and ":serialized:" in data_item.keys():
             if isinstance(data_item, dict) and "__module__" in data_item.keys():
                 data_item["__module__"] = "fault_tolerant_flight_control_drl.agent.policy"
@@ -122,17 +119,13 @@ def json_to_data(json_string, custom_objects=None):
             # errors. If so, we can tell bit more information to
             # user.
             try:
-                # print('here2')
-                # print(data_item, dict)
-                # print(base64.b64decode(serialization.encode()))
+                print('here2')
+                print(data_item, dict)
                 deserialized_object = cloudpickle.loads(
                     base64.b64decode(serialization.encode())
                 )
-            # except TypeError:
-            #     print('here2')
-            #     print(data_item, dict)
-            #     print(base64.b64decode(serialization.encode()))
-            #     raise TypeError
+            # except ModuleNotFoundError:
+            #     pass
             except pickle.UnpicklingError:
                 raise RuntimeError(
                     "Could not deserialize object {}. ".format(data_key) +
@@ -141,6 +134,7 @@ def json_to_data(json_string, custom_objects=None):
                 )
             return_data[data_key] = deserialized_object
         else:
+            # Read as it is
             return_data[data_key] = data_item
     return return_data
 

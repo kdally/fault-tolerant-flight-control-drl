@@ -15,7 +15,7 @@ tf.get_logger().warning('test')
 tf.get_logger().setLevel('ERROR')
 tf.get_logger().warning('test')
 
-from fault_tolerant_flight_control_drl.agent.buffer import ReplayBuffer
+from fault_tolerant_flight_control_drl.agent import ReplayBuffer
 from fault_tolerant_flight_control_drl.tools.save_util import data_to_json, json_to_data, params_to_bytes, bytes_to_params # todo: check saving tools
 from fault_tolerant_flight_control_drl.tools.math_util import unscale_action, scale_action, set_global_seeds
 
@@ -135,6 +135,7 @@ class SAC(ABC):
 
             with tf.variable_scope("input", reuse=False):
                 # Create policy and target TF objects
+                print(**self.policy_kwargs)
                 self.policy_tf = self.policy(self.sess, self.observation_space, self.action_space,
                                              **self.policy_kwargs)
                 self.target_policy = self.policy(self.sess, self.observation_space, self.action_space,
@@ -628,21 +629,17 @@ class SAC(ABC):
 
         # Open the zip archive and load data.
         try:
-            # print('here1',load_path)
             with zipfile.ZipFile(load_path, "r") as file_:
                 namelist = file_.namelist()
-                # print(namelist)
                 data = None
                 params = None
                 if "data" in namelist and load_data:
-                    # print('here2')
                     # Load class parameters and convert to string
                     # (Required for json library in Python 3.5)
                     json_data = file_.read("data").decode()
                     data = json_to_data(json_data, custom_objects=custom_objects)
 
                 if "parameters" in namelist:
-                    # print('here3')
                     # Load parameter list and and parameters
                     parameter_list_json = file_.read("parameter_list").decode()
                     parameter_list = json.loads(parameter_list_json)
