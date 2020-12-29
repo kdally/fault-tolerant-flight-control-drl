@@ -34,6 +34,5 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=install_requires,
-    package_data={'': ['license.txt']},
     include_package_data=True,
 )
