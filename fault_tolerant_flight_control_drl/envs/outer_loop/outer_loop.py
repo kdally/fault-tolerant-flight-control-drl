@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from abc import ABC
-from fault_tolerant_flight_control_drl.agent.sac import SAC
+from fault_tolerant_flight_control_drl.agent import SAC
 from fault_tolerant_flight_control_drl.tools import CascadedAltTask, ReliabilityTask
 from fault_tolerant_flight_control_drl.tools import plot_response
 from alive_progress import alive_bar
@@ -34,6 +34,7 @@ class AltController(gym.Env, ABC):
         self.action_space = gym.spaces.Box(-1., 1., shape=(1,), dtype=np.float64)
 
         self.agent, self.agent.ID = self.load_agent()
+        # self.agent, self.agentID = None, None
 
         self.current_pitch_ref = None
         self.obs_inner_controller = None
@@ -160,7 +161,7 @@ class AltController(gym.Env, ABC):
         return
 
     def load_agent(self):
-        return SAC.load(f"agent/trained/{self.InnerController.task.agent_catalog['normal_outer_loop']}.zip", env=self), \
+        return SAC.load(f"fault_tolerant_flight_control_drl/agent/trained/{self.InnerController.task.agent_catalog['normal_outer_loop']}.zip", env=self), \
                self.InnerController.task.agent_catalog['normal_outer_loop']
 
     class ActionLimits:
@@ -168,6 +169,7 @@ class AltController(gym.Env, ABC):
         def __init__(self, limits):
             self.low, self.high = limits[0, :], limits[1, :]
 
+#
 # from stable_baselines.common.env_checker import check_env
 # envs = AltController()
 # print("Observation space:", envs.observation_space.shape)
