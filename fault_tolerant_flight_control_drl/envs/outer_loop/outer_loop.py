@@ -19,7 +19,8 @@ class AltController(gym.Env, ABC):
             'Failure cases only implemented for initial conditions init_alt == 2000 & init_speed == 90'
 
         self.InnerController = inner_controller(evaluation=evaluation, task=CascadedAltTask,
-                                                FDD=FDD, init_speed=init_speed, init_alt=init_alt)
+                                                FDD=FDD, init_speed=init_speed, init_alt=init_alt,
+                                                disturbance=disturbance, low_pass=low_pass, sensor_noise=sensor_noise)
         self.pitch_limits = self.ActionLimits(np.array([[-30], [30]]))
         self.rate_limits = self.ActionLimits(np.array([[-10], [10]]))
         self.time = self.InnerController.time
