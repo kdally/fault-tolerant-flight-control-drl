@@ -117,7 +117,7 @@ class Citation(gym.Env):
         max_bound = np.ones(self.error.shape)
         # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))  # square function
         # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))   # rational function
-        reward_vec = -np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound),
+        reward_vec = - np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound),
                                  -max_bound)  # abs. linear function
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
