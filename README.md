@@ -9,7 +9,7 @@
 </p>
 
 
-> Fault tolerant flight control for the Cessna Citation 500. First-ever use of Deep Reinforcement Learning for jet aircraft. Employed Soft Actor Critic (SAC). 
+> Fault tolerant flight control for the Cessna Citation 500. First-ever use of Deep Reinforcement Learning for a jet aircraft. Employed Soft Actor Critic (SAC). 
 
 <p align="center">
   <img src="assets/citation_550_header.svg" width="750"/>
@@ -70,9 +70,9 @@ python tests/optimization.py
 
 ## References
 
-* Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S (2018) [[paper](https://arxiv.org/abs/1801.01290)][[code](https://github.com/haarnoja/sac/tree/master/sac)]
+* Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. (2018) [[paper](https://arxiv.org/abs/1801.01290)][[code](https://github.com/haarnoja/sac/tree/master/sac)]
+* Haarnoja, T., Zhou, A., Abbeel, P., and Hartikainen, K. (2019) [[paper](https://arxiv.org/abs/1812.05905)][[code](https://github.com/rail-berkeley/softlearning/)]
 * Hill, A. et al. (2018) [[doc](https://stable-baselines.readthedocs.io/)][[code](https://github.com/hill-a/stable-baselines)]
-
 
 
 ***
