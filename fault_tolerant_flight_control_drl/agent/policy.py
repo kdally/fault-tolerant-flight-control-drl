@@ -70,15 +70,14 @@ class LnMlpPolicy(ABC):
 
     recurrent = False
 
-    def __init__(self, sess, ob_space, ac_space, n_steps=1, n_batch=None, reuse=False,
-                 layers=None, act_fun=tf.nn.relu):
+    def __init__(self, sess, ob_space, ac_space, n_steps=1, reuse=False,
+                 layers=None):
 
         assert isinstance(ac_space, Box), "Error: the action space must be of type gym.spaces.Box"
 
         self.n_steps = n_steps
-        self.n_batch = n_batch
         with tf.variable_scope("input", reuse=False):
-            self.obs_ph = tf.placeholder(shape=(n_batch,) + ob_space.shape, dtype=ob_space.dtype, name='Ob')
+            self.obs_ph = tf.placeholder(shape=(None,) + ob_space.shape, dtype=ob_space.dtype, name='Ob')
             self.processed_obs = tf.cast(self.obs_ph, tf.float32)
             self.action_ph = None
 

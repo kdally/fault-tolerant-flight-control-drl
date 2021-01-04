@@ -39,17 +39,11 @@ class SAC(ABC):
     :param buffer_size: (int) size of the replay buffer
     :param batch_size: (int) Minibatch size for each gradient update
     :param tau: (float) the soft update coefficient ("polyak update", between 0 and 1)
-    :param ent_coef: (str or float) Entropy regularization coefficient. (Equivalent to
-        inverse of reward scale in the original SAC paper.)  Controlling exploration/exploitation trade-off.
-        Set it to 'auto' to learn it automatically (and 'auto_0.1' for using 0.1 as initial value)
-    :param train_freq: (int) Update the model every `train_freq` steps.
     :param learning_starts: (int) how many steps of the model to collect transitions for before learning starts
-    :param target_update_interval: (int) update the target network every `target_network_update_freq` steps.
-    :param target_entropy: (str or float) target entropy when learning ent_coef (ent_coef = 'auto')
     :param action_noise: (ActionNoise) the action noise type (None by default), this can help
-        for hard exploration problem. Cf DDPG for the different action noise type.
+        for hard exploration problem.
     :param random_exploration: (float) Probability of taking a random action (as in an epsilon-greedy strategy)
-        This is not needed for SAC normally but can help exploring when using HER + SAC.
+        This is not needed for SAC normally but can help exploring.
     :param _init_setup_model: (bool) Whether or not to build the network at the creation of the instance
     :param policy_kwargs: (dict) additional arguments to be passed to the policy on creation
     :param seed: (int) Seed for the pseudo-random generators (python, numpy, tensorflow).
@@ -58,11 +52,8 @@ class SAC(ABC):
     """
 
     def __init__(self, policy, env, gamma=0.99, learning_rate=3e-4, buffer_size=50000,
-                 learning_starts=100, train_freq=1, batch_size=64,
-                 tau=0.005, ent_coef='auto', target_update_interval=1,
-                 target_entropy='auto', action_noise=None,
-                 random_exploration=0.0,
-                 _init_setup_model=True, policy_kwargs=None,
+                 learning_starts=100, batch_size=64, tau=0.005, action_noise=None,
+                 random_exploration=0.0, _init_setup_model=True, policy_kwargs=None,
                  seed=None):
 
         self.ID = None
@@ -82,12 +73,12 @@ class SAC(ABC):
         self.buffer_size = buffer_size
         self.learning_rate = learning_rate
         self.learning_starts = learning_starts
-        self.train_freq = train_freq
+        self.train_freq = 1
         self.batch_size = batch_size
         self.tau = tau
-        self.ent_coef = ent_coef
-        self.target_update_interval = target_update_interval
-        self.gradient_steps = train_freq
+        self.ent_coef = 'auto'
+        self.target_update_interval = 1
+        self.gradient_steps = 1
         self.gamma = gamma
         self.action_noise = action_noise
         self.random_exploration = random_exploration
@@ -97,7 +88,7 @@ class SAC(ABC):
         self.replay_buffer = None
         self.params = None
         self.policy_tf = None
-        self.target_entropy = target_entropy
+        self.target_entropy = 'auto'
 
         self.obs_target = None
         self.target_policy = None
