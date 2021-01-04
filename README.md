@@ -35,7 +35,7 @@ python setup.py install
 
 ## Usage
 
-1. To fly the aircraft right away 🛩
+1. To fly the aircraft right away with pre-trained controllers 🛩
 ```sh
 python tests/test_all.py
 ```
@@ -47,7 +47,7 @@ python tests/test_all.py
 </p>
 
 
-2. To train the inner-loop and outer-loop controllers ⚙️
+2. To retrain the inner-loop and outer-loop controllers ⚙️
 ```sh
 python tests/train_inner_loop.py
 python tests/train_outer_loop.py
