@@ -64,7 +64,6 @@ class LnMlpPolicy(ABC):
     :param ob_space: (Gym Space) The observation space of the environment
     :param ac_space: (Gym Space) The action space of the environment
     :param n_steps: (int) The number of steps to run for each environment
-    :param n_batch: (int) The number of batch to run (n_steps)
     :param reuse: (bool) If the policy is reusable or not
     :param layers: (list) size (int) of the hidden layers
     """
@@ -100,7 +99,7 @@ class LnMlpPolicy(ABC):
             layers = [64, 64]
         self.layers = layers
         self.entropy = None
-        self.activ_fn = act_fun
+        self.activ_fn = tf.nn.relu
 
     def make_actor(self, obs=None, reuse=False, scope="pi"):
 
