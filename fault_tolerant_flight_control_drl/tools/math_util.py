@@ -13,10 +13,18 @@ tf.get_logger().warning('test')
 
 
 def d2r(num):
+    """
+    convert degrees to radians
+    :param num: (float) the number to convert
+    """
     return num * np.pi / 180.0
 
 
 def r2d(num):
+    """
+    convert radian to degrees
+    :param num: (float) the number to convert
+    """
     return num * 180 / np.pi
 
 

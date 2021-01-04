@@ -19,7 +19,7 @@ def learn(task: ft.tools.Task, env_type=ft.envs.CitationNormal):
     env_train = env_type(task=task)
     env_eval = env_type(task=task)
 
-    callback = ft.agent.SaveOnBestReturn(eval_env=env_eval, eval_freq=2000, log_path="fault_tolerant_flight_control_drl/agent/trained/tmp/",
+    callback = ft.agent.SaveOnBestReturn(eval_env=env_eval, log_path="fault_tolerant_flight_control_drl/agent/trained/tmp/",
                                 best_model_save_path="fault_tolerant_flight_control_drl/agent/trained/tmp/")
     agent = ft.agent.SAC(ft.agent.LnMlpPolicy, env_train,
                 # ent_coef='auto', batch_size=512,

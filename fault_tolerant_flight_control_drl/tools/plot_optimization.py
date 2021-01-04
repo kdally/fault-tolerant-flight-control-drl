@@ -7,6 +7,9 @@ sns.set()
 
 
 def plot_optimization(fname='report_sim2_5DoF'):
+    """
+    make parallel coordinates plot for the hyperparameter optimization results
+    """
 
     df = pd.read_csv(f'./tests/optimization_logs/{fname}.csv')
     df['value'] = -df['value']

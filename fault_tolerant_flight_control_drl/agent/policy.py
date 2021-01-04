@@ -58,7 +58,7 @@ def mlp(input_tensor, layers, activ_fn=tf.nn.relu, layer_norm=True):
 
 class LnMlpPolicy(ABC):
     """
-    Policy object that implements a SAC-like actor critic
+    Class that implements a Layer-Normalization Gaussian policy with ReLu activation.
 
     :param sess: (TensorFlow session) The current TensorFlow session
     :param ob_space: (Gym Space) The observation space of the environment
@@ -66,7 +66,7 @@ class LnMlpPolicy(ABC):
     :param n_steps: (int) The number of steps to run for each environment
     :param n_batch: (int) The number of batch to run (n_steps)
     :param reuse: (bool) If the policy is reusable or not
-    :param scale: (bool) whether or not to scale the input
+    :param layers: (list) size (int) of the hidden layers
     """
 
     recurrent = False
@@ -162,6 +162,9 @@ class LnMlpPolicy(ABC):
         return self.qf1, self.qf2, self.value_fn
 
     def step(self, obs, deterministic=False):
+        """
+        function to run on every policy iteration step
+        """
         if deterministic:
             return self.sess.run(self.deterministic_policy, {self.obs_ph: obs})
         return self.sess.run(self.policy, {self.obs_ph: obs})

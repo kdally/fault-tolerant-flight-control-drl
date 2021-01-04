@@ -8,6 +8,11 @@ couple = ['PZ5QGW',	'GT0PLE']
 
 
 class Task(ABC):
+    """
+    Task class.
+    This allows to select various types of tasks while sharing the same base structure.
+    Author: Killian Dally
+    """
 
     def __init__(self):
         self.time_v = None

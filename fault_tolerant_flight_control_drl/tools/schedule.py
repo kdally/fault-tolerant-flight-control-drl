@@ -2,6 +2,12 @@ import math
 
 
 def constant(initial_value):
+    """
+    Constant learning rate schedule.
+
+    :param initial_value: (float or str)
+    :return: (function)
+    """
     def func(progress):
         """
         Progress will decrease from 1 (beginning) to 0
@@ -34,7 +40,7 @@ def schedule(initial_value):
 
 def schedule_kink(initial_value, second_value):
     """
-    Linear learning rate schedule.
+    Linear learning rate schedule with kink.
 
     :param initial_value: (float or str)
     :param second_value: (float or str)
@@ -57,7 +63,7 @@ def schedule_kink(initial_value, second_value):
 
 def schedule_exp(initial_value):
     """
-    Linear learning rate schedule.
+    Exponential decay learning rate schedule.
 
     :param initial_value: (float or str)
     :return: (function)

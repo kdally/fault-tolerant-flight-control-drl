@@ -6,6 +6,10 @@ pd.set_option('mode.chained_assignment', None)
 
 
 def plot_training(ID: str, task_type: str):
+    """
+    plot the training progress of one controller
+    """
+
     df = pd.read_csv(f'fault_tolerant_flight_control_drl/agent/trained/{task_type}_{ID}.csv', header=0)
 
     df['r'] = -np.log10(-df['r'])
@@ -52,6 +56,10 @@ def plot_training(ID: str, task_type: str):
 
 
 def plot_trainings(IDs: list, task_type: str, window: int = 20):
+    """
+    plot the training progress of several controllers
+    """
+
     df = pd.read_csv(f'fault_tolerant_flight_control_drl/agent/trained/{task_type}_{IDs[0]}.csv', header=0)
 
     for i in range(len(IDs)):
@@ -114,6 +122,10 @@ def plot_trainings(IDs: list, task_type: str, window: int = 20):
 
 
 def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
+    """
+    plot the training progress of cascaded controllers
+    """
+
     df1 = pd.read_csv(f'fault_tolerant_flight_control_drl/agent/trained/3attitude_step_{IDs_1[0]}.csv', header=0)
 
     for i in range(len(IDs_1)):
@@ -236,6 +248,10 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
 
 
 def plot_trainings_sensitivity(IDs_1: list, IDs_2: list, IDs_3: list, window: int = 20):
+    """
+    plot the training progress of controllers for sensitivity analysis
+    """
+
     df1 = pd.read_csv(f'fault_tolerant_flight_control_drl/agent/trained/3attitude_step_{IDs_1[0]}.csv', header=0)
 
     # for i in range(len(IDs_1)):
@@ -402,4 +418,4 @@ def plot_trainings_sensitivity(IDs_1: list, IDs_2: list, IDs_3: list, window: in
 # plot_trainings(['9VZ5VE', '7AK56O','GXA2KT'], '3attitude_step')
 # plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', 'GT0PLE', 'GXA2KT'],
 #                         ['XQ2G4Q', 'DH0TLO', 'AZ5QGW', 'H0IC1R', 'TBNJM4'])
-plot_trainings_sensitivity(['GT0PLE'], ['BZVWF5'], ['UMJB0W'])
+# plot_trainings_sensitivity(['GT0PLE'], ['BZVWF5'], ['UMJB0W'])

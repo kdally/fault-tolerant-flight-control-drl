@@ -4,12 +4,9 @@ import numpy as np
 
 
 def plot_response_alt(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
-
-    # fig = go.Figure()
-    # fig.add_trace(go.Scatter(
-    #     x=env.time, y=env.ref_signal[0, :], name=r'$h [m]$',
-    #     line=dict(color='#EF553B', dash='dashdot')))
-    #
+    """
+    plot the response for an altitude task
+    """
 
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
@@ -255,6 +252,9 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
 
 
 def plot_response_att(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
+    """
+    plot the response for an attitude task
+    """
 
     # fig = go.Figure()
     # fig.add_trace(go.Scatter(
@@ -1256,6 +1256,7 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
 
     fig.show()
     return
+
 
 def plot_response_ice(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
 

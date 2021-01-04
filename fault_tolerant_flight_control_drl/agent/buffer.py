@@ -1,14 +1,13 @@
 import random
-from typing import List, Union
 import numpy as np
 
 
 class ReplayBuffer(object):
     def __init__(self, size: int):
         """
-        Implements a buffer.
+        Replay buffer to make samples more i.i.d. during critic and actor update.
 
-        :param size: (int)  Max number of transitions to store in the buffer. When the buffer overflows the old
+        :param size: (int)  Maximum number of transitions stored in the buffer. When the buffer overflows the old
             memories are dropped.
         """
         self._storage = []
@@ -20,7 +19,7 @@ class ReplayBuffer(object):
 
     def can_sample(self, n_samples: int) -> bool:
         """
-        Check if n_samples samples can be sampled
+        check if n_samples samples can be sampled
         from the buffer.
 
         :param n_samples: (int)
@@ -48,7 +47,7 @@ class ReplayBuffer(object):
 
     def sample(self, batch_size: int, **_kwargs):
         """
-        Sample a batch of experiences.
+        sample a batch of experiences.
 
         :param batch_size: (int) How many transitions to sample.
         :return:
@@ -76,5 +75,3 @@ class ReplayBuffer(object):
                 np.array(rewards),
                 np.array(obses_tp1),
                 np.array(dones))
-
-

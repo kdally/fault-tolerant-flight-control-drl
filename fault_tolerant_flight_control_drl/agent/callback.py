@@ -10,38 +10,30 @@ import numpy as np
 
 class SaveOnBestReturn(ABC):
     """
-    Callback for evaluating an agent.
+    Callback when evaluating the controller during training.
 
-    :param eval_env: (gym.Env) The environment used for initialization
-    :param eval_freq: (int) Evaluate the agent every eval_freq call of the callback.
-        will be saved. It will be updated at each evaluation.
-    :param best_model_save_path: (str) Path to a folder where the best model
-        according to performance on the eval env will be saved.
-    :param deterministic: (bool) Whether the evaluation should
-        use a stochastic or deterministic actions.
-    :param render: (bool) Whether to render or not the environment during evaluation
+    :param eval_env: (gym.Env) The environment used for evaluation.
+    :param eval_freq: (int) Evaluate the controller every eval_freq call of the callback.
+        Best controller so-far will be saved.
+    :param best_model_save_path: (str) Path to a folder where the best model will be saved.
     :param verbose: (int)
     """
 
     def __init__(self, eval_env,
                  log_path: str,
-                 eval_freq: int = 10000,
+                 eval_freq: int = 2000,
                  best_model_save_path: str = None,
-                 deterministic: bool = True,
                  verbose: int = 1):
         super(SaveOnBestReturn, self).__init__()
 
-        # The RL model
         self.model = None
         self.training_env = None  # type: Union[gym.Env, None]
-        # Number of time the callback was called
         self.n_calls = 0  # type: int
         self.num_timesteps = 0  # type: int
         self.verbose = verbose
 
         self.eval_freq = eval_freq
         self.best_reward = -np.inf
-        self.deterministic = deterministic
         self.weights_sample = None
 
         self.eval_env = eval_env
@@ -66,7 +58,14 @@ class SaveOnBestReturn(ABC):
         self.training_env = model.env
         return self
 
-    def _on_step(self) -> bool:
+    def on_step(self) -> bool:
+        """
+        This method will be called by the model after each call to `env.step()`.
+
+        :return: (bool) If the callback returns False, training is aborted early.
+        """
+        self.n_calls += 1
+        self.num_timesteps = self.model.num_timesteps
 
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
 
@@ -99,14 +98,3 @@ class SaveOnBestReturn(ABC):
                 # print('Entropy : ', self.model.ent_coef.eval(session=self.model.sess))
 
         return True
-
-    def on_step(self) -> bool:
-        """
-        This method will be called by the model after each call to `env.step()`.
-
-        :return: (bool) If the callback returns False, training is aborted early.
-        """
-        self.n_calls += 1
-        self.num_timesteps = self.model.num_timesteps
-
-        return self._on_step()

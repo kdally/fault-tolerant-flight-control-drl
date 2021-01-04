@@ -5,6 +5,9 @@ pd.set_option('mode.chained_assignment', None)
 
 
 def plot_weights(ID: str, task_type: str, last=None):
+    """
+    plot evolution of weights throughout training
+    """
 
     if last:
         df = pd.read_csv(f'./agent/trained/tmp/monitor.csv', header=0)

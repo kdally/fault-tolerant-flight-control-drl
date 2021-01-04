@@ -12,7 +12,26 @@ from alive_progress import alive_bar
 
 
 class Citation(gym.Env):
-    """Custom Environment that follows gym interface"""
+    """
+    Citation environment that follows the gym.env interface
+    Developed to be interfaced with a modified version of the CitAST environment, built with the DASMAT model and owned
+    by the Delft University of Technology. Follow the 'CitAST for Python' instructions at
+    https://github.com/kdally/fault-tolerant-flight-control-drl/blob/master/docs/CitAST_for_Python.pdf for installation.
+    Author: Killian Dally
+
+    :param evaluation: (bool) If False, the environment will be given training-specific shorter tasks.
+        If True, the environment is given longer and unseen tasks as part of the evaluation.
+    :param FDD: (bool) If True, the Fault Detection and Diagnosis module is added which switches from robust to
+        adaptive control at self.FDD_switch_time.
+    :param task: (Task) one of AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
+    :param disturbance: (bool) If True, disturbance forces are added in the environment. Normal disturbance values from
+    https://doi.org/10.2514/6.2018-1127.
+    :param sensor_noise: (bool) If True, sensor noise is added to the environment observations based on the sensor noise
+        estimates of the Cessna Citation 550 given in https://doi.org/10.2514/6.2018-1127.
+    :param low_pass: (bool) It True, control inputs are filtered with a first-order low-pass filter.
+    :param init_alt: (float) Initial flight altitude. One of 2000 or 5000.
+    :param init_speed: (float) Initial speed. One of 90 or 140.
+    """
 
     def __init__(self, evaluation=False, FDD=False, task=AttitudeTask,
                  disturbance=False, sensor_noise=False, low_pass=False,
@@ -291,6 +310,23 @@ class Citation(gym.Env):
 
 
 class CitationNormal(Citation):
+    """
+    Normal Citation Dynamics class, a sub-class of the Citation class.
+    Author: Killian Dally
+
+    :param evaluation: (bool) If False, the environment will be given training-specific shorter tasks.
+    If True, the environment is given longer and unseen tasks as part of the evaluation.
+    :param FDD: (bool) If True, the Fault Detection and Diagnosis module is added which switches from robust to
+    adaptive control at self.FDD_switch_time.
+    :param task: (Task) one of AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
+    :param disturbance: (bool) If True, disturbance forces are added in the environment. Normal disturbance values from
+    https://doi.org/10.2514/6.2018-1127.
+    :param sensor_noise: (bool) If True, sensor noise is added to the environment observations based on the sensor noise
+    estimates of the Cessna Citation 550 given in https://doi.org/10.2514/6.2018-1127.
+    :param low_pass: (bool) It True, control inputs are filtered with a first-order low-pass filter.
+    :param init_alt: (float) Initial flight altitude. One of 2000 or 5000.
+    :param init_speed: (float) Initial speed. One of 90 or 140.
+    """
 
     def __init__(self, init_alt=2000, init_speed=90, evaluation=False, FDD=False, task=AttitudeTask,
                  disturbance=False, sensor_noise=False, low_pass=False):
@@ -335,6 +371,11 @@ class CitationNormal(Citation):
 
 
 class CitationRudderStuck(Citation):
+    """
+    Citation Dynamics class with rudder failure, a sub-class of the Citation class.
+    The rudder is stuck at -15deg starting from self.failure_time.
+    Author: Killian Dally
+    """
 
     def get_plant(self):
         plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.dr._citation', package=None)
@@ -358,6 +399,11 @@ class CitationRudderStuck(Citation):
 
 
 class CitationAileronEff(Citation):
+    """
+    Citation Dynamics class with aileron failure, a sub-class of the Citation class.
+    The aileron effectiveness is reduced by 70% from self.failure_time.
+    Author: Killian Dally
+    """
 
     def get_plant(self):
 
@@ -381,6 +427,11 @@ class CitationAileronEff(Citation):
 
 
 class CitationElevRange(Citation):
+    """
+    Citation Dynamics class with elevator failure, a sub-class of the Citation class.
+    The elevator operating range is reduced to [-3 deg, 3 deg] from self.failure_time.
+    Author: Killian Dally
+    """
 
     def get_plant(self):
         plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.de._citation', package=None)
@@ -399,6 +450,12 @@ class CitationElevRange(Citation):
 
 
 class CitationCgShift(Citation):
+    """
+    Citation Dynamics class with backwards c.g. shift, a sub-class of the Citation class.
+    A 300kg payload moving from the from the front to the back of the passenger cabin is simulated,
+    which translates to a backwards c.g. shift of 0.25m from self.failure_time.
+    Author: Killian Dally
+    """
 
     def get_plant(self):
 
@@ -421,6 +478,13 @@ class CitationCgShift(Citation):
 
 
 class CitationIcing(Citation):
+    """
+   Citation Dynamics class with icing, a sub-class of the Citation class.
+   A large accumulation of ice on the wing is simulated according to the measurements made
+   in https://doi.org/10.1016/S0376-0421(01)00018-5 from self.failure_time. In practice, C_L_max and alpha_stall are
+   reduced by 30% and C_D increased by 0.06.
+   Author: Killian Dally
+   """
 
     def get_plant(self):
 
@@ -451,6 +515,10 @@ class CitationIcing(Citation):
 
 
 class CitationHorzTail(Citation):
+    """
+   Citation Dynamics class with partial horizontal tail loss, a sub-class of the Citation class.
+   Author: Killian Dally
+   """
 
     def get_plant(self):
 
@@ -474,6 +542,10 @@ class CitationHorzTail(Citation):
 
 
 class CitationVertTail(Citation):
+    """
+   Citation Dynamics class with partial vertical tail loss, a sub-class of the Citation class.
+   Author: Killian Dally
+   """
 
     def get_plant(self):
 
@@ -497,6 +569,11 @@ class CitationVertTail(Citation):
 
 
 class CitationVerif(CitationNormal):
+    """
+   Normal Citation Dynamics class for verification, a sub-class of the Citation class.
+   It emulates MATLAB from Python to compare the response of the compiled model and that of the Simulink model.
+   Author: Killian Dally
+   """
 
     def step(self, actions: np.ndarray):
         self.current_deflection = actions

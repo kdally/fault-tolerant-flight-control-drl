@@ -24,9 +24,10 @@ class SAC(ABC):
     """
     Soft Actor-Critic (SAC)
     Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor,
-    This implementation borrows code from original implementation (https://github.com/haarnoja/sac)
-    from OpenAI Spinning Up (https://github.com/openai/spinningup) and from the Softlearning repo
-    (https://github.com/rail-berkeley/softlearning/)
+    This implementation borrows code the from original implementation (https://github.com/haarnoja/sac),
+    from OpenAI Spinning Up (https://github.com/openai/spinningup),
+    from the Softlearning repo (https://github.com/rail-berkeley/softlearning/) and
+    from the StableBaselines repo (https://github.com/hill-a/stable-baselines)
     Paper: https://arxiv.org/abs/1801.01290
 
     :param policy: The LnMlpPolicy policy model
