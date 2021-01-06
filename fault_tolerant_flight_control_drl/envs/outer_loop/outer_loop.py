@@ -57,7 +57,8 @@ class AltController(gym.Env, ABC):
             self.InnerController.FFD_change()
             action, _ = self.InnerController.agents[1].predict(self.obs_inner_controller, deterministic=True)
         self.obs_inner_controller, _, done, info = self.InnerController.step(action)
-        self.error = self.ref_signal[self.step_count] - self.InnerController.state[self.track_index]
+        self.error = self.ref_signal[self.step_count] - self.InnerController.state[self.track_index] +\
+                     self.InnerController.get_sensor_noise()[self.track_index]
         self.error *= 0.25
 
         return self.get_obs(), self.get_reward(), done, info
@@ -72,9 +73,9 @@ class AltController(gym.Env, ABC):
 
     def get_reward(self):
         max_bound = np.ones(self.error.shape)
-        # reward = -np.abs(np.maximum(np.minimum(self.error / 60, max_bound), -max_bound))
+        reward = -np.abs(np.maximum(np.minimum(self.error / 60, max_bound), -max_bound))
         # reward = -np.abs(np.maximum(np.minimum(r2d(self.error / 240)**2, max_bound), -max_bound))
-        reward = -np.maximum(np.minimum(1 / (np.abs(self.error) * 0.09 + 1), max_bound), -max_bound)
+        # reward = -np.maximum(np.minimum(1 / (np.abs(self.error) * 0.09 + 1), max_bound), -max_bound)
         return reward
 
     def get_obs(self):
@@ -104,11 +105,11 @@ class AltController(gym.Env, ABC):
 
     def filter_control_input(self, current_pitch_ref):
 
-        w_0 = 0.08*2*np.pi  # rad/s
+        w_0 = 1 * 2 * np.pi  # rad/s
         filtered_pitch_ref = current_pitch_ref
         if self.step_count > 1 and self.enable_low_pass:
-            filtered_pitch_ref = self.InnerController.ref_signal[0, self.step_count-1]/(1+w_0*self.dt) + \
-                                  current_pitch_ref * (w_0*self.dt)/(1+w_0*self.dt)
+            filtered_pitch_ref = self.InnerController.ref_signal[0, self.step_count - 1] / (1 + w_0 * self.dt) + \
+                                 current_pitch_ref * (w_0 * self.dt) / (1 + w_0 * self.dt)
 
         return filtered_pitch_ref
 
@@ -153,7 +154,7 @@ class AltController(gym.Env, ABC):
         if verbose > 0:
             # print(f"Goal reached! Return = {episode_reward:.2f}")
             # print(self.InnerController.get_MAE(), self.get_MAE())
-            print(f'nRMSE% avg: {(self.InnerController.get_RMSE()[1:].sum()+self.get_RMSE()) / 3 * 100:.2f}%')
+            print(f'nRMSE% avg: {(self.InnerController.get_RMSE()[1:].sum() + self.get_RMSE()) / 3 * 100:.2f}%')
             print(f'nMAE% avg: {(self.InnerController.get_MAE()[1:].sum() + self.get_MAE()) / 3 * 100:.2f}%')
             print('')
 
@@ -162,7 +163,9 @@ class AltController(gym.Env, ABC):
         return
 
     def load_agent(self):
-        return SAC.load(f"fault_tolerant_flight_control_drl/agent/trained/{self.InnerController.task.agent_catalog['normal_outer_loop']}.zip", env=self), \
+        return SAC.load(
+            f"fault_tolerant_flight_control_drl/agent/trained/{self.InnerController.task.agent_catalog['normal_outer_loop']}.zip",
+            env=self), \
                self.InnerController.task.agent_catalog['normal_outer_loop']
 
     class ActionLimits:

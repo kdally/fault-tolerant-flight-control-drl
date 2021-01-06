@@ -95,7 +95,7 @@ class Citation(gym.Env):
 
         self.error = d2r(self.ref_signal[:, self.step_count] -
                          self.state_deg[self.track_indices] + self.get_sensor_noise()[self.track_indices]) \
-                     * self.scale_error(self.step_count)
+                       * self.scale_error(self.step_count)
 
         self.state_history[:, self.step_count] = self.state_deg
         self.action_history[:, self.step_count] = filtered_deflection
@@ -135,9 +135,9 @@ class Citation(gym.Env):
 
         max_bound = np.ones(self.error.shape)
         # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30)**2, max_bound), -max_bound))  # square function
-        # reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))   # rational function
-        reward_vec = - np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound),
-                                 - max_bound)  # abs. linear function
+        reward_vec = np.abs(np.maximum(np.minimum(r2d(self.error / 30), max_bound), -max_bound))  # rational function
+        # reward_vec = - np.maximum(np.minimum(1 / (np.abs(self.error) * 10 + 1), max_bound),
+        #                          - max_bound)  # abs. linear function
         reward = -reward_vec.sum() / self.error.shape[0]
         return reward
 
@@ -187,7 +187,7 @@ class Citation(gym.Env):
 
     def filter_control_input(self, deflection):
 
-        w_0 = 2 * 2 * np.pi  # rad/s
+        w_0 = 20 * 2 * np.pi  # rad/s
         filtered_deflection = deflection.copy()
         if self.step_count > 1 and self.enable_low_pass:
             filtered_deflection = self.action_history[:, self.step_count - 1] / (1 + w_0 * self.dt) + \
@@ -197,12 +197,25 @@ class Citation(gym.Env):
 
     def get_sensor_noise(self):
 
+        # values in degrees, SSD
         sensor_noise = np.zeros(self.state.shape)
-        if self.has_sensor_noise:  # from https://doi.org/10.2514/6.2018-1127
-            sensor_noise[0:3] += np.random.normal(scale=6.32e-4, size=3)  # p, q, r
-            sensor_noise[5] += np.random.normal(scale=8.72e-3)  # sideslip, estimate from alpha
-            sensor_noise[6:8] += np.random.normal(scale=3.16e-5, size=2)  # phi, theta
-            sensor_noise[9] += np.random.normal(scale=0.5)  # h (from Joon)
+        if self.has_sensor_noise:
+            # p, q, r measurement from https://doi.org/10.2514/6.2018-1127
+            sensor_noise[0:3] += r2d(np.random.normal(scale=np.sqrt(4e-7), size=3)+3e-5)
+
+            # sideslip, estimate from https://doi.org/10.1007/978-3-319-65283-2_14
+            sensor_noise[5] += r2d(np.random.normal(scale=3.5e-3))
+
+            # phi, theta measurement from https://doi.org/10.2514/6.2018-1127
+            sensor_noise[6:8] += r2d(np.random.normal(scale=np.sqrt(1e-9), size=2)+4e-3)
+
+            # h estimate from https://doi.org/10.1007/978-3-319-65283-2_14
+            sensor_noise[9] += np.random.normal(scale=0.3)
+
+            # sideslip, estimate from https://doi.org/10.2514/6.2021-0392
+            # sensor_noise[5] += r2d(np.random.normal(scale=8.73e-3))
+            # h estimate from https://doi.org/10.2514/6.2021-0392
+            # sensor_noise[9] += np.random.normal(scale=0.5)
         return sensor_noise
 
     def get_disturbance(self):
@@ -333,7 +346,7 @@ class CitationNormal(Citation):
         self.init_alt = init_alt
         self.init_speed = init_speed
         super(CitationNormal, self).__init__(evaluation=evaluation, FDD=FDD, task=task,
-                                       disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
+                                             disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
         self.ref_signal = self.task_fun(init_alt=init_alt)[0]
 
     def get_plant(self):
