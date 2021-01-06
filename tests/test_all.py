@@ -15,12 +15,12 @@ def GUI():
                     'rudder stuck at -15deg', '-70% aileron effectiveness', 'elevator range reduced to [-3deg, 3deg]',
                     'partial horizontal tail loss', 'partial vertical tail loss', 'c.g. shift', 'severe icing'),
                     default_value='rudder stuck at -15deg', auto_size_text=True, key='fail_type')],
-                [sg.Text('Initial conditions are fixed at 2000m and 90 m/s for the altitude and speed, respectively.')]]
+                [sg.Text('Initial altitude and speed are set as 2000m and 90 m/s, respectively.')]]
 
     section3 = [[sg.T('Controller Structure :')],
-                [sg.Radio('Cascaded (recommended)', 'struct', size=(25, 1), default=True, enable_events=True,
+                [sg.Radio('Cascaded', 'struct', size=(16, 1), default=True, enable_events=True,
                           key='-OPEN CASC'),
-                 sg.Radio('Single (not recommended)', 'struct', size=(25, 1), enable_events=True,
+                 sg.Radio('Single', 'struct', size=(16, 1), enable_events=True,
                           key='-OPEN SINGLE')], ]
 
     fname = 'assets/citation_550.png'
@@ -31,24 +31,23 @@ def GUI():
               [sg.Image(filename=fname, size=(440, 140), tooltip='PH-LAB Aircraft')],
 
               [sg.Text('_' * 100, size=(75, 1))],
-              [sg.Text('Aircraft condition', font=('Helvetica', 14))],
-              [sg.Radio('Normal', 'condition', size=(12, 1), enable_events=True, key='-OPEN COND-NORM', default=True),
-               sg.Radio('Failed', 'condition', size=(12, 1), enable_events=True, key='-OPEN COND-FAIL')],
+              [sg.Text('Flight conditions', font=('Helvetica', 14))],
+              [sg.Radio('Normal system', 'condition', size=(15, 1), enable_events=True, key='-OPEN COND-NORM', default=True),
+               sg.Radio('Failed system', 'condition', size=(14, 1), enable_events=True, key='-OPEN COND-FAIL')],
               [sg.pin(sg.Column(section1, key='-COND-NORM', visible=True))],
               [sg.pin(sg.Column(section2, key='-COND-FAIL', visible=False))],
+              [sg.Checkbox('Sensor noise', default=False, key='sens_noise'),
+               sg.Checkbox('Wind disturbance', default=False, key='dist')],
 
               [sg.Text('_' * 100, size=(75, 1))],
-              [sg.Text('Controller Type', font=('Helvetica', 14))],
+              [sg.Text('Controller Type', font=('Helvetica', 16))],
               [sg.Radio('Altitude tracking ', 'task', size=(16, 1), enable_events=True, key='-OPEN STRUCT-ALT',
                         default=True),
                sg.Radio('Attitude tracking', 'task', size=(16, 1), enable_events=True, key='-OPEN STRUCT-ATT')],
               [sg.pin(sg.Column(section3, key='-STRUCT', visible=True))],
-
-              [sg.Text('_' * 100, size=(75, 1))],
-              [sg.Text('Other Settings (not recommended)', font=('Helvetica', 14))],
-              [sg.Checkbox('Sensor noise', default=False, key='sens_noise'),
-               sg.Checkbox('Wind disturbance', default=False, key='dist'),
-               sg.Checkbox('Low pass filter', default=False, key='low_pass')],
+              #
+              # [sg.Text('_' * 100, size=(75, 1))],
+              # [sg.Text('Other Settings', font=('Helvetica', 14))],
 
               [sg.Cancel('Run Simulation', key='RUN', tooltip='Sim. time: 20s'), sg.Cancel('Exit', key='EXIT')]]
 
@@ -73,14 +72,16 @@ def GUI():
             window['-COND-FAIL'].update(visible=opened2)
 
         if event.startswith('-OPEN SINGLE'):
-            window['sens_noise'].update(disabled=True, value=False)
-            window['dist'].update(disabled=True, value=False)
-            window['low_pass'].update(disabled=True, value=False)
+            # window['sens_noise'].update(disabled=True, value=False)
+            # window['dist'].update(disabled=True, value=False)
+            sg.popup('This mode is not recommended. Unstable response is expected.',title='Warning',
+                     custom_text='I understand',background_color='orange red', keep_on_top=True, font=('Helvetica', 13))
+            # window['low_pass'].update(disabled=True, value=False)
 
         if event.startswith('-OPEN STRUCT-ATT') or event.startswith('-OPEN CASC'):
             window['sens_noise'].update(disabled=False)
             window['dist'].update(disabled=False)
-            window['low_pass'].update(disabled=False)
+            # window['low_pass'].update(disabled=False)
 
         if event.startswith('-OPEN STRUCT-'):
             opened3 = not opened3
@@ -123,7 +124,7 @@ def __main__():
 
     disturbance = instructions['dist']
     sensor_noise = instructions['sens_noise']
-    low_pass = instructions['low_pass']
+    low_pass = False
 
     if is_failed:
         if fail_type == 'rudder stuck at -15deg':

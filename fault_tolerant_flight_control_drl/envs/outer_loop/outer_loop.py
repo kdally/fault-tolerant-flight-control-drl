@@ -105,7 +105,7 @@ class AltController(gym.Env, ABC):
 
     def filter_control_input(self, current_pitch_ref):
 
-        w_0 = 1 * 2 * np.pi  # rad/s
+        w_0 = 0.5 * 2 * np.pi  # rad/s
         filtered_pitch_ref = current_pitch_ref
         if self.step_count > 1 and self.enable_low_pass:
             filtered_pitch_ref = self.InnerController.ref_signal[0, self.step_count - 1] / (1 + w_0 * self.dt) + \

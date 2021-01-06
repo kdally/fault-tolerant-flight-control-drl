@@ -187,7 +187,7 @@ class Citation(gym.Env):
 
     def filter_control_input(self, deflection):
 
-        w_0 = 20 * 2 * np.pi  # rad/s
+        w_0 = 2 * 2 * np.pi  # rad/s
         filtered_deflection = deflection.copy()
         if self.step_count > 1 and self.enable_low_pass:
             filtered_deflection = self.action_history[:, self.step_count - 1] / (1 + w_0 * self.dt) + \
