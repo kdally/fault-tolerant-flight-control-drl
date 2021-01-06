@@ -3,8 +3,9 @@ import random
 from abc import abstractmethod, ABC
 from scipy import signal
 
-# couple = ['1MY88Q',	'ZWGTJW']
+# couple = ['ICGYVP',	'BZVWF5']
 couple = ['PZ5QGW',	'GT0PLE']
+
 
 
 class Task(ABC):
