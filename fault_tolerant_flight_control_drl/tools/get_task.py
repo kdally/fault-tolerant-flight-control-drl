@@ -7,7 +7,6 @@ from scipy import signal
 couple = ['PZ5QGW',	'GT0PLE']
 
 
-
 class Task(ABC):
     """
     Task class.
@@ -628,24 +627,42 @@ class CascadedAltTask(AltitudeTask):
 
 class ReliabilityTask(CascadedAltTask):
 
-    # def get_task_eval(self):
+    # def get_task_eval(self, init_alt=2000):
     #
     #     self.time_v = np.arange(0, 120, 0.01)
-    #     initial_alt = 2000
     #     w_0 = 1/40
-    #     self.signals['h'] = initial_alt + 40*np.sin(2*np.pi*w_0*self.time_v)
+    #     self.signals['h'] = init_alt + 40*np.sin(2*np.pi*w_0*self.time_v)
     #     w_1 = 1/25
     #     self.signals['phi'] = 25*np.sin(2*np.pi*w_1*self.time_v)
     #
     #     return self.return_signals()
 
-    def get_task_eval(self):
+    # def get_task_eval(self, init_alt=2000):
+    #
+    #     self.time_v = np.arange(0, 120, 0.01)
+    #     w_0 = 1/80
+    #     self.signals['h'] = init_alt + 80*np.sin(2*np.pi*w_0*self.time_v)
+    #     w_1 = 1/50
+    #     self.signals['phi'] = 50*np.sin(2*np.pi*w_1*self.time_v)
+    #
+    #     return self.return_signals()
+
+    def get_task_eval(self, init_alt=2000):
 
         self.time_v = np.arange(0, 120, 0.01)
-        initial_alt = 2000
         w_0 = 1/40
-        self.signals['h'] = initial_alt + 40*(signal.sawtooth(2 * np.pi * w_0 * self.time_v, width=0.5) + 1)
+        self.signals['h'] = init_alt + 40*(signal.sawtooth(2 * np.pi * w_0 * self.time_v, width=0.5) + 1)
         w_1 = 1/25
-        self.signals['phi'] = 25*(signal.sawtooth(2 * np.pi * w_1 * (self.time_v-12), width=0.5))
+        self.signals['phi'] = 25*(signal.sawtooth(2 * np.pi * w_1 * (self.time_v-6), width=0.5))
 
         return self.return_signals()
+
+    # def get_task_eval(self, init_alt=2000):
+    #
+    #     self.time_v = np.arange(0, 120, 0.01)
+    #     w_0 = 1/80
+    #     self.signals['h'] = init_alt + 80*(signal.sawtooth(2 * np.pi * w_0 * self.time_v, width=0.5) + 1)
+    #     w_1 = 1/50
+    #     self.signals['phi'] = 50*(signal.sawtooth(2 * np.pi * w_1 * (self.time_v-12), width=0.5))
+    #
+    #     return self.return_signals()
