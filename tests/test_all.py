@@ -37,7 +37,7 @@ def GUI():
               [sg.pin(sg.Column(section1, key='-COND-NORM', visible=True))],
               [sg.pin(sg.Column(section2, key='-COND-FAIL', visible=False))],
               [sg.Checkbox('Sensor noise', default=False, key='sens_noise'),
-               sg.Checkbox('Wind disturbance', default=False, key='dist')],
+               sg.Checkbox('Atmospheric disturbances', default=False, key='dist')],
 
               [sg.Text('_' * 100, size=(75, 1))],
               [sg.Text('Controller Type', font=('Helvetica', 16))],
@@ -154,7 +154,7 @@ def __main__():
                            init_speed=init_speed,
                            disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
     else:
-        env_eval = env(evaluation=True, task=ft.tools.AttitudeTask, FDD=is_failed, init_alt=init_alt, init_speed=init_speed,
+        env_eval = env(evaluation=True, task=ft.tools.DisturbanceRejectionAtt, FDD=is_failed, init_alt=init_alt, init_speed=init_speed,
                        disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
 
     env_eval.render()

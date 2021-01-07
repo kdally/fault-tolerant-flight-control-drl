@@ -24,7 +24,7 @@ def learn():
                                          log_path="fault_tolerant_flight_control_drl/agent/trained/tmp/",
                                          best_model_save_path="fault_tolerant_flight_control_drl/agent/trained/tmp/")
     agent = ft.agent.SAC(ft.agent.LnMlpPolicy, env_train,
-                         ent_coef='auto', batch_size=512,
+                         batch_size=512,
                          # learning_rate=schedule_kink(0.0005, 0.0004),
                          train_freq=100,
                          learning_rate=ft.tools.constant(0.0003),

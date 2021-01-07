@@ -10,10 +10,10 @@ def plot_weights(ID: str, task_type: str, last=None):
     """
 
     if last:
-        df = pd.read_csv(f'./agent/trained/tmp/monitor.csv', header=0)
+        df = pd.read_csv(f'fault_tolerant_flight_control_drl/agent/trained/tmp/monitor.csv', header=0)
 
     else:
-        df = pd.read_csv(f'./agent/trained/{task_type}_{ID}.csv', header=0)
+        df = pd.read_csv(f'fault_tolerant_flight_control_drl/agent/trained/{task_type}_{ID}.csv', header=0)
 
     fig = px.line(df, x=df['l'], y=df.iloc[:, 3:].columns)
 

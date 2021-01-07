@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from abc import ABC
 from fault_tolerant_flight_control_drl.agent import SAC
-from fault_tolerant_flight_control_drl.tools import CascadedAltTask, ReliabilityTask
+from fault_tolerant_flight_control_drl.tools import CascadedAltTask, ReliabilityTask, DisturbanceRejectionAlt
 from fault_tolerant_flight_control_drl.tools import plot_response
 from alive_progress import alive_bar
 from fault_tolerant_flight_control_drl.tools.math_util import unscale_action, d2r, r2d

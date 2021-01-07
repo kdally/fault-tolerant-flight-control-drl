@@ -3,8 +3,9 @@ import random
 from abc import abstractmethod, ABC
 from scipy import signal
 
-# couple = ['ICGYVP',	'BZVWF5']
-couple = ['PZ5QGW',	'GT0PLE']
+# couple = ['PZ5QGW',	'YQZL4N']
+# couple = ['PZ5QGW',	'GT0PLE']
+couple = ['PZ5QGW',	'9VZ5VE'] # for disturbance rejection, most 'calm'
 
 
 class Task(ABC):
@@ -390,6 +391,17 @@ class AttitudeTask(Task):
         return self.track_signals, self.track_indices, self.obs_indices, self.time_v, '3attitude_step'
 
 
+class DisturbanceRejectionAtt(AttitudeTask):
+
+    def get_task_eval(self, init_alt=2000):
+
+        self.time_v = np.arange(0, 20, 0.01)
+        self.signals['theta'] = np.zeros((self.time_v.shape[0],))
+        self.signals['phi'] = np.zeros((self.time_v.shape[0],))
+
+        return self.return_signals()
+
+
 class AltitudeTask(Task):
 
     def get_agent_catalog(self):
@@ -666,3 +678,14 @@ class ReliabilityTask(CascadedAltTask):
     #     self.signals['phi'] = 50*(signal.sawtooth(2 * np.pi * w_1 * (self.time_v-12), width=0.5))
     #
     #     return self.return_signals()
+
+
+class DisturbanceRejectionAlt(CascadedAltTask):
+
+    def get_task_eval(self, init_alt=2000):
+
+        self.time_v = np.arange(0, 20, 0.01)
+        self.signals['h'] = init_alt * np.ones((self.time_v.shape[0],))
+        self.signals['phi'] = np.zeros((self.time_v.shape[0],))
+
+        return self.return_signals()

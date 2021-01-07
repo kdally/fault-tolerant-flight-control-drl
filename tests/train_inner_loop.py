@@ -16,18 +16,17 @@ if not os.path.exists('figures/during_training'):
 
 
 def learn(task: ft.tools.Task, env_type=ft.envs.CitationNormal):
-    env_train = env_type(task=task)
-    env_eval = env_type(task=task)
+    env_train = env_type(task=task, sensor_noise=True)
+    env_eval = env_type(task=task, sensor_noise=True)
 
     callback = ft.agent.SaveOnBestReturn(eval_env=env_eval, log_path="fault_tolerant_flight_control_drl/agent/trained/tmp/",
                                 best_model_save_path="fault_tolerant_flight_control_drl/agent/trained/tmp/")
     agent = ft.agent.SAC(ft.agent.LnMlpPolicy, env_train,
-                # ent_coef='auto', batch_size=512,
                 # learning_rate=schedule_kink(0.0004, 0.0002),
                 # train_freq=100,
                 # learning_rate=constant(0.0003),
                 # policy_kwargs=dict(layers=[32, 32]),
-                ent_coef='auto', batch_size=256,
+                batch_size=256,
                 learning_rate=ft.tools.schedule_kink(0.0004, 0.0002)
                 )
     agent.learn(total_timesteps=int(1e6), callback=callback)
@@ -68,8 +67,8 @@ signal.signal(signal.SIGINT, keyboardInterruptHandler)
 ########################################################################################################################
 # ***** CHOOSE FLIGHT SETTINGS ****** #
 
-current_task = ft.tools.AltitudeTask
-# current_task = ft.tools.AttitudeTask
+# current_task = ft.tools.AltitudeTask
+current_task = ft.tools.AttitudeTask
 
 env = ft.envs.CitationNormal
 # env = ft.envs.CitationElevRange

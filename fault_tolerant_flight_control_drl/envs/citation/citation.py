@@ -3,7 +3,8 @@ import numpy as np
 from abc import abstractmethod
 
 from fault_tolerant_flight_control_drl.agent import SAC
-from fault_tolerant_flight_control_drl.tools import AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
+from fault_tolerant_flight_control_drl.tools import AltitudeTask, AttitudeTask, BodyRateTask
+from fault_tolerant_flight_control_drl.tools import ReliabilityTask, DisturbanceRejectionAtt
 from fault_tolerant_flight_control_drl.tools import plot_response
 import importlib
 from fault_tolerant_flight_control_drl.tools.math_util import unscale_action, d2r, r2d
@@ -23,7 +24,7 @@ class Citation(gym.Env):
         If True, the environment is given longer and unseen tasks as part of the evaluation.
     :param FDD: (bool) If True, the Fault Detection and Diagnosis module is added which switches from robust to
         adaptive control at self.FDD_switch_time.
-    :param task: (Task) one of AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask
+    :param task: (Task) one of AltitudeTask, AttitudeTask, BodyRateTask, ReliabilityTask, DisturbanceRejection
     :param disturbance: (bool) If True, disturbance forces are added in the environment. Normal disturbance values from
     https://doi.org/10.2514/6.2018-1127.
     :param sensor_noise: (bool) If True, sensor noise is added to the environment observations based on the sensor noise
@@ -85,11 +86,11 @@ class Citation(gym.Env):
 
         if self.time[self.step_count] < self.failure_time and self.evaluation:
             self.state = self.C_MODEL.step(
-                np.hstack([d2r(filtered_deflection + self.get_disturbance()), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                np.hstack([d2r(filtered_deflection + self.add_disturbance()[:, self.step_count]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                            self.failure_input[1]]))
         else:
             self.state = self.C_MODEL.step(
-                np.hstack([d2r(filtered_deflection + self.get_disturbance()), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                np.hstack([d2r(filtered_deflection + self.add_disturbance()[:, self.step_count]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                            self.failure_input[2]]))
         self.state_deg = self.state * self.scale_s
 
@@ -176,7 +177,7 @@ class Citation(gym.Env):
         print('Encountered crash. Episode terminated early.')
         if not self.evaluation:
             ID = get_ID(6)
-            agent = SAC.load("agent/trained/tmp/best_model.zip", env=self)
+            agent = SAC.load("fault_tolerant_flight_control_drl/agent/trained/tmp/best_model.zip", env=self)
             agent.ID = ID
             agent.save(f'{self.agent_path}/{self.task_fun()[4]}_{agent.ID}.zip')
             print('Training is corrupt because of NaN values, terminated early. '
@@ -218,13 +219,21 @@ class Citation(gym.Env):
             # sensor_noise[9] += np.random.normal(scale=0.5)
         return sensor_noise
 
-    def get_disturbance(self):
+    def add_disturbance(self):
 
-        disturbance = np.zeros(self.action_space.shape)
-        if self.has_disturbance:  # from https://doi.org/10.2514/6.2018-1127
-            disturbance += np.random.normal(scale=7.41e-4, size=3)  # delta_e, delta_a, delta_r
+        disturbance = np.zeros((self.action_space.shape[0], self.time.shape[0]))
+        if self.has_disturbance:  # 3211 input in deg
+            disturbance[0, np.argwhere(self.time == 1)[0, 0]:np.argwhere(self.time == 4)[0, 0]] = 0.5
+            disturbance[0, np.argwhere(self.time == 4)[0, 0]:np.argwhere(self.time == 6)[0, 0]] = -0.9
+            disturbance[0, np.argwhere(self.time == 6)[0, 0]:np.argwhere(self.time == 7)[0, 0]] = 1.2
+            disturbance[0, np.argwhere(self.time == 7)[0, 0]:np.argwhere(self.time == 8)[0, 0]] = -1.2
 
-        return r2d(disturbance)
+            disturbance[1, np.argwhere(self.time == 10)[0, 0]:np.argwhere(self.time == 13)[0, 0]] = -0.5
+            disturbance[1, np.argwhere(self.time == 13)[0, 0]:np.argwhere(self.time == 15)[0, 0]] = 0.9
+            disturbance[1, np.argwhere(self.time == 15)[0, 0]:np.argwhere(self.time == 16)[0, 0]] = -1.2
+            disturbance[1, np.argwhere(self.time == 16)[0, 0]:np.argwhere(self.time == 17)[0, 0]] = 1.2
+
+        return disturbance
 
     def scale_error(self, step_count):
 
