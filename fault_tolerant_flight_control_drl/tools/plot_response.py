@@ -1958,7 +1958,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
                      # tickvals=np.arange(-5, 5 + 2.5, 2.5),
                      # ticktext=['-5', ' ', '0', ' ', '5'],
                      tickfont=dict(size=11),
-                     range=[-2.5, 2.5],
+                     # range=[-2.5, 2.5],
                      titlefont=dict(size=13)
                      )
     fig.append_trace(go.Scatter(
@@ -1969,7 +1969,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
                      # tickvals=np.arange(0, 20 + 5, 5),
                      # ticktext=['0', ' ', '10', ' ', '20'],
                      tickfont=dict(size=11),
-                     range=[0, 1],
+                     range=[-2, 2],
                      titlefont=dict(size=13)
                      )
 
