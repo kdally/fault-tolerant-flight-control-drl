@@ -12,7 +12,7 @@ def GUI():
 
     section2 = [[sg.T('Failure Type')],
                 [sg.InputCombo(values=(
-                    'rudder stuck at -15deg', '-70% aileron effectiveness', 'elevator range reduced to [-3deg, 3deg]',
+                    'rudder stuck at -15deg', '-70% aileron effectiveness', 'elevator range reduced to [-2.5deg, 2.5deg]',
                     'partial horizontal tail loss', 'partial vertical tail loss', 'c.g. shift', 'severe icing'),
                     default_value='rudder stuck at -15deg', auto_size_text=True, key='fail_type')],
                 [sg.Text('Initial altitude and speed are set as 2000m and 90 m/s, respectively.')]]
@@ -131,7 +131,7 @@ def __main__():
             env = ft.envs.CitationRudderStuck
         elif fail_type == '-70% aileron effectiveness':
             env = ft.envs.CitationAileronEff
-        elif fail_type == 'elevator range reduced to [-3deg, 3deg]':
+        elif fail_type == 'elevator range reduced to [-2.5deg, 2.5deg]':
             env = ft.envs.CitationElevRange
         elif fail_type == 'partial horizontal tail loss':
             env = ft.envs.CitationHorzTail

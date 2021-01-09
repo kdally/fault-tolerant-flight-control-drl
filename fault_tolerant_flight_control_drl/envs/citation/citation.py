@@ -46,7 +46,7 @@ class Citation(gym.Env):
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
         self.FDD_switch_time = 60
-        self.failure_time = 10
+        self.failure_time = 5
         self.task = task()
         self.task_fun, self.evaluation, self.FDD = self.task.choose_task(evaluation, self.failure_input, FDD)
         self.has_sensor_noise = sensor_noise
@@ -457,7 +457,7 @@ class CitationElevRange(Citation):
 
     def get_plant(self):
         plant = importlib.import_module(f'fault_tolerant_flight_control_drl.envs.citation.de._citation', package=None)
-        return plant, ['de', 20.05, 3.0]
+        return plant, ['de', 20.05, 2.5]
 
     def load_agent(self, FDD):
         if FDD:
