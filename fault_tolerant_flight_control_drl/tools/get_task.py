@@ -4,8 +4,8 @@ from abc import abstractmethod, ABC
 from scipy import signal
 
 # couple = ['PZ5QGW',	'YQZL4N']
-# couple = ['PZ5QGW',	'GT0PLE']
-couple = ['PZ5QGW',	'9VZ5VE'] # for disturbance rejection, most 'calm'
+couple = ['PZ5QGW',	'GT0PLE']
+# couple = ['PZ5QGW',	'9VZ5VE'] # for disturbance rejection, most 'calm'
 
 
 class Task(ABC):
@@ -170,6 +170,7 @@ class AttitudeTask(Task):
         catalog['aileron_eff'] = '3attitude_step_E919SW_da'
         catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
         catalog['horz_tail'] = '3attitude_step_R0EV0U_ht'
+        # catalog['horz_tail'] = '3attitude_step_' + couple[1]
         catalog['vert_tail'] = '3attitude_step_2KGDYQ_vt'
         catalog['icing'] = '3attitude_step_9MUWUB_ice'
         catalog['cg_shift'] = '3attitude_step_5K6QFG_cg'

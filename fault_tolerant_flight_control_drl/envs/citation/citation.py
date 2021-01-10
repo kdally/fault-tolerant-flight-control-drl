@@ -46,7 +46,7 @@ class Citation(gym.Env):
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
         self.C_MODEL, self.failure_input = self.get_plant()
         self.FDD_switch_time = 60
-        self.failure_time = 5
+        self.failure_time = 10
         self.task = task()
         self.task_fun, self.evaluation, self.FDD = self.task.choose_task(evaluation, self.failure_input, FDD)
         self.has_sensor_noise = sensor_noise
@@ -81,8 +81,8 @@ class Citation(gym.Env):
     def step(self, action_rates: np.ndarray):
 
         self.current_deflection = self.current_deflection + self.scale_a(action_rates) * self.dt
-        filtered_deflection = self.filter_control_input(self.current_deflection)
         if self.sideslip_factor[self.step_count - 1] == 0.0: self.current_deflection[2] = 0.0
+        filtered_deflection = self.filter_control_input(self.current_deflection)
 
         if self.time[self.step_count] < self.failure_time and self.evaluation:
             self.state = self.C_MODEL.step(
@@ -516,13 +516,14 @@ class CitationIcing(Citation):
     def load_agent(self, FDD):
         if FDD:
             return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['icing']}.zip", env=self)], \
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['icing']}.zip", env=self,
+                             policy_kwargs=dict(layers=[32, 32]))], \
                    self.task.agent_catalog['icing']
         return CitationNormal().load_agent()
 
     def reset(self):
         super(CitationIcing, self).reset()
-        self.ref_signal = self.task_fun(theta_angle=25)[0]
+        self.ref_signal = self.task_fun()[0]
 
         return np.zeros(self.observation_space.shape)
 
@@ -550,7 +551,8 @@ class CitationHorzTail(Citation):
     def load_agent(self, FDD):
         if FDD:
             return [SAC.load(f"{self.agent_path}/{self.task.agent_catalog['normal']}.zip", env=self),
-                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['horz_tail']}.zip", env=self)], \
+                    SAC.load(f"{self.agent_path}/{self.task.agent_catalog['horz_tail']}.zip", env=self,
+                             policy_kwargs=dict(layers=[32, 32]))], \
                    self.task.agent_catalog['horz_tail']
         return CitationNormal().load_agent()
 
