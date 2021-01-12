@@ -170,7 +170,6 @@ class AttitudeTask(Task):
         catalog['aileron_eff'] = '3attitude_step_E919SW_da'
         catalog['rudder_stuck'] = '3attitude_step_HNAKCC_dr'
         catalog['horz_tail'] = '3attitude_step_R0EV0U_ht'
-        # catalog['horz_tail'] = '3attitude_step_' + couple[1]
         catalog['vert_tail'] = '3attitude_step_2KGDYQ_vt'
         catalog['icing'] = '3attitude_step_9MUWUB_ice'
         catalog['cg_shift'] = '3attitude_step_5K6QFG_cg'
