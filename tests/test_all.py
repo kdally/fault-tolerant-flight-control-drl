@@ -8,7 +8,20 @@ def GUI():
                 [sg.Text('Initial Altitude [m]:'),
                  sg.InputCombo(values=('2000', '5000'), auto_size_text=True, default_value='2000', key='init_alt')],
                 [sg.Text('Initial Speed [m/s]:'),
-                 sg.InputCombo(values=('90', '140'), auto_size_text=True, default_value='90', key='init_speed')]]
+                 sg.InputCombo(values=('90', '140'), auto_size_text=True, default_value='90', key='init_speed')]
+                # [sg.Text('Initial Altitude [m]:'),
+                #  sg.Radio('2000', 'init_alt', auto_size_text=True, default=True,
+                #           key='init_alt_2000', enable_events=True),
+                #  sg.Radio('5000', 'init_alt', auto_size_text=True, default=False,
+                #           key='init_alt_5000', enable_events=True)
+                #  ],
+                # [sg.Text('Initial Speed [m/s]:'),
+                #  sg.Radio('90','init_speed', auto_size_text=True, default=True,
+                #           key='init_speed_90', enable_events=True),
+                #  sg.Radio('140','init_speed', auto_size_text=True, default=False,
+                #           key='init_speed_140', enable_events=True)
+                #  ]
+                ]
 
     section2 = [[sg.T('Failure Type')],
                 [sg.InputCombo(values=(
@@ -36,8 +49,9 @@ def GUI():
                sg.Radio('Failed system', 'condition', size=(14, 1), enable_events=True, key='-OPEN COND-FAIL')],
               [sg.pin(sg.Column(section1, key='-COND-NORM', visible=True))],
               [sg.pin(sg.Column(section2, key='-COND-FAIL', visible=False))],
-              [sg.Checkbox('Sensor noise', default=False, key='sens_noise'),
-               sg.Checkbox('Atmospheric disturbances', default=False, key='dist')],
+              [sg.Checkbox('Sensor noise', default=False, key='-NOISE'),
+               sg.Checkbox('Control disturbances', default=False, key='-DIST-CONT', enable_events=True),
+               sg.Checkbox('Atmospheric disturbances', default=False, key='ATM', enable_events=True)],
 
               [sg.Text('_' * 100, size=(75, 1))],
               [sg.Text('Controller Type', font=('Helvetica', 16))],
@@ -72,22 +86,23 @@ def GUI():
             window['-COND-FAIL'].update(visible=opened2)
 
         if event.startswith('-OPEN SINGLE'):
-            # window['sens_noise'].update(disabled=True, value=False)
-            # window['dist'].update(disabled=True, value=False)
+            # window['-NOISE'].update(disabled=True, value=False)
+            # window['-DIST-CONT'].update(disabled=True, value=False)
             sg.popup('This mode is not recommended. Unstable response is expected.',title='Warning',
                      custom_text='I understand',background_color='orange red', keep_on_top=True, font=('Helvetica', 13))
-            # window['low_pass'].update(disabled=True, value=False)
-
-        if event.startswith('-OPEN STRUCT-ATT') or event.startswith('-OPEN CASC'):
-            window['sens_noise'].update(disabled=False)
-            window['dist'].update(disabled=False)
-            # window['low_pass'].update(disabled=False)
 
         if event.startswith('-OPEN STRUCT-'):
             opened3 = not opened3
             window['-OPEN STRUCT-ALT'].update(opened3)
             window['-OPEN STRUCT-ATT'].update(not opened3)
             window['-STRUCT'].update(visible=opened3)
+
+        if event == 'ATM':
+            window['init_alt'].update(disabled=True, value='2000')
+            window['init_speed'].update(disabled=True, value='90')
+        if not instructions['ATM']:
+            window['init_alt'].update(disabled=False)
+            window['init_speed'].update(disabled=False)
 
     window.close()
 
@@ -122,8 +137,9 @@ def __main__():
     is_task_alt = instructions['-OPEN STRUCT-ALT']
     is_cascaded = instructions['-OPEN CASC']
 
-    disturbance = instructions['dist']
-    sensor_noise = instructions['sens_noise']
+    cont_disturbance = instructions['-DIST-CONT']
+    atm_disturbance = instructions['ATM']
+    sensor_noise = instructions['-NOISE']
     low_pass = False
 
     if is_failed:
@@ -142,20 +158,23 @@ def __main__():
         else:  # fail_type == 'severe icing':
             env = ft.envs.CitationIcing
     else:
-        env = ft.envs.CitationNormal
+        if atm_disturbance:
+            env = ft.envs.CitationDistAlpha
+        else:
+            env = ft.envs.CitationNormal
 
     if is_task_alt:
         if is_cascaded:
             env_eval = ft.envs.AltController(evaluation=True, FDD=is_failed, inner_controller=env,
-                                             init_alt=init_alt, init_speed=init_speed, disturbance=disturbance,
+                                             init_alt=init_alt, init_speed=init_speed, disturbance=cont_disturbance,
                                              sensor_noise=sensor_noise, low_pass=low_pass)
         else:
             env_eval = env(evaluation=True, FDD=is_failed, task=ft.tools.AltitudeTask, init_alt=init_alt,
                            init_speed=init_speed,
-                           disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
+                           disturbance=cont_disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
     else:
-        env_eval = env(evaluation=True, task=ft.tools.DisturbanceRejectionAtt, FDD=is_failed, init_alt=init_alt, init_speed=init_speed,
-                       disturbance=disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
+        env_eval = env(evaluation=True, task=ft.tools.AttitudeTask, FDD=is_failed, init_alt=init_alt, init_speed=init_speed,
+                       disturbance=cont_disturbance, sensor_noise=sensor_noise, low_pass=low_pass)
 
     env_eval.render()
 

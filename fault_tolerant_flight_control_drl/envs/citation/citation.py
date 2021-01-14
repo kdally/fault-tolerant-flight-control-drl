@@ -592,6 +592,22 @@ class CitationVertTail(Citation):
         return sideslip_factor, pitch_factor, roll_factor, alt_factor
 
 
+class CitationDistAlpha(CitationNormal):
+    """
+       CitationNormal Dynamics class with atmospheric disturbances as verital .
+       The rudder is stuck at -15deg starting from self.failure_time.
+       Author: Killian Dally
+    """
+    def get_plant(self):
+
+        path = 'fault_tolerant_flight_control_drl.envs.citation'
+        if self.init_alt == 2000 and self.init_speed == 90:
+            plant = importlib.import_module(f'{path}.normal_2000_90_dist._citation', package=None)
+        else:
+            raise NotImplementedError('No model with the specified initial conditions is present.')
+        return plant, ['normal', 1.0, 1.0]
+
+
 class CitationVerif(CitationNormal):
     """
    Normal Citation Dynamics class for verification, a sub-class of the Citation class.

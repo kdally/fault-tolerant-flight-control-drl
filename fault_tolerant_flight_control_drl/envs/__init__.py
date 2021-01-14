@@ -6,5 +6,6 @@ from fault_tolerant_flight_control_drl.envs.citation import CitationHorzTail
 from fault_tolerant_flight_control_drl.envs.citation import CitationElevRange
 from fault_tolerant_flight_control_drl.envs.citation import CitationAileronEff
 from fault_tolerant_flight_control_drl.envs.citation import CitationRudderStuck
+from fault_tolerant_flight_control_drl.envs.citation import CitationDistAlpha
 from fault_tolerant_flight_control_drl.envs.citation import CitationVerif
 from fault_tolerant_flight_control_drl.envs.outer_loop import AltController

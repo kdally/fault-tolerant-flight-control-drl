@@ -7,3 +7,4 @@ from fault_tolerant_flight_control_drl.envs.citation.citation import CitationEle
 from fault_tolerant_flight_control_drl.envs.citation.citation import CitationAileronEff
 from fault_tolerant_flight_control_drl.envs.citation.citation import CitationRudderStuck
 from fault_tolerant_flight_control_drl.envs.citation.citation import CitationVerif
+from fault_tolerant_flight_control_drl.envs.citation.citation import CitationDistAlpha

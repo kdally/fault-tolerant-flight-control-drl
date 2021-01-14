@@ -145,7 +145,7 @@ class AltController(gym.Env, ABC):
                 pitch_ref, _ = self.agent.predict(obs_outer_loop, deterministic=True)
                 obs_outer_loop, reward_outer_loop, done, info = self.step(pitch_ref)
                 episode_reward += reward_outer_loop
-
+                # print(self.InnerController.state_deg)
                 bar()
 
         plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
