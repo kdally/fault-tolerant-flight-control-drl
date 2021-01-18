@@ -35,7 +35,7 @@ python setup.py install
 
 ## Usage
 
-1. To fly the aircraft right away with pre-trained controllers 🛩
+1. To fly the aircraft right away with pre-trained agents 🛩
 ```sh
 python tests/test_all.py
 ```
