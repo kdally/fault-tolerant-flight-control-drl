@@ -2,9 +2,9 @@
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-blue.svg" />
   <a href="#" target="_blank">
-   <img alt="Python Version" src="https://img.shields.io/pypi/pyversions/Django.svg" />
+   <img alt="Python Version" src="https://shields.io/badge/python-v3.7-blue.svg" />
     <a href="#" target="_blank">
-    <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" />
+    <img alt="License: MIT" src="https://img.shields.io/github/license/kdally/fault-tolerant-flight-control-drl" />
   </a>
 </p>
 
@@ -27,7 +27,7 @@ cd fault-tolerant-flight-control-drl
 ```
 
 2. Install required packages
- > Requires Python 3.6 or higher
+ > Requires Python 3.7 or higher.
  > Only compatible with TensorFlow 1.XX
 
 ```sh
