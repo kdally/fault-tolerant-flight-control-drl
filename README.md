@@ -27,6 +27,7 @@ cd fault-tolerant-flight-control-drl
 ```
 
 2. Install required packages
+ > Requires Python 3.6 or higher
  > Only compatible with TensorFlow 1.XX
 
 ```sh
