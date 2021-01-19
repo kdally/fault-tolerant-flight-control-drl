@@ -16,7 +16,7 @@ install_requires = [
     'plotly>=4.9.0',
     'optuna',
     'cloudpickle~=1.2.1',
-    'numpy>=1.14',
+    'numpy<1.19.0,>=1.16.0',
     'pandas~=1.1.3',
     'alive_progress',
     'PySimpleGUI',
