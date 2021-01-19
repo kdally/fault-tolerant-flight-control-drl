@@ -26,11 +26,11 @@ git clone https://github.com/kdally/fault-tolerant-flight-control-drl
 cd fault-tolerant-flight-control-drl
 ```
 
-2. Install required packages
- > We recommend creating a new conda environment with Python 3.7 or higher.
- > The module is only compatible with TensorFlow 1.XX
+2. Create a new conda environment with the required packages
 
 ```sh
+conda env create -f environment.yml
+conda activate ftc-drl
 python setup.py install
 ```
 
