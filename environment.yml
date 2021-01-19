@@ -13,6 +13,7 @@ dependencies:
   - python>=3.7.7
   - tensorflow-base=1.14.0=py37hc8dfbb8_0
   - tensorflow-estimator=1.14.0=py_0
+  - searborn
   - pip
   - pip:
     - cloudpickle>=1.2.1
