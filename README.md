@@ -27,8 +27,8 @@ cd fault-tolerant-flight-control-drl
 ```
 
 2. Install required packages
- > Requires Python 3.7 or higher.
- > Only compatible with TensorFlow 1.XX
+ > We recommend creating a new conda environment with Python 3.7 or higher.
+ > The module is only compatible with TensorFlow 1.XX
 
 ```sh
 python setup.py install
