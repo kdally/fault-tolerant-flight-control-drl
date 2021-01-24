@@ -2379,7 +2379,16 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
                      )
 
     fig.add_shape(type="rect",
-                  x0=40, y0=1, x1=43, y1=8.5,
+                  x0=20, y0=0, x1=23, y1=8,
+                  line=dict(
+                      color='orange',
+                      width=2,
+                  ),
+                  fillcolor="orange", row=2, col=1,
+                  opacity=0.4,
+                  )
+    fig.add_shape(type="rect",
+                  x0=75, y0=0, x1=78, y1=8,
                   line=dict(
                       color='orange',
                       width=2,
