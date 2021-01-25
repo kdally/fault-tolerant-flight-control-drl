@@ -44,7 +44,7 @@ python tests/test_all.py
 > Select flight settings on the GUI. Default choices are recommended for unexperienced users.
 
 <p align="center">
-  <img src="https://i.ibb.co/fxgW2MV/GUI.png" width="350"/>
+  <img src="assets/gui.png" width="350"/>
 </p>
 
 
