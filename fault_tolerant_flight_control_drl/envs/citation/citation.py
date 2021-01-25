@@ -44,6 +44,7 @@ class Citation(gym.Env):
 
         self.rate_limits = self.ActionLimits(np.array([[-20, -40, -20], [20, 40, 20]]))
         self.deflection_limits = self.ActionLimits(np.array([[-20.05, -37.24, -21.77], [14.9, 37.24, 21.77]]))
+        self.placeholder_cond = False
         self.C_MODEL, self.failure_input = self.get_plant()
         self.FDD_switch_time = 60
         self.failure_time = 10
@@ -365,6 +366,7 @@ class CitationNormal(Citation):
             plant = importlib.import_module(f'{path}.normal_2000_90._citation', package=None)
         elif self.init_alt == 2000 and self.init_speed == 140:
             plant = importlib.import_module(f'{path}.normal_2000_140._citation', package=None)
+            self.placeholder_cond = True
         elif self.init_alt == 5000 and self.init_speed == 90:
             plant = importlib.import_module(f'{path}.normal_5000_90._citation', package=None)
         elif self.init_alt == 5000 and self.init_speed == 140:

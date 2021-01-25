@@ -163,6 +163,11 @@ class AltController(gym.Env, ABC):
         return
 
     def load_agent(self):
+        if self.InnerController.placeholder_cond:
+            return SAC.load(
+                f"fault_tolerant_flight_control_drl/agent/trained/{self.InnerController.task.agent_catalog['normal_outer_loop_']}.zip",
+                env=self), \
+                   self.InnerController.task.agent_catalog['normal_outer_loop']
         return SAC.load(
             f"fault_tolerant_flight_control_drl/agent/trained/{self.InnerController.task.agent_catalog['normal_outer_loop']}.zip",
             env=self), \

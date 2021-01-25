@@ -3,8 +3,8 @@ import random
 from abc import abstractmethod, ABC
 from scipy import signal
 
-# couple = ['PZ5QGW',	'YQZL4N']
 couple = ['PZ5QGW',	'GT0PLE']
+# couple = ['XQ2G4Q',	'GT0PLE']
 # couple = ['PZ5QGW',	'9VZ5VE'] # for disturbance rejection, most 'calm'
 
 
@@ -618,7 +618,7 @@ class CascadedAltTask(AltitudeTask):
         catalog = AttitudeTask().get_agent_catalog()
         # catalog['normal_outer_loop'] = 'altitude_2pitch_XQ2G4Q'
         catalog['normal_outer_loop'] = 'altitude_2pitch_' + couple[0]
-
+        catalog['normal_outer_loop_'] = 'altitude_2pitch_' + 'XQ2G4Q'
         return catalog
 
     def return_signals(self):
