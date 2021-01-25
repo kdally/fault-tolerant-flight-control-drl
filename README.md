@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to the First  DRL Controller for a Jet Aircraft </h1>
+<h1 align="center">Welcome to the 'DRL Controller for Jet Aircraft' Project </h1>
 <p>
   <img alt="Version" src="https://shields.io/badge/version-0.1.1-blue.svg" />
   <a href="#" target="_blank">
@@ -9,7 +9,7 @@
 </p>
 
 
-> Fault tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for the flight control of a jet aircraft. Employed Soft Actor Critic (SAC). 
+> Fault tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for the inner-loop flight control of a jet aircraft. Employed Soft Actor Critic (SAC). 
 
 <p align="center">
   <img src="assets/citation_550_header.svg" width="750"/>
