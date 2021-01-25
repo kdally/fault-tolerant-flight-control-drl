@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to 'DRL Controller for a Jet Aircraft' Project </h1>
+<h1 align="center">Welcome to the 'DRL Controller for Jet Aircraft' Project </h1>
 <p>
   <img alt="Version" src="https://shields.io/badge/version-0.1.1-blue.svg" />
   <a href="#" target="_blank">
