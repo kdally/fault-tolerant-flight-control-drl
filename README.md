@@ -67,7 +67,7 @@ python tests/optimization.py
 * Github: [@kdally](https://github.com/kdally)
 * LinkedIn: [@kdally](https://linkedin.com/in/kdally)
 
-> Project developed as part of a Master's Thesis at the Control & Simulation Division of Delft University of Technology under the supervision of Assistant Professor Dr. E-J. van Kampen.
+> Project developed as part of a Master's Thesis at the Control & Simulation Division of Delft University of Technology under the supervision of Assistant Professor Dr. ir. E-J. van Kampen.
 
 ## References
 
