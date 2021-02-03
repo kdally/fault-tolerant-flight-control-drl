@@ -15,15 +15,6 @@ Fault tolerant flight control for the Cessna Citation 500. First use of Deep Rei
   <img src="assets/citation_550_header.png" width="750"/>
 </p>
 
-## Background
-
-Soft Actor-Critic is a Deep Reinforcement Learning framework first proposed in this [paper](https://arxiv.org/abs/1801.01290). It is used to develop a cascaded coupled-dynamics flight controller that can withstand various types of failures. Its structure is shown below.
-
-<p align="center">
-  <img src="assets/control_diagram.svg" width="750"/>
-</p>
-
-
 ## Installation
 > MacOS users can use the module straight away.
 > Linux and Windows users are required to recompile the CitAST high-fidelity simulation model as instructed in `docs/CitAST_for_Python.pdf`.
