@@ -3,10 +3,6 @@ import random
 from abc import abstractmethod, ABC
 from scipy import signal
 
-couple = ['PZ5QGW',	'GT0PLE']
-# couple = ['XQ2G4Q',	'GT0PLE']
-# couple = ['PZ5QGW',	'9VZ5VE'] # for disturbance rejection, most 'calm'
-
 
 class Task(ABC):
     """
@@ -613,6 +609,10 @@ class AltitudeTask(Task):
 
 
 class CascadedAltTask(AltitudeTask):
+    
+    couple = ['PZ5QGW', 'GT0PLE']
+    # couple = ['XQ2G4Q',	'GT0PLE']
+    # couple = ['PZ5QGW',	'9VZ5VE']
 
     def get_agent_catalog(self):
         catalog = AttitudeTask().get_agent_catalog()

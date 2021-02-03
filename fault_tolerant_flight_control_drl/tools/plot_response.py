@@ -3,7 +3,6 @@ from plotly.subplots import make_subplots
 import numpy as np
 
 
-
 def plot_response_alt(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
     """
     plot the response for an altitude task
@@ -1991,7 +1990,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
 
     end_time = env.time[-1] + env.dt * 2
 
-    tick_interval = 10
+    tick_interval = 2
 
     fig.update_xaxes(title_text=r'$t \:\: \text{[s]}$', range=[0, end_time], tickmode='array',
                      tickvals=np.arange(0, end_time, tick_interval), tickfont=dict(size=11), row=6, col=1,
@@ -2555,6 +2554,6 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
             plot_response_alt(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
 
     else:
-        plot_response_att(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
+        plot_response_dist(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
 
 

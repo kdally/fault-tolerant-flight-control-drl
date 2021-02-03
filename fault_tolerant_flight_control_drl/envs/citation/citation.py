@@ -202,22 +202,18 @@ class Citation(gym.Env):
         # values in degrees, SSD
         sensor_noise = np.zeros(self.state.shape)
         if self.has_sensor_noise:
-            # p, q, r measurement from https://doi.org/10.2514/6.2018-1127
-            sensor_noise[0:3] += r2d(np.random.normal(scale=np.sqrt(4e-7), size=3)+3e-5)
 
-            # sideslip, estimate from https://doi.org/10.1007/978-3-319-65283-2_14
-            sensor_noise[5] += r2d(np.random.normal(scale=3.5e-3))
+            # p, q, r measurement from https://doi.org/10.2514/6.2018-0385
+            sensor_noise[0:3] += r2d(np.random.normal(scale=np.sqrt(4.0e-7), size=3)+3.0e-5)
 
-            # phi, theta measurement from https://doi.org/10.2514/6.2018-1127
-            sensor_noise[6:8] += r2d(np.random.normal(scale=np.sqrt(1e-9), size=2)+4e-3)
+            # sideslip, estimate from https://doi.org/10.2514/6.2018-0385
+            sensor_noise[5] += r2d(np.random.normal(scale=np.sqrt(7.5e-8))+1.8e-3)
 
-            # h estimate from https://doi.org/10.1007/978-3-319-65283-2_14
-            sensor_noise[9] += np.random.normal(scale=0.3)
+            # phi, theta measurement from https://doi.org/10.2514/6.2018-0385
+            sensor_noise[6:8] += r2d(np.random.normal(scale=np.sqrt(1e-9), size=2)+4.0e-3)
 
-            # sideslip, estimate from https://doi.org/10.2514/6.2021-0392
-            # sensor_noise[5] += r2d(np.random.normal(scale=8.73e-3))
-            # h estimate from https://doi.org/10.2514/6.2021-0392
-            # sensor_noise[9] += np.random.normal(scale=0.5)
+            # h estimate from https://doi.org/10.2514/6.2018-0385
+            sensor_noise[9] += np.random.normal(scale=np.sqrt(4.5e-3))+8.0e-3
         return sensor_noise
 
     def add_disturbance(self):
