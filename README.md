@@ -20,7 +20,7 @@
 Soft Actor-Critic is a reinforcement learning framework proposed in this [paper](https://arxiv.org/abs/1801.01290). It is used to develop a cascaded coupled-dynamics flight controller that can withstand various types of failures. Its structure is shown below.
 
 <p align="center">
-  <img src="assets/controller_structure.svg" width="750"/>
+  <img src="assets/control_diagram.svg" width="750"/>
 </p>
 
 
