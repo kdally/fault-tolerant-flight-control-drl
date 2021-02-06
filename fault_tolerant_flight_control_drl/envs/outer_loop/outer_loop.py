@@ -1,5 +1,6 @@
 import gym
 import numpy as np
+import time
 from abc import ABC
 from fault_tolerant_flight_control_drl.agent import SAC
 from fault_tolerant_flight_control_drl.tools import CascadedAltTask, ReliabilityTask, DisturbanceRejectionAlt
@@ -46,7 +47,8 @@ class AltController(gym.Env, ABC):
     def step(self, pitch_ref: np.ndarray):
 
         self.step_count = self.InnerController.step_count
-        self.current_pitch_ref = self.bound_a(self.current_pitch_ref + self.scale_a(pitch_ref) * self.dt)
+        # self.current_pitch_ref = self.bound_a(self.current_pitch_ref + self.scale_a(pitch_ref) * self.dt)
+        self.current_pitch_ref = self.current_pitch_ref + self.scale_a(pitch_ref) * self.dt
         filtered_deflection = self.filter_control_input(self.current_pitch_ref)
 
         self.InnerController.ref_signal[0, self.step_count] = filtered_deflection[0]
@@ -139,6 +141,7 @@ class AltController(gym.Env, ABC):
         episode_reward = 0
         done = False
         items = range(self.time.shape[0])
+        t0 = time.time()
         with alive_bar(len(items)) as bar:
             while not done:
                 # eng.run_3d_sim(matlab.double(list(self.InnerController.state)), nargout=0)
@@ -147,6 +150,8 @@ class AltController(gym.Env, ABC):
                 episode_reward += reward_outer_loop
                 # print(self.InnerController.state_deg)
                 bar()
+        tf = time.time()-t0
+        print(f'Sample run time: {1000*tf/self.time.shape[0]:.3f}ms')
 
         plot_response(self.agent.ID + '_' + self.InnerController.agentID.split('_')[2], self.InnerController,
                       self.task_fun(), episode_reward, during_training,
