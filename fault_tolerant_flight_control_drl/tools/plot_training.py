@@ -223,7 +223,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
             range=[0, 1e6],
             title_font_family='Balto',
         ),
-        xaxis_title='Training time steps', yaxis_title='Episode sum of rewards',
+        xaxis_title='Training time-steps', yaxis_title='Episode sum of rewards',
         template="plotly", height=400,
         margin=dict(l=10, r=40, b=10, t=5),
         legend=dict(
@@ -387,7 +387,7 @@ def plot_trainings_sensitivity(IDs_1: list, IDs_2: list, IDs_3: list, window: in
             range=[0, 1e6],
             title_font_family='Balto',
         ),
-        xaxis_title='Training time steps', yaxis_title='Return',
+        xaxis_title='Training time-steps', yaxis_title='Return',
         template="plotly", height=400,
         margin=dict(l=10, r=40, b=10, t=5),
         legend=dict(

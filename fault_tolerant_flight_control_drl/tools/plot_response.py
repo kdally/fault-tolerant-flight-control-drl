@@ -45,7 +45,7 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
                          # tickvals=np.arange(-15, 5 + 5, 5),
                          # ticktext=['-15', ' ', '-5', ' ', '5'],
                          tickfont=dict(size=11),
-                         range=[-5, 20],
+                         # range=[-20, 5],
                          titlefont=dict(size=13)
                          )
 
@@ -790,8 +790,8 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
-                         tickvals=np.arange(-15, 5 + 5, 5),
-                         ticktext=['-15', ' ', '-5', ' ', '5'],
+                         tickvals=np.arange(-5, 15 + 5, 5),
+                         ticktext=['-5', ' ', '5', ' ', '15'],
                          tickfont=dict(size=11),
                          # range=[-10, 10],
                          titlefont=dict(size=13)
@@ -1543,8 +1543,8 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
-                         tickvals=np.arange(-15, 5 + 5, 5),
-                         ticktext=['-15', ' ', '-5', ' ', '5'],
+                         tickvals=np.arange(-5, 15 + 5, 5),
+                         ticktext=['-5', ' ', '5', ' ', '15'],
                          tickfont=dict(size=11),
                          # range=[-10, 10],
                          titlefont=dict(size=13)
