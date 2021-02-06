@@ -155,9 +155,11 @@ class BodyRateTask(Task):
 
         return self.track_signals, self.track_indices, self.obs_indices, self.time_v, 'body_rates'
 
+
 couple = ['PZ5QGW', 'GT0PLE']
 # couple = ['XQ2G4Q',	'GT0PLE']
 # couple = ['PZ5QGW',	'9VZ5VE']
+
 
 class AttitudeTask(Task):
 

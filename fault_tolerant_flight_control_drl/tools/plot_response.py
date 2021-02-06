@@ -11,11 +11,11 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -38,14 +38,14 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=env.external_ref_signal.T - env.state_history[9, :].T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
                          # tickvals=np.arange(-15, 5 + 5, 5),
                          # ticktext=['-15', ' ', '-5', ' ', '5'],
                          tickfont=dict(size=11),
-                         # range=[-10, 10],
+                         range=[-5, 20],
                          titlefont=dict(size=13)
                          )
 
@@ -57,9 +57,8 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -70,7 +69,7 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      )
@@ -78,7 +77,7 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(-5, 5+2.5, 2.5),
                      # ticktext=['-5',' ', '0',' ', '5'],
@@ -95,7 +94,7 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -103,7 +102,7 @@ def plot_response_alt(name, env, task, perf, during_training=False, failure=None
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(88, 90+1, 1),
                      # ticktext=['88', '89', '90'],
@@ -265,11 +264,11 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -292,7 +291,7 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8)
 
@@ -304,26 +303,25 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=env.state_history[9, :].T - env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$h\:\:  [\text{m}]$', row=4, col=1, title_standoff=8)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11)
                      )
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(-10, 10+5, 5),
-                     ticktext=['-10',' ','0',' ','10'],
+                     tickvals=np.arange(-10, 10 + 5, 5),
+                     ticktext=['-10', ' ', '0', ' ', '10'],
                      range=[-10, 11],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
@@ -335,9 +333,9 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
     fig.update_yaxes(row=2, col=2, title_standoff=14,
                      tickmode='array',
                      tickvals=np.arange(-5, 5 + 2.5, 2.5),
-                     range=[-5,7],
+                     range=[-5, 7],
                      ticktext=['-5', ' ', '0', ' ', '5'],
-                     title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+                     title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
                      )
@@ -345,12 +343,12 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=4, col=1)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=4, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=4, col=1, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(80, 120+10, 10),
+                     tickvals=np.arange(80, 120 + 10, 10),
                      ticktext=['80', ' ', '100', ' ', '120'],
                      tickfont=dict(size=11),
-                     range=[77,120],
+                     range=[77, 120],
                      titlefont=dict(size=13)
                      )
 
@@ -359,7 +357,7 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
         line=dict(color='#636EFA')), row=2, col=1)
     fig.update_yaxes(title_text=r'$\alpha\:\: [\text{deg}]$', row=2, col=1, title_standoff=18,
                      tickmode='array',
-                     tickvals=np.arange(0, 10+5, 2.5),
+                     tickvals=np.arange(0, 10 + 5, 2.5),
                      ticktext=['0', ' ', '5', ' ', '10'],
                      range=[-2, 10],
                      tickfont=dict(size=11),
@@ -383,13 +381,12 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
         line=dict(color='#636EFA')), row=3, col=2)
     fig.update_yaxes(title_text=r'$\phi\:\: [\text{deg}]$', row=3, col=2, title_standoff=6,
                      tickmode='array',
-                     tickvals=[-35,0,35,70],
+                     tickvals=[-35, 0, 35, 70],
                      # ticktext=['-35', '0', ' ', '70'],
                      tickfont=dict(size=11),
                      range=[-37, 72],
                      titlefont=dict(size=13)
                      )
-
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[7, :].T, name=r'$\theta [^\circ]$',
@@ -500,7 +497,6 @@ def plot_response_att(name, env, task, perf, during_training=False, failure=None
 
 
 def plot_response_da(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
-
     # fig = go.Figure()
     # fig.add_trace(go.Scatter(
     #     x=env.time, y=env.ref_signal[0, :], name=r'$h [m]$',
@@ -510,11 +506,11 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -537,7 +533,7 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          # tickmode='array',
@@ -556,15 +552,14 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=env.state_history[9, :].T - env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      tickmode='array',
@@ -576,10 +571,10 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(-5, 5+2.5, 2.5),
-                     ticktext=['-5',' ', '0',' ', '5'],
+                     tickvals=np.arange(-5, 5 + 2.5, 2.5),
+                     ticktext=['-5', ' ', '0', ' ', '5'],
                      # range=[-5, 6],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
@@ -593,7 +588,7 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -601,9 +596,9 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(88, 90+1, 1),
+                     tickvals=np.arange(88, 90 + 1, 1),
                      # ticktext=['88', '89', '90'],
                      tickfont=dict(size=11),
                      # range=[87,90.5],
@@ -615,8 +610,8 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
         line=dict(color='#636EFA')), row=2, col=1)
     fig.update_yaxes(title_text=r'$\alpha\:\: [\text{deg}]$', row=2, col=1, title_standoff=18,
                      tickmode='array',
-                     tickvals=np.arange(2, 6+1, 1),
-                     ticktext=['2', ' ','4', ' ', '6'],
+                     tickvals=np.arange(2, 6 + 1, 1),
+                     ticktext=['2', ' ', '4', ' ', '6'],
                      # range=[1.5, 6],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
@@ -755,7 +750,6 @@ def plot_response_da(name, env, task, perf, during_training=False, failure=None,
 
 
 def plot_response_dr(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
-
     # fig = go.Figure()
     # fig.add_trace(go.Scatter(
     #     x=env.time, y=env.ref_signal[0, :], name=r'$h [m]$',
@@ -765,11 +759,11 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -792,7 +786,7 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -811,15 +805,14 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=env.state_history[9, :].T - env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      )
@@ -827,7 +820,7 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(-5, 5+2.5, 2.5),
                      # ticktext=['-5',' ', '0',' ', '5'],
@@ -844,7 +837,7 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -852,12 +845,12 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(88, 90+1, 1),
+                     tickvals=np.arange(88, 90 + 1, 1),
                      # ticktext=['88', '89', '90'],
                      tickfont=dict(size=11),
-                     range=[87,90.5],
+                     range=[87, 90.5],
                      titlefont=dict(size=13)
                      )
 
@@ -1004,7 +997,6 @@ def plot_response_dr(name, env, task, perf, during_training=False, failure=None,
 
 
 def plot_response_cg(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
-
     # fig = go.Figure()
     # fig.add_trace(go.Scatter(
     #     x=env.time, y=env.ref_signal[0, :], name=r'$h [m]$',
@@ -1014,11 +1006,11 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -1041,7 +1033,7 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          # tickmode='array',
@@ -1060,15 +1052,14 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=env.state_history[9, :].T - env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      # tickmode='array',
@@ -1080,7 +1071,7 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(-5, 5+2.5, 2.5),
                      # ticktext=['-5',' ', '0',' ', '5'],
@@ -1097,7 +1088,7 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -1105,9 +1096,9 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(88, 90+1, 1),
+                     tickvals=np.arange(88, 90 + 1, 1),
                      # ticktext=['88', '89', '90'],
                      tickfont=dict(size=11),
                      # range=[87,90.5],
@@ -1259,7 +1250,6 @@ def plot_response_cg(name, env, task, perf, during_training=False, failure=None,
 
 
 def plot_response_ice(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
-
     # fig = go.Figure()
     # fig.add_trace(go.Scatter(
     #     x=env.time, y=env.ref_signal[0, :], name=r'$h [m]$',
@@ -1269,11 +1259,11 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -1296,7 +1286,7 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          # tickmode='array',
@@ -1315,15 +1305,14 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=env.state_history[9, :].T - env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      tickmode='array',
@@ -1335,10 +1324,10 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(-5, 5+2.5, 2.5),
-                     ticktext=['-5',' ', '0',' ', '5'],
+                     tickvals=np.arange(-5, 5 + 2.5, 2.5),
+                     ticktext=['-5', ' ', '0', ' ', '5'],
                      range=[-5, 5.5],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
@@ -1352,7 +1341,7 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -1360,7 +1349,7 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(88, 90+1, 1),
                      # ticktext=['88', '89', '90'],
@@ -1514,7 +1503,6 @@ def plot_response_ice(name, env, task, perf, during_training=False, failure=None
 
 
 def plot_response_norm(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
-
     # fig = go.Figure()
     # fig.add_trace(go.Scatter(
     #     x=env.time, y=env.ref_signal[0, :], name=r'$h [m]$',
@@ -1524,11 +1512,11 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -1551,7 +1539,7 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -1570,15 +1558,14 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=env.state_history[9, :].T - env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
 
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      )
@@ -1586,10 +1573,10 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(-5, 5+2.5, 2.5),
-                     ticktext=['-5',' ', '0',' ', '5'],
+                     tickvals=np.arange(-5, 5 + 2.5, 2.5),
+                     ticktext=['-5', ' ', '0', ' ', '5'],
                      range=[-5, 6],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
@@ -1603,7 +1590,7 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -1611,12 +1598,12 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      tickmode='array',
-                     tickvals=np.arange(88, 90+1, 1),
+                     tickvals=np.arange(88, 90 + 1, 1),
                      # ticktext=['88', '89', '90'],
                      tickfont=dict(size=11),
-                     range=[87,90.5],
+                     range=[87, 90.5],
                      titlefont=dict(size=13)
                      )
 
@@ -1625,8 +1612,8 @@ def plot_response_norm(name, env, task, perf, during_training=False, failure=Non
         line=dict(color='#636EFA')), row=2, col=1)
     fig.update_yaxes(title_text=r'$\alpha\:\: [\text{deg}]$', row=2, col=1, title_standoff=18,
                      tickmode='array',
-                     tickvals=np.arange(2, 6+1, 1),
-                     ticktext=['2', ' ','4', ' ', '6'],
+                     tickvals=np.arange(2, 6 + 1, 1),
+                     ticktext=['2', ' ', '4', ' ', '6'],
                      range=[1.5, 6],
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
@@ -1799,7 +1786,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -1833,9 +1820,9 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
     fig.update_yaxes(row=2, col=2, title_standoff=14,
                      tickmode='array',
                      # tickvals=np.arange(-5, 5 + 2.5, 2.5),
-                     range=[-2,2],
+                     range=[-2, 2],
                      # ticktext=['-5', ' ', '0', ' ', '5'],
-                     title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+                     title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
                      tickfont=dict(size=11),
                      titlefont=dict(size=13)
                      )
@@ -1843,7 +1830,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      )
@@ -1851,7 +1838,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(-5, 5+2.5, 2.5),
                      # ticktext=['-5',' ', '0',' ', '5'],
@@ -1863,7 +1850,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=4, col=1)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=4, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=4, col=1, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(88, 90+1, 1),
                      ticktext=['88', '89', '90'],
@@ -1936,7 +1923,7 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
         x=env.time, y=env.action_history[0, :].T,
         name=r'$\delta_e [^\circ]$', line=dict(color='#00CC96')), row=6, col=1)
     fig.append_trace(go.Scatter(
-        x=env.time, y=env.add_disturbance()[0,:],
+        x=env.time, y=env.add_disturbance()[0, :],
         line=dict(color='Grey')), row=6, col=1)
     fig.update_yaxes(title_text=r'$\delta_\text{e} \:\:  [\text{deg}]$', row=6, col=1, title_standoff=20,
                      # tickmode='array',
@@ -2018,7 +2005,6 @@ def plot_response_dist(name, env, task, perf, during_training=False, failure=Non
 
 
 def plot_response_single(name, env, task, perf, during_training=False, failure=None, FDD=False, broken=False):
-
     # fig = go.Figure()
     # fig.add_trace(go.Scatter(
     #     x=env.time, y=env.ref_signal[0, :], name=r'$h [m]$',
@@ -2028,11 +2014,11 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -2055,7 +2041,7 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -2074,9 +2060,8 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -2087,7 +2072,7 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      )
@@ -2095,7 +2080,7 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(-5, 5+2.5, 2.5),
                      # ticktext=['-5',' ', '0',' ', '5'],
@@ -2112,7 +2097,7 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -2120,7 +2105,7 @@ def plot_response_single(name, env, task, perf, during_training=False, failure=N
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(88, 90+1, 1),
                      # ticktext=['88', '89', '90'],
@@ -2276,11 +2261,11 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
     subplot_indices = {0: [1, 2], 1: [1, 1], 3: [2, 2], 4: [2, 1], 5: [4, 2],
                        6: [3, 2], 7: [3, 1], 8: [7, 1], 9: [5, 1], 10: [7, 2], 11: [7, 2]}
 
-    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2/6, horizontal_spacing=0.17/2)
+    fig = make_subplots(rows=6, cols=2, vertical_spacing=0.2 / 6, horizontal_spacing=0.17 / 2)
 
     if broken:
-        env.time = env.time[:env.step_count-2]
-        env.state_history = env.state_history[:env.step_count-2]
+        env.time = env.time[:env.step_count - 2]
+        env.state_history = env.state_history[:env.step_count - 2]
 
     if env.external_ref_signal is not None:
         fig.append_trace(go.Scatter(
@@ -2303,7 +2288,7 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
             row=4, col=2)
 
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T - env.external_ref_signal.T, name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.external_ref_signal.T, name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -2322,9 +2307,8 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
                 row=subplot_indices[state_index][0], col=subplot_indices[state_index][1])
 
     if env.task_fun()[4] == 'altitude_2attitude':
-
         fig.append_trace(go.Scatter(
-            x=env.time, y=env.state_history[9, :].T-env.ref_signal[0, :], name=r'$h [m]$',
+            x=env.time, y=-env.state_history[9, :].T + env.ref_signal[0, :], name=r'$h [m]$',
             line=dict(color='#636EFA')), row=4, col=1)
         fig.update_yaxes(title_text=r'$\Delta h \:\: [\text{m}]$', row=4, col=1, title_standoff=8,
                          tickmode='array',
@@ -2335,7 +2319,7 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[0, :].T, name=r'$p [\frac{deg}{s}]$',
         line=dict(color='#636EFA')), row=1, col=2)
-    fig.update_yaxes(title_text=r'$p\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=2, title_standoff=7,
+    fig.update_yaxes(title_text=r'$p\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=2, title_standoff=7,
                      tickfont=dict(size=11),
                      titlefont=dict(size=13),
                      )
@@ -2343,7 +2327,7 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[1, :].T, name=r'$q [^\circ/s]$',
         line=dict(color='#636EFA')), row=1, col=1)
-    fig.update_yaxes(title_text=r'$q\:\: [\frac{\text{deg}}{\text{s}}]$', row=1, col=1, title_standoff=13,
+    fig.update_yaxes(title_text=r'$q\:\: [\text{deg}\:\text{s}^{-1}]$', row=1, col=1, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(-5, 5+2.5, 2.5),
                      # ticktext=['-5',' ', '0',' ', '5'],
@@ -2360,7 +2344,7 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
     #                  tickvals=np.arange(-5, 5 + 2.5, 2.5),
     #                  range=[-5,7],
     #                  ticktext=['-5', ' ', '0', ' ', '5'],
-    #                  title_text=r'$r\:\: [\frac{\text{deg}}{s}]$',
+    #                  title_text=r'$r\:\: [\text{deg}\:\text{s}^{-1}]$',
     #                  tickfont=dict(size=11),
     #                  titlefont=dict(size=13)
     #                  )
@@ -2368,7 +2352,7 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
     fig.append_trace(go.Scatter(
         x=env.time, y=env.state_history[3, :].T, name=r'$V [m/s]$',
         line=dict(color='#636EFA')), row=2, col=2)
-    fig.update_yaxes(title_text=r'$V\:\: [\frac{\text{m}}{\text{s}}]$', row=2, col=2, title_standoff=13,
+    fig.update_yaxes(title_text=r'$V\:\: [\text{ms}^{-1}]$', row=2, col=2, title_standoff=13,
                      # tickmode='array',
                      # tickvals=np.arange(88, 90+1, 1),
                      # ticktext=['88', '89', '90'],
@@ -2490,7 +2474,6 @@ def plot_response_dist_alpha(name, env, task, perf, during_training=False, failu
                      titlefont=dict(size=13)
                      )
 
-
     if failure != 'normal' and not during_training:
         fig.add_vline(x=env.failure_time, row='all', col="all", line=dict(color="Grey", width=1.5))
 
@@ -2540,20 +2523,24 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
     if 9 in env.track_indices or type(env.external_ref_signal) == np.ndarray:
         if '_dr' in env.agentID:
             print(env.agentID)
-            plot_response_dr(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
+            plot_response_dr(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure,
+                             FDD=FDD, broken=broken)
         elif '_da' in env.agentID:
-            plot_response_da(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
+            plot_response_da(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure,
+                             FDD=FDD, broken=broken)
         elif '_cg' in env.agentID:
-            plot_response_cg(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
+            plot_response_cg(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure,
+                             FDD=FDD, broken=broken)
         elif '_ice' in env.agentID:
-            plot_response_ice(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
+            plot_response_ice(name=name, env=env, task=task, perf=perf, during_training=during_training,
+                              failure=failure, FDD=FDD, broken=broken)
         elif isinstance(env, CitationDistAlpha):
             plot_response_dist_alpha(name=name, env=env, task=task, perf=perf, during_training=during_training,
-                              failure=failure, FDD=FDD, broken=broken)
+                                     failure=failure, FDD=FDD, broken=broken)
         else:
-            plot_response_alt(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
+            plot_response_alt(name=name, env=env, task=task, perf=perf, during_training=during_training,
+                              failure=failure, FDD=FDD, broken=broken)
 
     else:
-        plot_response_dist(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure, FDD=FDD, broken=broken)
-
-
+        plot_response_dist(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure,
+                           FDD=FDD, broken=broken)
