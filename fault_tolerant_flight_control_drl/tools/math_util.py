@@ -51,7 +51,7 @@ def unscale_action(action_space, scaled_action):
     :return: (np.ndarray)
     """
     low, high = action_space.low, action_space.high
-    return low + (0.5 * (scaled_action + 1.0) * (high - low))
+    return low + 0.5 * (scaled_action + 1.0) * (high - low)
 
 
 def set_global_seeds(seed):

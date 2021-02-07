@@ -2542,5 +2542,5 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
                               failure=failure, FDD=FDD, broken=broken)
 
     else:
-        plot_response_dist(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure,
+        plot_response_att(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure,
                            FDD=FDD, broken=broken)
