@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to the 'DRL Controller for Jet Aircraft' Project </h1>
+<h1 align="center">Welcome to the 'DRL for Flight Control' Project </h1>
 <p>
   <img alt="Version" src="https://shields.io/badge/version-0.1.1-blue.svg" />
   <a href="#" target="_blank">
@@ -9,7 +9,7 @@
 </p>
 
 
-Fault tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller. The code is based on the thesis [Deep Reinforcement Learning for Flight Control](http://resolver.tudelft.nl/uuid:fcef2325-4c90-4276-8bfc-1e230724c68a).
+Fault-tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller. The code was developed as part of the thesis [Deep Reinforcement Learning for Flight Control](http://resolver.tudelft.nl/uuid:fcef2325-4c90-4276-8bfc-1e230724c68a).
 
 <p align="center">
   <img src="assets/citation_550_header.png" width="750"/>
