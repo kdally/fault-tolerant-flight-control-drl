@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to _DRL for Flight Control_ </h1>
+<h1 align="center">Welcome to DRL FOR FLIGHT CONTROL </h1>
 <p>
   <img alt="Version" src="https://shields.io/badge/version-0.1.1-blue.svg" />
   <a href="#" target="_blank">
