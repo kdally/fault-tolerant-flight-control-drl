@@ -9,7 +9,7 @@
 </p>
 
 
-Fault tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller.
+Fault tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller. The code is based on the thesis [Deep Reinforcement Learning for Flight Control](http://resolver.tudelft.nl/uuid:fcef2325-4c90-4276-8bfc-1e230724c68a).
 
 <p align="center">
   <img src="assets/citation_550_header.png" width="750"/>
@@ -67,7 +67,7 @@ python tests/optimization.py
 * Github: [@kdally](https://github.com/kdally)
 * LinkedIn: [@kdally](https://linkedin.com/in/kdally)
 
-> Project developed as part of a Master's Thesis at the Control & Simulation Division of Delft University of Technology under the supervision of Assistant Professor Dr. ir. E-J. van Kampen.
+> Project developed as part of a [Master's Thesis](http://resolver.tudelft.nl/uuid:fcef2325-4c90-4276-8bfc-1e230724c68a) at the Control & Simulation Department, Faculty of Aerospace Engineering at Delft University of Technology.
 
 ## References
 
