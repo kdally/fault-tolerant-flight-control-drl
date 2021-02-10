@@ -185,7 +185,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
     fig.add_trace(go.Scatter(
         x=df1['l'], y=df1['r_avg_smooth'],
         showlegend=True,
-        line=dict(color='#636EFA'), name='Attitude Controller'
+        line=dict(color='#636EFA'), name='Attitude controller only'
     ))
 
     fig.add_trace(go.Scatter(
@@ -200,7 +200,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
     fig.add_trace(go.Scatter(
         x=df2['l'], y=df2['r_avg_smooth'],
         showlegend=True,
-        line=dict(color='#E45756'), name='Altitude Controller'
+        line=dict(color='#E45756'), name='Altitude controller with trained inner-loop attitude controller'
     ))
 
     fig.layout.font.family = 'Arial'
@@ -227,7 +227,7 @@ def plot_trainings_cascaded(IDs_1: list, IDs_2: list, window: int = 20):
         template="plotly", height=400,
         margin=dict(l=10, r=40, b=10, t=5),
         legend=dict(
-            font=dict(family='Balto', size=20),
+            font=dict(family='Balto', size=18),
             yanchor="top",
             y=0.99,
             xanchor="left",
@@ -416,6 +416,6 @@ def plot_trainings_sensitivity(IDs_1: list, IDs_2: list, IDs_3: list, window: in
 # plot_training('BZVWF5','3attitude_step')
 # plot_trainings(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], '3attitude_step')
 # plot_trainings(['9VZ5VE', '7AK56O','GXA2KT'], '3attitude_step')
-# plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', 'GT0PLE', 'GXA2KT'],
-#                         ['XQ2G4Q', 'DH0TLO', 'AZ5QGW', 'H0IC1R', 'TBNJM4'])
+plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', 'GT0PLE', 'GXA2KT'],
+                        ['XQ2G4Q', 'DH0TLO', 'AZ5QGW', 'H0IC1R', 'TBNJM4'])
 # plot_trainings_sensitivity(['GT0PLE'], ['BZVWF5'], ['UMJB0W'])
