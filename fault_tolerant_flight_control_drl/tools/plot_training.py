@@ -416,6 +416,6 @@ def plot_trainings_sensitivity(IDs_1: list, IDs_2: list, IDs_3: list, window: in
 # plot_training('BZVWF5','3attitude_step')
 # plot_trainings(['9VZ5VE', '8G9WIL', '0I9D1J', '7AK56O', 'GXA2KT'], '3attitude_step')
 # plot_trainings(['9VZ5VE', '7AK56O','GXA2KT'], '3attitude_step')
-plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', 'GT0PLE', 'GXA2KT'],
-                        ['XQ2G4Q', 'DH0TLO', 'AZ5QGW', 'H0IC1R', 'TBNJM4'])
+# plot_trainings_cascaded(['9VZ5VE', '8G9WIL', '0I9D1J', 'GT0PLE', 'GXA2KT'],
+#                         ['XQ2G4Q', 'DH0TLO', 'AZ5QGW', 'H0IC1R', 'TBNJM4'])
 # plot_trainings_sensitivity(['GT0PLE'], ['BZVWF5'], ['UMJB0W'])

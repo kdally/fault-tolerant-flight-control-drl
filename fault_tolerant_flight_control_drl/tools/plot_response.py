@@ -2544,3 +2544,9 @@ def plot_response(name, env, task, perf, during_training=False, failure=None, FD
     else:
         plot_response_att(name=name, env=env, task=task, perf=perf, during_training=during_training, failure=failure,
                            FDD=FDD, broken=broken)
+
+    import scipy.io as sio
+    # Create a dictionary
+    adict = {}
+    adict['state_history'] = env.state_history
+    sio.savemat(f'fault_tolerant_flight_control_drl/3D_visualization/mat_files/{name}_{failure}.mat', adict)
