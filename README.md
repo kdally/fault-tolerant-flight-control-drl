@@ -74,7 +74,7 @@ python tests/optimization.py
 * Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. (2018) [[paper](https://arxiv.org/abs/1801.01290)][[code](https://github.com/haarnoja/sac/tree/master/sac)]
 * Haarnoja, T., Zhou, A., Abbeel, P., and Hartikainen, K. (2019) [[paper](https://arxiv.org/abs/1812.05905)][[code](https://github.com/rail-berkeley/softlearning/)]
 * Hill, A. et al. (2018) [[doc](https://stable-baselines.readthedocs.io/)][[code](https://github.com/hill-a/stable-baselines)]
-* Rodríguez, R. (2021) [[code](https://github.com/Ro3code/aircraft_3d_animation)]
+* Rodríguez, R. (2021) [[article](https://medium.com/codestory/3d-animations-made-simple-with-matlab-visualizing-flight-test-data-and-simulation-results-ed399cdcc711)][[code](https://github.com/Ro3code/aircraft_3d_animation)]
 
 
 
