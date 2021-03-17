@@ -62,7 +62,7 @@ python tests/optimization.py
 
 ## Author
 
-👤 **Killian Dally**
+👤 **K. Dally**
 (Delft University of Technology MSc. Student)
 * Github: [@kdally](https://github.com/kdally)
 * LinkedIn: [@kdally](https://linkedin.com/in/kdally)
