@@ -13,6 +13,7 @@ dependencies:
   - python>=3.7.7
   - tensorflow-base=1.14.0=py37hc8dfbb8_0
   - tensorflow-estimator=1.14.0=py_0
+  - seaborn
   - pip
   - pip:
     - cloudpickle>=1.2.1
@@ -20,4 +21,3 @@ dependencies:
     - gym>=0.15.7
     - plotly>=4.9.0
     - tensorflow==1.15.3
-    - searborn
