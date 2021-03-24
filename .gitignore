@@ -4,12 +4,12 @@ fault-tolerant-flight-control-drl/envs/thrust_obs
 /assets/matlab/
 /tests/verification.py
 /tests/scratchpad.py
-.idea
-flying2.py
 fault_tolerant_flight_control_drl/tools/fix.py
 /fault_tolerant_flight_control_drl.egg-info/
 /build/
 /dist/
+.idea
+flying2.py
 *.xml
 *.pyc
 *.xlsx
