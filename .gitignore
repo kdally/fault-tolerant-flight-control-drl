@@ -7,6 +7,9 @@ fault-tolerant-flight-control-drl/envs/thrust_obs
 .idea
 flying2.py
 fault_tolerant_flight_control_drl/tools/fix.py
+/fault_tolerant_flight_control_drl.egg-info/
+/build/
+/dist/
 *.xml
 *.pyc
 *.xlsx

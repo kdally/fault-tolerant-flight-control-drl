@@ -14,6 +14,8 @@ dependencies:
   - tensorflow-base=1.14.0=py37hc8dfbb8_0
   - tensorflow-estimator=1.14.0=py_0
   - seaborn
+  - psutil
+  - requests
   - pip
   - pip:
     - cloudpickle>=1.2.1
