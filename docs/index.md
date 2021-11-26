@@ -3,7 +3,7 @@
 Fault-tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller. The code was developed for a Master's thesis entitled [Deep Reinforcement Learning for Flight Control](http://resolver.tudelft.nl/uuid:fcef2325-4c90-4276-8bfc-1e230724c68a).
 
 <p align="center">
-  <img src="./assets/attitude70deg.gif" width="500"/>
+  <img src="/assets/attitude70deg.gif" width="500"/>
 </p>
 
 ## Installation
@@ -35,7 +35,7 @@ python tests/test_all.py
 > Select flight settings on the GUI. Default choices are recommended for unexperienced users.
 
 <p align="center">
-  <img src="./assets/gui.png" width="350"/>
+  <img src="/assets/gui.png" width="350"/>
 </p>
 
 
