@@ -1,6 +1,6 @@
 # DRL for Flight Control
 
-[![Build Status](https://github.com/kdally/fault-tolerant-flight-control-drl/workflows/CI/badge.svg)](https://github.com/kdally/fault-tolerant-flight-control-drl/actions?query=workflow%3ACI)
+[![CodeQL](https://github.com/kdally/fault-tolerant-flight-control-drl/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kdally/fault-tolerant-flight-control-drl/actions/workflows/codeql-analysis.yml)
 [![Python](https://shields.io/badge/python-v3.7-blue.svg)](https://github.com/kdally/fault-tolerant-flight-control-drl/)
 [![License](https://img.shields.io/github/license/kdally/fault-tolerant-flight-control-drl)](https://github.com/kdally/fault-tolerant-flight-control-drl/blob/master/LICENSE)
 [![docs](https://img.shields.io/badge/docs-blue.svg)](https://kdally.github.io/fault-tolerant-flight-control-drl/)
