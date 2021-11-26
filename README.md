@@ -1,8 +1,9 @@
 # DRL for Flight Control
 
-[![](https://shields.io/badge/python-v3.7-blue.svg)](https://github.com/kdally/fault-tolerant-flight-control-drl/)
-[![](https://img.shields.io/github/license/kdally/fault-tolerant-flight-control-drl)](https://github.com/kdally/fault-tolerant-flight-control-drl/blob/master/LICENSE)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdally.github.io/fault-tolerant-flight-control-drl/)
+[![Build Status](https://github.com/kdally/fault-tolerant-flight-control-drl/workflows/CI/badge.svg)](https://github.com/kdally/fault-tolerant-flight-control-drl/actions?query=workflow%3ACI)
+[![Python](https://shields.io/badge/python-v3.7-blue.svg)](https://github.com/kdally/fault-tolerant-flight-control-drl/)
+[![License](https://img.shields.io/github/license/kdally/fault-tolerant-flight-control-drl)](https://github.com/kdally/fault-tolerant-flight-control-drl/blob/master/LICENSE)
+[![docs](https://img.shields.io/badge/docs-blue.svg)](https://kdally.github.io/fault-tolerant-flight-control-drl/)
 
 
 Fault-tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller. The code was developed for a Master's thesis entitled [Deep Reinforcement Learning for Flight Control](http://resolver.tudelft.nl/uuid:fcef2325-4c90-4276-8bfc-1e230724c68a).
