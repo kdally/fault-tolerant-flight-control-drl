@@ -6,7 +6,7 @@
 [![docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://kdally.github.io/fault-tolerant-flight-control-drl/)
 
 
-Fault-tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller. The paper for this code can be found at [doi.org/10.2514/6.2022-2078](https://doi.org/10.2514/6.2022-2078).
+Fault-tolerant flight control for the Cessna Citation 500. First use of Deep Reinforcement Learning for a jet aircraft flight controller. The paper for this code can be found at [doi.org/10.2514/6.2022-2078](https://doi.org/10.2514/6.2022-2078). The arXiv reprint is known as [arXiv:2202.09262](https://arxiv.org/abs/2202.09262).
 
 <p align="center">
   <img src="assets/attitude70deg.gif" width="500"/>
